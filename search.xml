@@ -1,6 +1,308 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>sync.pool源码阅读</title>
+    <url>/2020/10/29/sync.pool%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB/</url>
+    <content><![CDATA[<p>阅读项目代码的时候发现很多地方用到了golang的sync.pool，所以好奇golang的sync.pool底层实现是什么样的，有哪些优化。<br>本文是基于go1.13.8，做讲解。</p>
+<a id="more"></a>
+
+<h1 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h1><p>Pool翻译过来就是池子，主要功能就是: 需要使用某个Object的时候可以从Pool获取，使用完毕再归还，从而减少创建和销毁Object的开销。而本文讲的就是golang中的Pool源码实现。</p>
+<h1 id="用法"><a href="#用法" class="headerlink" title="用法"></a>用法</h1><p><strong>千万不要想当然的认为put进去的Object和get出来的Object有什么关系，Pool存的Object在GC时会都清理掉</strong></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">package main</span><br><span class="line"></span><br><span class="line">import (</span><br><span class="line">	&quot;fmt&quot;</span><br><span class="line">	&quot;sync&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">type Book struct &#123;</span><br><span class="line">	Name string</span><br><span class="line">	Info map[string]string</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func NewBook() interface&#123;&#125; &#123;</span><br><span class="line">	return &amp;Book&#123;</span><br><span class="line">		Name: &quot;&quot;,</span><br><span class="line">		Info: make(map[string]string),</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">func main() &#123;</span><br><span class="line">	&#x2F;&#x2F; 创建pool并定义创建object的函数</span><br><span class="line">	bookPool :&#x3D; sync.Pool&#123;New:NewBook&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 从pool获取object</span><br><span class="line">	a :&#x3D; bookPool.Get().(*Book)</span><br><span class="line">	a.Name &#x3D; &quot;go&quot;</span><br><span class="line">	a.Info[&quot;a&quot;] &#x3D; &quot;b&quot;</span><br><span class="line"></span><br><span class="line">	fmt.Println(a)</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 放回pool</span><br><span class="line">	bookPool.Put(a)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="结构图"><a href="#结构图" class="headerlink" title="结构图"></a>结构图</h1><p><img src="/images/pool.png"></p>
+<h1 id="实现细节"><a href="#实现细节" class="headerlink" title="实现细节"></a>实现细节</h1><ul>
+<li>Pool实现源码是这两个文件go/src/sync/pool.go, go/src/sync/poolqueue.go</li>
+</ul>
+<h2 id="数据结构——从下往上讲一下Pool底层存储是如何实现"><a href="#数据结构——从下往上讲一下Pool底层存储是如何实现" class="headerlink" title="数据结构——从下往上讲一下Pool底层存储是如何实现"></a>数据结构——从下往上讲一下Pool底层存储是如何实现</h2><h3 id="eface"><a href="#eface" class="headerlink" title="eface"></a>eface</h3><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 存储元素的结构体，类型指针和值指针</span></span><br><span class="line"><span class="keyword">type</span> eface <span class="keyword">struct</span> &#123;</span><br><span class="line">        typ, val unsafe.Pointer</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Pool底层用eface来存储单个Object, 包括typ指针: Object的类型，val指针: Object的值</p>
+<h3 id="poolDequeue"><a href="#poolDequeue" class="headerlink" title="poolDequeue"></a>poolDequeue</h3><p>poolDequeue是一个无锁、固定大小的单生产端多消费端的环形队列，单一producer可以在头部push和pop(可能和传统队列头部只能push的定义不同)，多consumer可以在尾部pop</p>
+<ol>
+<li>headTail:</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">[hhhhhhhh hhhhhhhh hhhhhhhh hhhhhhhh tttttttt tttttttt tttttttt tttttttt] </span><br><span class="line">1. headTail表示下标，高32位表示头下标，低32位表示尾下标，poolDequeue定义了，head tail的pack和unpack函数方便转化，</span><br><span class="line">	实际用的时候都会mod ( len(vals) - 1 ) 来防止溢出</span><br><span class="line">2. head和tail永远只用32位表示，溢出后会从0开始，这也满足循环队列的设计</span><br><span class="line">3. 队列为空的条件  tail &#x3D;&#x3D; head</span><br><span class="line">4. 队列满的条件    (tail+uint32(len(d.vals)))&amp;(1&lt;&lt;dequeueBits-1) &#x3D;&#x3D; head tail加上队列长度和head相等(实际上就是队列已有的空间都有值了,满了)</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>vals:</li>
+</ol>
+<ol>
+<li><p>poolDequeue是被poolChain使用，poolChain使用poolDequeue时<br> a) 初始化vals长度为8，vals长度必须是2的幂<br> b) 当队列满时，vals长度*2，最大扩展到 dequeueLimit = (1 &lt;&lt; 32) / 4 = (1 &lt;&lt; 30)，之后就不会扩展了</p>
+</li>
+<li><p>为什么vals长度必须是2的幂<br> 这是因为go的内存管理策略是将内存分为2的幂大小的链表，申请2的幂大小的内存可以有效减小分配内存的开销</p>
+</li>
+<li><p>为什么dequeueLimit是(1 &lt;&lt; 32) / 4 = 1 &lt;&lt; 30<br> a) dequeueLimit 必须是2的幂(上边解释过)<br> b) head和tail都是32位，最大是1 &lt;&lt; 31，如果都用的话，head和tail就是无符号整型，无符号整型使用的时候会有很多上溢的错误，这类错误是不容易检测的，所以相比之下还不如用31位有符号整型，有错就报出来，结论参考<a href="https://stackoverrun.com/cn/q/10770747">https://stackoverrun.com/cn/q/10770747</a></p>
+</li>
+</ol>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> poolDequeue <span class="keyword">struct</span> &#123;</span><br><span class="line">	headTail <span class="keyword">uint64</span></span><br><span class="line"></span><br><span class="line">	vals []eface</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// poolDequeue成员函数</span></span><br><span class="line"><span class="comment">// 这里的删除操作，是将指针置空，然后让GC来回收内存空间</span></span><br><span class="line">unpack     将headTail分解为head和tail</span><br><span class="line">pack       将head和tail组合成headTail</span><br><span class="line">pushHead   添加元素到队首</span><br><span class="line">popHead    获取并删除队首元素</span><br><span class="line">popTail    获取并删除队尾元素</span><br><span class="line">PushHead   添加元素到队首</span><br><span class="line">PopHead    获取并删除队首元素</span><br><span class="line">PopTail    获取并删除队尾元素</span><br></pre></td></tr></table></figure>
+
+<h3 id="poolChainElt"><a href="#poolChainElt" class="headerlink" title="poolChainElt"></a>poolChainElt</h3><p>链表的一个节点 Node</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">type poolChainElt struct &#123;</span><br><span class="line">	poolDequeue</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; next and prev link to the adjacent poolChainElts in this</span><br><span class="line">	&#x2F;&#x2F; poolChain.</span><br><span class="line">	&#x2F;&#x2F;</span><br><span class="line">	&#x2F;&#x2F; next is written atomically by the producer and read</span><br><span class="line">	&#x2F;&#x2F; atomically by the consumer. It only transitions from nil to</span><br><span class="line">	&#x2F;&#x2F; non-nil.</span><br><span class="line">	&#x2F;&#x2F;</span><br><span class="line">	&#x2F;&#x2F; prev is written atomically by the consumer and read</span><br><span class="line">	&#x2F;&#x2F; atomically by the producer. It only transitions from</span><br><span class="line">	&#x2F;&#x2F; non-nil to nil.</span><br><span class="line">	next, prev *poolChainElt</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="poolChain"><a href="#poolChain" class="headerlink" title="poolChain"></a>poolChain</h3><p>poolChain 是动态版的poolDequeue<br>head(poolDequeue)[prev] –&gt; &lt;— <a href="...">next</a>[prev] —&gt; &lt;—[next]tail(poolDequeue)<br>动态的队列，队列每个节点又是一个环形队列(poolDequeue)</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">type poolChain struct &#123;</span><br><span class="line">	&#x2F;&#x2F; 头指针，只能单一producer操作(push, pop)</span><br><span class="line">	head *poolChainElt</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 尾指针，可以被多个consumer pop，必须是原子操作</span><br><span class="line">	tail *poolChainElt</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F; poolChain成员函数</span><br><span class="line">func (c *poolChain) pushHead(val interface&#123;&#125;)</span><br><span class="line">	1. 如果head为nil，说明队列现在是空的，那么新建一个节点，将head和tail都指向这个节点</span><br><span class="line">	2. 将val push到head的环形队列中，如果push成功了，可以返回了</span><br><span class="line">	3. 如果没push成功，则说明head的环形队列满了，就再创建一个两倍head大小的节点[最大(1 &lt;&lt; 32) &#x2F; 4]，</span><br><span class="line">		将新节点作为head，并且处理好新head和旧head的next，prev关系</span><br><span class="line">	4. 将val push到head的环形队列中</span><br><span class="line"></span><br><span class="line">func (c *poolChain) popHead()</span><br><span class="line">	1. 先在head环形队列中popHead试试，如果空了，当前节点就没用了，就删掉当前节点，去prev节点并且把prev节点作为新head再取一值递归下去，</span><br><span class="line">		能取到就返回，取不到说明队列空了</span><br><span class="line">func (c *poolChain) popTail()</span><br><span class="line">	1. 如果tail为nil，说明队列是空的，直接返回</span><br><span class="line">	2. 如果tail非nil，就取取试试，有东西就返回</span><br><span class="line">	3. 如果没取出来东西，那么说明tail节点没存东西了，递归去prev节点环形队列中popTail，并且把prev节点作为tail，能取到就返回，取不到就是空了</span><br></pre></td></tr></table></figure>
+
+<h3 id="poolLocal"><a href="#poolLocal" class="headerlink" title="poolLocal"></a>poolLocal</h3><ol>
+<li>poolLocal是每个调度器(P)存Object的结构体</li>
+<li>private是每个调度器私有的，shared是所有调度器公有的，每个调度器pop时的逻辑是: 先看private，没有在看自己的shared，再没有就去其他调度器的shared偷，再没有才是空</li>
+<li>pad是防止伪共享，参考<a href="https://www.cnblogs.com/cyfonly/p/5800758.html">https://www.cnblogs.com/cyfonly/p/5800758.html</a><figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> poolLocal <span class="keyword">struct</span> &#123;</span><br><span class="line">	poolLocalInternal</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Prevents false sharing on widespread platforms with</span></span><br><span class="line">	<span class="comment">// 128 mod (cache line size) = 0 .</span></span><br><span class="line">	pad [<span class="number">128</span> - unsafe.Sizeof(poolLocalInternal&#123;&#125;)%<span class="number">128</span>]<span class="keyword">byte</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Local per-P Pool appendix.</span></span><br><span class="line"><span class="comment">// 当前调度器的内部资源</span></span><br><span class="line"><span class="keyword">type</span> poolLocalInternal <span class="keyword">struct</span> &#123;</span><br><span class="line">	<span class="comment">// 当前调度器的私有资源</span></span><br><span class="line">	private <span class="keyword">interface</span>&#123;&#125; <span class="comment">// Can be used only by the respective P.</span></span><br><span class="line">	<span class="comment">// 所有调度器的公有资源</span></span><br><span class="line">	shared  poolChain   <span class="comment">// Local P can pushHead/popHead; any P can popTail.</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<h2 id="主要函数"><a href="#主要函数" class="headerlink" title="主要函数"></a>主要函数</h2><h3 id="Put"><a href="#Put" class="headerlink" title="Put"></a>Put</h3><p>Put adds x to the pool.</p>
+<ol>
+<li>首先关闭竞争检测，然后会将当前goroutine固定到一个调度器(P)上，且不允许抢占</li>
+<li>从Pool的local中取出来当前goroutine固定到那个调度器(P)对应的poolLocal, 没有就新建</li>
+<li>先判断这个当前调度器(P)专属poolLocal，私有空间是不是空的，如果是把x放到私有空间，并把x置nil</li>
+<li>判断x是否为nil，如果不为空说明私有空间满了，就push到该调度器专属poolLocal的shared head</li>
+<li>允许抢占，开启竞争检测</li>
+</ol>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(p *Pool)</span> <span class="title">Put</span><span class="params">(x <span class="keyword">interface</span>&#123;&#125;)</span></span> &#123;</span><br><span class="line">	<span class="comment">// 如果put进来的值为空直接返回</span></span><br><span class="line">	<span class="keyword">if</span> x == <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="keyword">return</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// 关闭竞争检测</span></span><br><span class="line">	<span class="keyword">if</span> race.Enabled &#123;</span><br><span class="line">		<span class="keyword">if</span> fastrand()%<span class="number">4</span> == <span class="number">0</span> &#123;</span><br><span class="line">			<span class="comment">// Randomly drop x on floor.</span></span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">		race.ReleaseMerge(poolRaceAddr(x))</span><br><span class="line">		race.Disable()</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// </span></span><br><span class="line">	l, _ := p.pin()</span><br><span class="line">	<span class="keyword">if</span> l.private == <span class="literal">nil</span> &#123;</span><br><span class="line">		l.private = x</span><br><span class="line">		x = <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> x != <span class="literal">nil</span> &#123;</span><br><span class="line">		l.shared.pushHead(x)</span><br><span class="line">	&#125;</span><br><span class="line">	runtime_procUnpin()</span><br><span class="line">	<span class="keyword">if</span> race.Enabled &#123;</span><br><span class="line">		race.Enable()</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>把当前的goroutine固定到调度器(P)，不允许抢占, 返回该调度器(P)对应的poolLocal和调度器(P)ID<br>运行时调度器的三个重要组成部分 — 线程 M、Goroutine G 和调度器 P(负责调度)</p>
+<p>判断pid是否小于[]poolLocal的长度，小于的话就在取出poolLocal[P]返回，否则就去执行pinSlow函数<br>Caller must call runtime_procUnpin() when done with the pool.</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(p *Pool)</span> <span class="title">pin</span><span class="params">()</span> <span class="params">(*poolLocal, <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">	<span class="comment">// 关闭抢占，等这个goroutine工作完，其他goroutine才能获得时间片工作</span></span><br><span class="line">	pid := runtime_procPin()</span><br><span class="line">	<span class="comment">// In pinSlow we store to local and then to localSize, here we load in opposite order.</span></span><br><span class="line">	<span class="comment">// Since we&#x27;ve disabled preemption, GC cannot happen in between.</span></span><br><span class="line">	<span class="comment">// Thus here we must observe local at least as large localSize.</span></span><br><span class="line">	<span class="comment">// We can observe a newer/larger local, it is fine (we must observe its zero-initialized-ness).</span></span><br><span class="line"></span><br><span class="line">	s := atomic.LoadUintptr(&amp;p.localSize) <span class="comment">// load-acquire</span></span><br><span class="line">	l := p.local                          <span class="comment">// load-consume</span></span><br><span class="line">	<span class="keyword">if</span> <span class="keyword">uintptr</span>(pid) &lt; s &#123;</span><br><span class="line">		<span class="keyword">return</span> indexLocal(l, pid), pid</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> p.pinSlow()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当goroutine固定到的调度器(P)没有poolLocal时，pins() 函数就会调用pinSlow() 来重新固定到其他调度器(P)，<br>如果新固定到的调度器(P)还是没有poolLocal，就给该调度器创建一个poolLocal放到Pool的local中</p>
+<ol>
+<li>打开抢占并且pool加锁然后关闭抢占，这里如果不先打开抢占的话，其他goroutine如果之前获得锁了，但不能运行，当前goroutine在获取锁，就会死锁</li>
+<li>如果判断pid和len([]poolLocal)的关系，小于就返回[PID]poolLocal</li>
+<li>如果此Pool的[]poolLocal是空的，就把Pool加到allPools中</li>
+<li>获得当前cpu的数量，创建一个cpu数量大小的[]poolLocal</li>
+</ol>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(p *Pool)</span> <span class="title">pinSlow</span><span class="params">()</span> <span class="params">(*poolLocal, <span class="keyword">int</span>)</span></span> &#123;</span><br><span class="line">	runtime_procUnpin()</span><br><span class="line">	allPoolsMu.Lock()</span><br><span class="line">	<span class="keyword">defer</span> allPoolsMu.Unlock()</span><br><span class="line">	pid := runtime_procPin()</span><br><span class="line">	<span class="comment">// poolCleanup won&#x27;t be called while we are pinned.</span></span><br><span class="line">	s := p.localSize</span><br><span class="line">	l := p.local</span><br><span class="line">	<span class="keyword">if</span> <span class="keyword">uintptr</span>(pid) &lt; s &#123;</span><br><span class="line">		<span class="keyword">return</span> indexLocal(l, pid), pid</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> p.local == <span class="literal">nil</span> &#123;</span><br><span class="line">		allPools = <span class="built_in">append</span>(allPools, p)</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">// If GOMAXPROCS changes between GCs, we re-allocate the array and lose the old one.</span></span><br><span class="line">	size := runtime.GOMAXPROCS(<span class="number">0</span>)</span><br><span class="line">	local := <span class="built_in">make</span>([]poolLocal, size)</span><br><span class="line">	atomic.StorePointer(&amp;p.local, unsafe.Pointer(&amp;local[<span class="number">0</span>])) <span class="comment">// store-release</span></span><br><span class="line">	atomic.StoreUintptr(&amp;p.localSize, <span class="keyword">uintptr</span>(size))         <span class="comment">// store-release</span></span><br><span class="line">	<span class="keyword">return</span> &amp;local[pid], pid</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Get"><a href="#Get" class="headerlink" title="Get"></a>Get</h3><p>从Pool中获取对象，然后返回，如果Pool为空的就用New来创建<br>不要假设Put进来的对象和Get得到的对象有什么关系</p>
+<ol>
+<li>关掉竞争检测</li>
+<li>将goroutine固定到一个调度器(P), 并获取他的poolLocal和PID</li>
+<li>判断该调度器(P)的poolLocal的私有空间是不是空的，如果是空的，就从该调度器(P)的poolLocal shared空间头<br> pop一下看有没有</li>
+<li>如果没有，就说明该调度器(P)自己的poolLocal没有对象了，就调用getSlow</li>
+</ol>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(p *Pool)</span> <span class="title">Get</span><span class="params">()</span> <span class="title">interface</span></span>&#123;&#125; &#123;</span><br><span class="line">	<span class="keyword">if</span> race.Enabled &#123;</span><br><span class="line">		race.Disable()</span><br><span class="line">	&#125;</span><br><span class="line">	l, pid := p.pin()</span><br><span class="line">	x := l.private</span><br><span class="line">	l.private = <span class="literal">nil</span></span><br><span class="line">	<span class="keyword">if</span> x == <span class="literal">nil</span> &#123;</span><br><span class="line">		<span class="comment">// Try to pop the head of the local shard. We prefer</span></span><br><span class="line">		<span class="comment">// the head over the tail for temporal locality of</span></span><br><span class="line">		<span class="comment">// reuse.</span></span><br><span class="line">		x, _ = l.shared.popHead()</span><br><span class="line">		<span class="keyword">if</span> x == <span class="literal">nil</span> &#123;</span><br><span class="line">			x = p.getSlow(pid)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	runtime_procUnpin()</span><br><span class="line">	<span class="keyword">if</span> race.Enabled &#123;</span><br><span class="line">		race.Enable()</span><br><span class="line">		<span class="keyword">if</span> x != <span class="literal">nil</span> &#123;</span><br><span class="line">			race.Acquire(poolRaceAddr(x))</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">if</span> x == <span class="literal">nil</span> &amp;&amp; p.New != <span class="literal">nil</span> &#123;</span><br><span class="line">		x = p.New()</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> x</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>懒获取函数</p>
+<ol>
+<li>取到Pool的localSize和local</li>
+<li>然后遍历其他调度器(P)对应的poolLocal，看看能不能从对应poolLocal中的shared tail中取出对象, 如果能取到，直接返回</li>
+<li>如果取不到就到victim中查询，有就返回，没有调用New创建一个新的Object返回</li>
+</ol>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="params">(p *Pool)</span> <span class="title">getSlow</span><span class="params">(pid <span class="keyword">int</span>)</span> <span class="title">interface</span></span>&#123;&#125; &#123;</span><br><span class="line">	<span class="comment">// See the comment in pin regarding ordering of the loads.</span></span><br><span class="line">	size := atomic.LoadUintptr(&amp;p.localSize) <span class="comment">// load-acquire</span></span><br><span class="line">	locals := p.local                        <span class="comment">// load-consume</span></span><br><span class="line">	<span class="comment">// Try to steal one element from other procs.</span></span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="keyword">int</span>(size); i++ &#123;</span><br><span class="line">		l := indexLocal(locals, (pid+i+<span class="number">1</span>)%<span class="keyword">int</span>(size))</span><br><span class="line">		<span class="keyword">if</span> x, _ := l.shared.popTail(); x != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> x</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Try the victim cache. We do this after attempting to steal</span></span><br><span class="line">	<span class="comment">// from all primary caches because we want objects in the</span></span><br><span class="line">	<span class="comment">// victim cache to age out if at all possible.</span></span><br><span class="line">	size = atomic.LoadUintptr(&amp;p.victimSize)</span><br><span class="line">	<span class="keyword">if</span> <span class="keyword">uintptr</span>(pid) &gt;= size &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">	&#125;</span><br><span class="line">	locals = p.victim</span><br><span class="line">	l := indexLocal(locals, pid)</span><br><span class="line">	<span class="keyword">if</span> x := l.private; x != <span class="literal">nil</span> &#123;</span><br><span class="line">		l.private = <span class="literal">nil</span></span><br><span class="line">		<span class="keyword">return</span> x</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">for</span> i := <span class="number">0</span>; i &lt; <span class="keyword">int</span>(size); i++ &#123;</span><br><span class="line">		l := indexLocal(locals, (pid+i)%<span class="keyword">int</span>(size))</span><br><span class="line">		<span class="keyword">if</span> x, _ := l.shared.popTail(); x != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">return</span> x</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Mark the victim cache as empty for future gets don&#x27;t bother</span></span><br><span class="line">	<span class="comment">// with it.</span></span><br><span class="line">	atomic.StoreUintptr(&amp;p.victimSize, <span class="number">0</span>)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">return</span> <span class="literal">nil</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h2><h3 id="pool-dot"><a href="#pool-dot" class="headerlink" title="pool.dot"></a>pool.dot</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">digraph &#123;</span><br><span class="line">    bgcolor&#x3D;&quot;#C6CFD532&quot;;</span><br><span class="line"></span><br><span class="line">    node [shape&#x3D;record, fontsize&#x3D;&quot;8&quot;, margin&#x3D;&quot;0.04&quot;, height&#x3D;0.2, color&#x3D;gray]</span><br><span class="line">    edge [fontname&#x3D;&quot;Inconsolata, Consolas&quot;, fontsize&#x3D;10, arrowhead&#x3D;normal]</span><br><span class="line"></span><br><span class="line">    pool [shape&#x3D;record,label&#x3D;&quot;&#123;noCopy|&lt;local&gt;local|localSize|&lt;victim&gt;victim|victimSize|New&#125;&quot;,xlabel&#x3D;&quot;Pool&quot;]</span><br><span class="line">    poolLocal[shape&#x3D;record,label&#x3D;&quot;&#123;&lt;poolLocalInternal&gt;poolLocalInternal|pad&#125;&quot;,xlabel&#x3D;&quot;poolLocal&quot;]</span><br><span class="line">    poolLocalInternal[shape&#x3D;record,label&#x3D;&quot;&#123;private|&lt;shared&gt;shared&#125;&quot;,xlabel&#x3D;&quot;poolLocalInternal&quot;]</span><br><span class="line">    poolChain[shape&#x3D;record,label&#x3D;&quot;&#123;&lt;head&gt;head|&lt;tail&gt;tail&#125;&quot;,xlabel&#x3D;&quot;poolChain&quot;]</span><br><span class="line">    poolChainElt[shape&#x3D;record,label&#x3D;&quot;&#123;&lt;poolDequeue&gt;poolDequeue|next|prev&#125;&quot;,xlabel&#x3D;&quot;poolChainElt&quot;]</span><br><span class="line">    poolDequeue[shape&#x3D;record,label&#x3D;&quot;&#123;headTail|&lt;vals&gt;vals&#125;&quot;,xlabel&#x3D;&quot;poolDequeue&quot;]</span><br><span class="line">    eface[shape&#x3D;record,label&#x3D;&quot;&#123;typ|val&#125;&quot;,xlabel&#x3D;&quot;eface&quot;]</span><br><span class="line">    victim[shape&#x3D;record,label&#x3D;&quot;GC的时候，首先把local中每个处理器(P)对应的poolLocal赋给victim，然后清空local，所以victim就是缓存GC前的local&quot;,xlabel&#x3D;&quot;victim&quot;]</span><br><span class="line"></span><br><span class="line">    pool:local -&gt; poolLocal [label&#x3D;&quot;local指针指向[]poolLocal首地址&quot;,rankdir&#x3D;LR]</span><br><span class="line">    poolLocal:poolLocalInternal -&gt; poolLocalInternal</span><br><span class="line">    poolLocalInternal:shared -&gt; poolChain[label&#x3D;&quot;shared是一个队列&quot;]</span><br><span class="line">    poolChain:head -&gt; poolChainElt[label&#x3D;&quot;head和tail是队列的收尾节点指针&quot;]</span><br><span class="line">    poolChain:tail -&gt; poolChainElt</span><br><span class="line">    poolChainElt:poolDequeue -&gt; poolDequeue[label&#x3D;&quot;poolDequeue是一个环形队列&quot;]</span><br><span class="line">    poolDequeue:vals -&gt; eface[label&#x3D;&quot;eface存储Object的结构体，typ和val是Object的类型和值指针&quot;]</span><br><span class="line">    pool:victim -&gt; victim</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>语言</category>
+        <category>Golang</category>
+      </categories>
+      <tags>
+        <tag>源码</tag>
+        <tag>Golang</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Timing wheel心跳机制</title>
+    <url>/2020/10/29/timing_wheel%E5%BF%83%E8%B7%B3%E6%9C%BA%E5%88%B6/</url>
+    <content><![CDATA[<p>在web服务中，断开空闲连接是一种减少资源浪费的一种手段，由此就有了心跳机制来判断一个连接是否空闲。</p>
+<a id="more"></a> 
+
+<h1 id="一种简单粗暴的方式："><a href="#一种简单粗暴的方式：" class="headerlink" title="一种简单粗暴的方式："></a>一种简单粗暴的方式：</h1><ol>
+<li><p>服务端每个连接保存一个最后一次操作的时间戳，每次这个连接对应fd可读时（客户端发来请求），就更新一下时间戳。</p>
+</li>
+<li><p>服务端会起一个定时任务: close掉在时间戳(now – heart_beat)时刻之前的fd。</p>
+</li>
+</ol>
+<p>这种方式需要不断的遍历已有连接，检查是否过期。</p>
+<p>本文介绍的是，George Varghese 和 Tony Lauck 1996 年的论文《Hashed and Hierarchical Timing Wheels: data structures to efficiently implement a timer facility》中提出了一种时间轮(Timing wheel)管理time out事件的方式。</p>
+<h1 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h1><p>下图是一个时间轮模型，假设当前心跳间隔是4S，将时间轮分为4分，每个格子表示当前格子的剩余寿命(s)。<br><img src="/images/time_wheel_1.png"><br>每隔1S，pointer滚动一次，先清理掉0号格子存放的所有连接，然后当前时刻进来的连接放入(heart_beat – 1)号格子格子。</p>
+<h2 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h2><p>当前时刻conn 1连入，此时conn1剩余寿命3S，放入3号格子<br><img src="/images/time_wheel_2.png"><br>1S后，此时conn1剩余寿命2S<br><img src="/images/time_wheel_3.png"><br>当conn1剩余寿命为0S时，此连接会被清理。如果恰好这一秒conn进行操作了，那么会放入3号格子另一个conn1，如果时间轮上所有的conn1都被清理，那么这个连接会被关闭。</p>
+<h1 id="实现："><a href="#实现：" class="headerlink" title="实现："></a>实现：</h1><p>C++以及一些指针友好型语言实现比较简单，轮子转动一次格子的指针引用数-1即可，当某个格子指针引用数为0时，代表格子时间到了，会析构掉。<br>事例代码可见: <a href="https://github.com/lyuc0924/basket/tree/master/forward">journey-c(basket网络库)</a>中workthread的实现。</p>
+]]></content>
+      <categories>
+        <category>工程</category>
+      </categories>
+      <tags>
+        <tag>工程</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>红黑树</title>
+    <url>/2020/10/22/%E7%BA%A2%E9%BB%91%E6%A0%91/</url>
+    <content><![CDATA[<p>红黑树是一种自平衡二叉搜索树。二叉搜索树就是插入的时候，比当前节点小的放到左子树，大的放到右子树。这样查找的时候可以沿着树的一条路径找到想要的值，所以时间复杂度是树的深度，最坏$O(N)$，平均$O(lg^N)$。</p>
+<p>正因为二叉搜索树由于数据的不确定性可能造成树建的不平衡，导致树过深，时间复杂度过高。所以出现了自平衡二叉搜索树像红黑树。</p>
+<p>红黑树所有的性质和特点都是想让树尽可能的平衡。</p>
+<a id="more"></a>
+
+<p><img src="/images/rbtree.jpg" alt="rbtree"></p>
+<h1 id="性质"><a href="#性质" class="headerlink" title="性质"></a>性质</h1><ol>
+<li>每个节点或是红色，或是黑色</li>
+<li>根结点是黑色</li>
+<li>每个叶节点(NIL)是黑色</li>
+<li>如果一个节点是红色，则它两个子节点必须是黑色</li>
+<li>对每个节点，从该节点到其所有后代叶节点的简单路径上，均包含相同数目的黑色节点</li>
+</ol>
+<p>另外其他二叉树叶子结点一般为nil，红黑树为了节省内存空间，将所有叶子节点指向一个哨兵节点，哨兵节点color为BLACK，其他属性p、left、right、key为任意值，根结点的父节点也指向哨兵节点。</p>
+<h1 id="为什么红黑树可以平衡"><a href="#为什么红黑树可以平衡" class="headerlink" title="为什么红黑树可以平衡"></a>为什么红黑树可以平衡</h1><h2 id="引理"><a href="#引理" class="headerlink" title="引理"></a>引理</h2><blockquote>
+<p>一棵有n个内部节点的红黑树的高度至多为$2lg^{(n+1)}$</p>
+</blockquote>
+<p>如果可以证明上述引理，那么红黑树的查找最坏的时间复杂度也是$O(2lg^{(n+1)})$，因为在一棵高度为h的树上操作时间复杂度是$O(h)$，就是咱们要的平衡。</p>
+<h2 id="证明"><a href="#证明" class="headerlink" title="证明"></a>证明</h2><p>首先证明<font color=red>红黑树以任意一个节点x为根的子树中至少包含$2^{bh(x)}-1$个内部节点</font>(从节点x出发，不包含x到达一个叶子节点的任意一条简单路径上黑节点的个数成为x节点的黑高，记为$bh(x)$)。</p>
+<p>下面用数学归纳法证明</p>
+<ul>
+<li><p>当高度为0时<br>即子树为空，满足内部节点不超过$2^{0}-1=0$的要求。</p>
+</li>
+<li><p>当高度为k时<br>假设以x为根的子树内部节点不超过$2^{bh(x)}-1$。</p>
+</li>
+<li><p>当高度为k-1时<br>即当前节点是x(这个x节点是高度为k时假设的那个)的儿子，黑高为$bh(x)$或$bh(x)-1$，取决于儿子是黑还是红。所以以儿子节点为根的子树至少有$2^{bh(x)-1}-1$内部节点。于是，<font color=red>由儿子节点推父节点x内部节点的个数不超过$(2^{bh(x)-1}-1)+(2^{bh(x)-1}-1)=(2^{bh(x)}-1)$</font>，由此假设成立。</p>
+</li>
+</ul>
+<p>现在来证明引理。设h为树的高度，根据性质4得出从根节点到叶节点的任何一条简单路径上都至少有一半节点是黑色，所以根的黑高至少时h/2。于是有</p>
+<center>$n \geq 2^{h/2}-1$</center>
+
+<p>n为树的节点个数，这个公式上边证明过了。将1放到左边，然后取对数得到</p>
+<center>$lg^{(n+1)} \geq h/2 $</center>
+
+<p>由此得到结论，高度小于等于$2lg^{(n+1)}$，所以只要满足红黑树性质的n节点二叉树高度最大为$2lg^{(n+1)}$。</p>
+<center>$h \leq 2lg^{(n+1)}$</center>
+
+<h1 id="红黑树如何实现自平衡"><a href="#红黑树如何实现自平衡" class="headerlink" title="红黑树如何实现自平衡"></a>红黑树如何实现自平衡</h1><h2 id="旋转"><a href="#旋转" class="headerlink" title="旋转"></a>旋转</h2><p>由于插入和删除操作会对红黑树修改，有可能会不符合红黑树的性质，所以必须通过调整节点的颜色和指针结构来重新满足性质，而调整指针结构的操作是旋转，有左旋、右旋。<br><strong>下图α,β,γ代表一棵子树(可能为空)</strong></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">    |                            |                      </span><br><span class="line">    y                            x</span><br><span class="line">   &#x2F; \   &lt;--- left rotate ---   &#x2F; \</span><br><span class="line">  x   γ  --- right rotate ---&gt; α   y</span><br><span class="line"> &#x2F; \                              &#x2F; \</span><br><span class="line">α   β                            β   γ</span><br></pre></td></tr></table></figure>
+
+<h3 id="左旋"><a href="#左旋" class="headerlink" title="左旋"></a>左旋</h3><p>上图为例，左旋就是从右边树结构变成左边树结构的操作。<br>当在某点例如x点做左旋时: </p>
+<ol>
+<li>以x-y这条路径当轴，逆时针旋转(左旋)，x变成y的左儿子，y到原来x的位置。</li>
+<li>因为x变成了y的左儿子，所以要考虑y之前是否有左儿子，如果有的话就要将左儿子β在左子树中重新找位置了，之前β是在x的右边所以比x大，刚好x的右儿子旋转后是空的，所以β就放到x的右儿子的位置。就得到了左边树的结构。</li>
+</ol>
+<h3 id="右旋"><a href="#右旋" class="headerlink" title="右旋"></a>右旋</h3><p>和左旋步骤是一样的，方向相反。</p>
+<h2 id="插入"><a href="#插入" class="headerlink" title="插入"></a>插入</h2><ol>
+<li>插入节点颜色设置为红色。</li>
+<li>首先从根结点开始遍历，插入节点比当前节点小就去左子树，否则就去右子树，直到遍历到叶子结点，然后比较插入节点和父节点大小选择作为父节点的左儿子还是右儿子。</li>
+<li>现在已经将节点插入了，由于插入节点颜色是红色，所以可能破坏红节点儿子只能是黑节点的性质。所以从插入节点向上遍历修复破坏性质的地方，直到完全符合性质。</li>
+</ol>
+<h3 id="修复"><a href="#修复" class="headerlink" title="修复"></a>修复</h3><p>回想一下插入新节点的过程，然后对比一下可能违反什么性质。</p>
+<table>
+<thead>
+<tr>
+<th>性质编号</th>
+<th>描述</th>
+<th>是否可能违反</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>每个节点或是红色，或是黑色</td>
+<td>不会违反，除非插入第三种颜色</td>
+</tr>
+<tr>
+<td>2</td>
+<td>根结点是黑色</td>
+<td>可能违反，只有树为空的时候，插入节点(红色)作为根结点</td>
+</tr>
+<tr>
+<td>3</td>
+<td>每个叶节点(NIL)是黑色</td>
+<td>不会违反，插入节点不会改变叶节点的颜色，叶节点永远都是T.nil</td>
+</tr>
+<tr>
+<td>4</td>
+<td>如果一个节点是红色，则它两个子节点必须是黑色</td>
+<td>可能违反，只有插入节点的父节点是红色时，会违反这条性质</td>
+</tr>
+<tr>
+<td>5</td>
+<td>对每个节点，从该节点到其所有后代叶节点的简单路径上，均包含相同数目的黑色节点</td>
+<td>不会违反，插入节点为红色，不会改变每条路径上黑色的数量</td>
+</tr>
+</tbody></table>
+<p>对比过后发现，可能违反的性质有2、4。并且同一时间只可能违反其一，如果违反性质2，说明树为空插入节点为根结点，根结点的父节点是T.nil(黑色)不违反性质4。如果违反性质4，那么插入节点的父节点一定是红色，说明树一定不是空的(为空的话，插入节点的父节点应该是T.nil黑色)，并且只有树为空的情况插入才会影响根结点颜色，所以也不可能违反性质2。</p>
+<p>现在可能破坏的地方分析清楚了，就可以开始梳理如何修复了，并且修复操作不能造成二次破坏导致不符合其他性质。 </p>
+<h4 id="违反性质1"><a href="#违反性质1" class="headerlink" title="违反性质1"></a>违反性质1</h4><p>只需要把根结点直接设置为黑色即可。因为违反性质1的时候，树中只有插入节点一个节点，所以修复结束。</p>
+<h4 id="违反性质4"><a href="#违反性质4" class="headerlink" title="违反性质4"></a>违反性质4</h4><p>违反性质4是因为插入节点和父节点都是红色，情况比较复杂，具体分6类。从插入节点往上遍历，针对不同的case采取不同的fix方式，直到父节点是黑色或者到根结点即停止遍历。<br><strong>指针指向的位置初始时在插入位置</strong></p>
+<h5 id="case-1"><a href="#case-1" class="headerlink" title="case 1"></a>case 1</h5><blockquote>
+<p>(1)插入节点是父节点是祖父节点的左儿子<br>(2)插入节点叔节点是红色<br><img src="/images/rbtree_fixup_case1.png" alt="case1"><br>这种情况将父节点和叔节点变为黑色，祖父节点变为红色，指针指向祖父节点(上移两层)。<br><img src="/images/rbtree_fixup_case1_fix.png" alt="case1"><br><strong>这一步祖父节点可能是根结点，所以在修复完违反性质4的情况之后，再把根结点设置为黑色，避免再违反性质1</strong></p>
+</blockquote>
+<h5 id="case-2"><a href="#case-2" class="headerlink" title="case 2"></a>case 2</h5><blockquote>
+<p>(1)插入节点是父节点是祖父节点的左儿子<br>(2)插入节点叔节点是黑色<br>(3)插入节点是父节点右儿子<br><img src="/images/rbtree_fixup_case2.png" alt="case1"><br>以父节点到插入节点为轴做左旋，就可以变为case 3。</p>
+</blockquote>
+<h5 id="case-3"><a href="#case-3" class="headerlink" title="case 3"></a>case 3</h5><blockquote>
+<p>(1)插入节点是父节点是祖父节点的左儿子<br>(2)插入节点叔节点是黑色<br>(3)插入节点是父节点左儿子<br><img src="/images/rbtree_fixup_case3.png" alt="case1"><br>将父节点变为黑色，祖父节点变为红色，然后以祖父节点到父节点为轴，左右旋。(关系还是按照旋转前定的)<br><img src="/images/rbtree_fixup_case3_fix.png" alt="case1"><br><strong><em>case 4,5,6是插入节点的父节点是父节点右儿子的情况，和前三种对称，这里就略过了。</em></strong></p>
+</blockquote>
+<h3 id="插入节点为什么设置为红色"><a href="#插入节点为什么设置为红色" class="headerlink" title="插入节点为什么设置为红色?"></a>插入节点为什么设置为红色?</h3><p>如果设置为黑色的话，会破坏每点到叶节点简单路径上黑色节点数量相同的性质了，修复起来情况就复杂了，相比之下就比如直接设置为红色。</p>
+<h2 id="删除"><a href="#删除" class="headerlink" title="删除"></a>删除</h2><p>删除和普通的搜索二叉树的删除差不多，唯一的不同就是要记录减少的颜色，因为可能破坏红黑树的性质。 </p>
+<blockquote>
+<p>y: 为要删除的节点或者是后继节点(提上来放到删除节点的位置)<br>x: 为不违反性质的最低节点(x往下就没操作过)</p>
+</blockquote>
+<ol>
+<li>没有儿子<br>直接删除y，y的父节点的儿子指向T.nil，x为T.nil。</li>
+<li>只有右儿子<br>将y的右子树(以x为根的子树)提到y的位置，x为y的右儿子。</li>
+<li>只有左儿子<br>将y的左子树提到y的位置，x为y的左儿子。</li>
+<li>有两个儿子<br>找到后继节点y(比删除大的最小的那个)，用y替换删除节点的位置，颜色设置为删除节点的颜色，这样y原来的位置就空了，将y的右子树(如果有)提到y原来的位置，x为y的右儿子。</li>
+</ol>
+<h3 id="修复解析"><a href="#修复解析" class="headerlink" title="修复解析"></a>修复解析</h3><p>只要y是黑色节点，不论y是要删除的节点还是后继节点，删除操作完成后，都相当于少了y节点的颜色，所以要记住y之前的颜色，如果y是黑色的话，就会产生三个问题。</p>
+<ol>
+<li>如果y是根结点，删除y后，如果提到y位置节点颜色是红色就违反了性质2。(性质1最好修复，所有修复操作完成后直接把根变为黑色就行)</li>
+<li>如果x是红色，并且x的父节点也是红色，就违反性质4。</li>
+<li>因为y是黑色节点，所以删掉后经过y的路径上黑色节点都少1就违反性质5了，解决这个问题的办法是假设x除了自身颜色外还有一层黑色，就是双重颜色，所以现在x违反性质1。</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>性质编号</th>
+<th>描述</th>
+<th>是否可能违反</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>每个节点或是红色，或是黑色</td>
+<td>可能违反，x有双重颜色时违反</td>
+</tr>
+<tr>
+<td>2</td>
+<td>根结点是黑色</td>
+<td>可能违反，y是根结点，并且后续一个红色节点代替了上来，那么根节点就是红色</td>
+</tr>
+<tr>
+<td>3</td>
+<td>每个叶节点(NIL)是黑色</td>
+<td>不会违反</td>
+</tr>
+<tr>
+<td>4</td>
+<td>如果一个节点是红色，则它两个子节点必须是黑色</td>
+<td>可能违反，情况4(两个儿子)，后继节点的父亲是红色，右儿子是红色，那么右儿子提上来之后就父子都是红色</td>
+</tr>
+<tr>
+<td>5</td>
+<td>对每个节点，从该节点到其所有后代叶节点的简单路径上，均包含相同数目的黑色节点</td>
+<td>不会违反</td>
+</tr>
+</tbody></table>
+<p><strong>现在可能违反的性质有1，2，4</strong></p>
+<h3 id="修复策略"><a href="#修复策略" class="headerlink" title="修复策略"></a>修复策略</h3><p>修复是从x向上遍历，因为x为根的子树没有做过操作，所以不会违反性质。修复册落氛围4中情况:</p>
+<h4 id="case-1-1"><a href="#case-1-1" class="headerlink" title="case 1"></a>case 1</h4><blockquote>
+<p>x的兄弟节点w是红色<br>此时，因为w是红色，所以x的父节点是黑色，且w的子节点是黑色。将w变为黑色，x的父节点变为红色，且对x的父节点做左旋，就变成case 2</p>
+</blockquote>
+<h4 id="case-2-1"><a href="#case-2-1" class="headerlink" title="case 2"></a>case 2</h4><blockquote>
+<p>x的兄弟节点w是黑色，且w的两个子节点是黑色<br>因为w是黑色且x本来就一层黑色，所以从x，w上去掉一层黑色。将这层黑色加到x的父节点身上，指针指向从x到x的父节点，继续循环。</p>
+</blockquote>
+<h4 id="case-3-1"><a href="#case-3-1" class="headerlink" title="case 3"></a>case 3</h4><blockquote>
+<p>x的兄弟节点w是黑色，且w的左儿子是红色，右儿子是黑色<br>交换w和左儿子的颜色，然后做一次右旋，变成case 4。</p>
+</blockquote>
+<h4 id="case-4"><a href="#case-4" class="headerlink" title="case 4"></a>case 4</h4><blockquote>
+<p>x的兄弟节点w是黑色，且w的右儿子是红色<br>w变成w父节点的颜色，w父节点变成黑色，w的右儿子变成黑色，做一次左旋，循环结束。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>算法</category>
+        <category>数据结构</category>
+      </categories>
+      <tags>
+        <tag>算法</tag>
+        <tag>数据结构</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>长连接平滑重启</title>
     <url>/2020/10/21/%E9%95%BF%E8%BF%9E%E6%8E%A5%E5%B9%B3%E6%BB%91%E9%87%8D%E5%90%AF%E5%AE%9E%E7%8E%B0/</url>
     <content><![CDATA[<blockquote>
@@ -53,10 +355,189 @@
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;&#x2F; client.go</span><br><span class="line">package main</span><br><span class="line"></span><br><span class="line">import (</span><br><span class="line">	&quot;fmt&quot;</span><br><span class="line">	&quot;net&quot;</span><br><span class="line">	&quot;time&quot;</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">var (</span><br><span class="line">	writeTimeout &#x3D; time.Second * 5</span><br><span class="line">	readTimeout  &#x3D; time.Second * 5</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">func main() &#123;</span><br><span class="line">	conn, err :&#x3D; net.Dial(&quot;tcp&quot;, &quot;127.0.0.1:7000&quot;)</span><br><span class="line">	if err !&#x3D; nil &#123;</span><br><span class="line">		panic(err)</span><br><span class="line">	&#125;</span><br><span class="line">	defer func() &#123;</span><br><span class="line">		conn.Close()</span><br><span class="line">	&#125;()</span><br><span class="line">	for &#123;</span><br><span class="line">		time.Sleep(time.Second)</span><br><span class="line">		err :&#x3D; conn.SetWriteDeadline(time.Now().Add(writeTimeout))</span><br><span class="line">		if err !&#x3D; nil &#123;</span><br><span class="line">			fmt.Println(err.Error())</span><br><span class="line">			break</span><br><span class="line">		&#125;</span><br><span class="line">		fmt.Println(&quot;send ping&quot;)</span><br><span class="line">		_, err &#x3D; conn.Write([]byte(&#96;ping&#96;))</span><br><span class="line">		if err !&#x3D; nil &#123;</span><br><span class="line">			fmt.Println(err.Error())</span><br><span class="line">			break</span><br><span class="line">		&#125;</span><br><span class="line">		err &#x3D; conn.SetReadDeadline(time.Now().Add(readTimeout))</span><br><span class="line">		if err !&#x3D; nil &#123;</span><br><span class="line">			fmt.Println(err.Error())</span><br><span class="line">			break</span><br><span class="line">		&#125;</span><br><span class="line">		rBuf :&#x3D; make([]byte, 4)</span><br><span class="line">		_, err &#x3D; conn.Read(rBuf)</span><br><span class="line">		if err !&#x3D; nil &#123;</span><br><span class="line">			fmt.Println(err.Error())</span><br><span class="line">		&#125;</span><br><span class="line">		fmt.Println(&quot;recv &quot; + string(rBuf))</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 ]]></content>
       <categories>
+        <category>工程</category>
         <category>长连接</category>
       </categories>
       <tags>
+        <tag>Golang</tag>
         <tag>网络</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>关于2的n次幂对齐</title>
+    <url>/2020/10/29/%E5%85%B3%E4%BA%8E2%E7%9A%84n%E6%AC%A1%E5%B9%82%E5%AF%B9%E9%BD%90/</url>
+    <content><![CDATA[<h1 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h1><p>内存对齐时基本都会求关于n位对齐的向上取整</p>
+<a id="more"></a>
+
+<h1 id="讲解"><a href="#讲解" class="headerlink" title="讲解"></a>讲解</h1><p>go1.13.8 中channel源码中有这样一个变量<a href="https://github.com/golang/go/blob/885099d1550dad8387013c8f35ad3d4ad9f17c66/src/runtime/chan.go#L28">hchansize</a>用来表示hchan(channel对应的实际结构体)所需大小(申请内存空间时，是根据hchansize给hchan申请对应大小的内存空间)，这个变量的值大概就是hchan的size关于maxAlign向上取整下一个较大倍数，看到源码实现时，就感觉真是怪物。</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line">hchanSize = unsafe.Sizeof(hchan&#123;&#125;) + <span class="keyword">uintptr</span>(-<span class="keyword">int</span>(unsafe.Sizeof(hchan&#123;&#125;))&amp;(maxAlign<span class="number">-1</span>))</span><br></pre></td></tr></table></figure>
+
+<p>为了方便将上述表达式简化为 n + ( (-n) &amp; (a - 1))，n是unsafe.Sizeof(hchan{})，a是maxAlign。等价于 n + (a - (n % a))</p>
+<p><strong>( (-n) &amp; (a - 1) ) 等价 a - (n % a) ?</strong></p>
+<p>向上取整的问题实际可以转化为求出n距离下一个a的倍数差多少，然后n加上这个数就可以。</p>
+<p>当a为2的n次幂时，n % a可以转化为 n &amp; (a - 1)，取模运算就变成了n与(a - 1) AND时能留下多少个1。</p>
+<p>计算机实际计算时是以<a href="https://www.cnblogs.com/wuwangchuxin0924/p/5851067.html">补码</a>进行运算的，-n转化为补码，符号位不变其他位取反转化为反码，然后最低位+1转化为补码，下面分两步讲。</p>
+<p>以n = 3, a = 8为例(实际计算时是8字节，下面用一字节举例):</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">原码: -n &#x3D; 1000 0011</span><br><span class="line">反码: -n &#x3D; 1111 1100</span><br><span class="line">此时(-n) &amp; (a - 1)实际为 (a - 1) - n % a，而咱们要求的是a - (n % a)</span><br><span class="line">补码：-n &#x3D; 1111 1101</span><br><span class="line">因为-n的反码变补码时最低位要+1，所以刚好(a - 1) - n % a + 1 &#x3D; a - (n % a)</span><br></pre></td></tr></table></figure>
+
+<p>所以( (-n) &amp; (a - 1) ) 等价 a - (n % a)</p>
+]]></content>
+      <categories>
+        <category>黑科技</category>
+      </categories>
+      <tags>
+        <tag>黑科技</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>channel 源码阅读</title>
+    <url>/2020/10/29/channel%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB/</url>
+    <content><![CDATA[<p>(年初的时候go语言的学习提上了日程，前一篇sync.pool阅读之后，阅读代码进度本该更快些，奈何身体被掏空，所以这篇文章断断续续一个月终于攒起来了。)</p>
+<a id="more"></a>
+
+<h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><p>channel是golang中用于goroutine之间通讯的数据结构，有以下特点：</p>
+<ol>
+<li>线程安全</li>
+<li>创建channel时返回的是指针，不需要考虑拷贝的问题</li>
+<li>顺序通讯，写入和读出的顺序一致</li>
+</ol>
+<h1 id="数据部分"><a href="#数据部分" class="headerlink" title="数据部分"></a>数据部分</h1><p><img src="/images/chan.png"></p>
+<p><strong>源码位置go/src/runtime/chan.go</strong></p>
+<h2 id="hchan"><a href="#hchan" class="headerlink" title="hchan"></a>hchan</h2><p>channel对应的数据结构</p>
+<figure class="highlight go"><table><tr><td class="code"><pre><span class="line"><span class="keyword">type</span> hchan <span class="keyword">struct</span> &#123;</span><br><span class="line">	qcount   <span class="keyword">uint</span></span><br><span class="line">	dataqsiz <span class="keyword">uint</span></span><br><span class="line">	buf      unsafe.Pointer</span><br><span class="line">	elemsize <span class="keyword">uint16</span></span><br><span class="line">	closed   <span class="keyword">uint32</span></span><br><span class="line">	elemtype *_type</span><br><span class="line">	sendx    <span class="keyword">uint</span></span><br><span class="line">	recvx    <span class="keyword">uint</span></span><br><span class="line">	recvq    waitq</span><br><span class="line">	sendq    waitq</span><br><span class="line"></span><br><span class="line">	<span class="comment">// lock protects all fields in hchan, as well as several</span></span><br><span class="line">	<span class="comment">// fields in sudogs blocked on this channel.</span></span><br><span class="line">	<span class="comment">//</span></span><br><span class="line">	<span class="comment">// Do not change another G&#x27;s status while holding this lock</span></span><br><span class="line">	<span class="comment">// (in particular, do not ready a G), as this can deadlock</span></span><br><span class="line">	<span class="comment">// with stack shrinking.</span></span><br><span class="line">	lock mutex</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="参数意义"><a href="#参数意义" class="headerlink" title="参数意义"></a>参数意义</h3><p>qcount   uint // 表示channel中元素的个数<br>dataqsiz uint // 表示channel的大小长度<br>buf      unsafe.Pointer // 存储元素的环形队列头指针<br>elemsize uint16 // 表示此channel能存储元素的大小<br>closed   uint32 // channel是否关闭了<br>elemtype *_type // 表示此channel能存储元素的类型<br>sendx    uint // 表示发送操作对应buf的下标，超过dataqsiz之后清0（因为是循环队列嘛）<br>recvx    uint // 表示接收操作对应buf的下标<br>recvq    waitq // 等待接收操作的goroutine队列<br>sendq    waitq // 等待发送操作的goroutine队列</p>
+<p>lock mutex // channel的锁</p>
+<h2 id="waitq"><a href="#waitq" class="headerlink" title="waitq"></a>waitq</h2><p>用来表示等待发送或者接受的goroutine队列（用sudog表示队列一个节点）</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">type waitq struct &#123;</span><br><span class="line">	first *sudog</span><br><span class="line">	last  *sudog</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="参数意义-1"><a href="#参数意义-1" class="headerlink" title="参数意义"></a>参数意义</h3><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">first goroutine指针，队首指针</span><br><span class="line">last  goroutine指针，队尾指针</span><br></pre></td></tr></table></figure>
+
+<h3 id="函数"><a href="#函数" class="headerlink" title="函数"></a>函数</h3><h4 id="enqueue"><a href="#enqueue" class="headerlink" title="enqueue"></a>enqueue</h4><p>两种情况：</p>
+<ol>
+<li>队列为空，将元素放入队尾将first指针和last指针赋好值</li>
+<li>队列不为空，直接将元素放入队尾</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">func (q *waitq) enqueue(sgp *sudog) &#123;</span><br><span class="line">	&#x2F;&#x2F; 将goroutine的next置为空</span><br><span class="line">	sgp.next &#x3D; nil</span><br><span class="line">	x :&#x3D; q.last</span><br><span class="line">	if x &#x3D;&#x3D; nil &#123; &#x2F;&#x2F; 如果尾指针为空，说明队列为空，就把这个goroutine放进去</span><br><span class="line">		sgp.prev &#x3D; nil</span><br><span class="line">		q.first &#x3D; sgp</span><br><span class="line">		q.last &#x3D; sgp</span><br><span class="line">		return</span><br><span class="line">	&#125;</span><br><span class="line">	&#x2F;&#x2F; 直接入队列</span><br><span class="line">	sgp.prev &#x3D; x</span><br><span class="line">	x.next &#x3D; sgp</span><br><span class="line">	q.last &#x3D; sgp</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="dequeue"><a href="#dequeue" class="headerlink" title="dequeue"></a>dequeue</h4><p>从队列头开始遍历</p>
+<ol>
+<li>first指针为空，说明队列为空，则直接返回空</li>
+<li>如果队列只有一个元素了，将元素取出，并且清空first指针和last指针</li>
+<li>队列还有很多元素，直接将first指针对应的元素去除</li>
+<li>最后判断如果这个元素(sudog——在channel中用来表示等待接收或者发送的goroutine的)在select结构中并且select结构有其他接口，就跳过，继续遍历下一个节点。</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">func (q *waitq) dequeue() *sudog &#123;</span><br><span class="line">	for &#123;</span><br><span class="line">		sgp :&#x3D; q.first</span><br><span class="line">		if sgp &#x3D;&#x3D; nil &#123; &#x2F;&#x2F; 头指针为空，说明队列为空，直接返回</span><br><span class="line">			return nil</span><br><span class="line">		&#125;</span><br><span class="line">		y :&#x3D; sgp.next</span><br><span class="line">		if y &#x3D;&#x3D; nil &#123; &#x2F;&#x2F; 如果next指针为空，说明队列就一个元素了，取出这个就空了，就将队列置空</span><br><span class="line">			q.first &#x3D; nil</span><br><span class="line">			q.last &#x3D; nil</span><br><span class="line">		&#125; else &#123; &#x2F;&#x2F; next不为空，就将next作为队首，将原来的队首返回</span><br><span class="line">			y.prev &#x3D; nil</span><br><span class="line">			q.first &#x3D; y</span><br><span class="line">			sgp.next &#x3D; nil &#x2F;&#x2F; mark as removed (see dequeueSudog)</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		&#x2F;&#x2F; if a gogoroutine was put on this queue because of a</span><br><span class="line">		&#x2F;&#x2F; select, there is a small window between the gogoroutine</span><br><span class="line">		&#x2F;&#x2F; being woken up by a different case and it grabbing the</span><br><span class="line">		&#x2F;&#x2F; channel locks. Once it has the lock</span><br><span class="line">		&#x2F;&#x2F; it removes itself from the queue, so we won&#39;t see it after that.</span><br><span class="line">		&#x2F;&#x2F; We use a flag in the G struct to tell us when someone</span><br><span class="line">		&#x2F;&#x2F; else has won the race to signal this gogoroutine but the gogoroutine</span><br><span class="line">		&#x2F;&#x2F; hasn&#39;t removed itself from the queue yet.</span><br><span class="line">		&#x2F;&#x2F; 如果goroutine处于select结构中并且select有其他出口就跳过这个</span><br><span class="line">		if sgp.isSelect &amp;&amp; !atomic.Cas(&amp;sgp.g.selectDone, 0, 1) &#123;</span><br><span class="line">			continue</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		return sgp</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="sudog"><a href="#sudog" class="headerlink" title="sudog"></a>sudog</h2><p>sudog是在等待对channel发送或者接受的goroutine</p>
+<p><strong>为什么有了goroutine还要有一个sudog？</strong></p>
+<ol>
+<li>因为goroutine和等待的channel是多对多的关系，一个goroutine可能在等待多个channel，一个channel也可能有很多goroutine在等待，所以用sudog表示这个等待中的goroutine</li>
+<li>sudog是channel等待或者接发送链表的一个node</li>
+</ol>
+<p><strong>sudog通过acquireSudog创建，releaseSudog销毁</strong></p>
+<ol>
+<li>在go/src/runtime/proc.go中</li>
+<li>go会维护一个全局的缓存（有锁），然后每个调度器（P）有自己的缓存</li>
+<li>创建sudog时会先从P的缓存中找，没有就到全局缓存中找，在没有才new一个</li>
+<li>销毁sudog的时候先判断P是不是满了，如果满了就将一半缓存放到全局缓存然后再把sudog放到自己缓存</li>
+<li>全局缓存的生存周期时两次GC的间隔，go/src/runtime/mgc.go 中clearpools()函数中可以看到，每次GC都会清理全局缓存</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">type sudog struct &#123;</span><br><span class="line">	&#x2F;&#x2F; sudog替哪个goroutine在等待</span><br><span class="line">	g *g</span><br><span class="line"></span><br><span class="line">	isSelect bool  &#x2F;&#x2F; 是否在select结构中(select可能取消阻塞发送或接收)</span><br><span class="line">	next     *sudog &#x2F;&#x2F; 下一个节点</span><br><span class="line">	prev     *sudog &#x2F;&#x2F; 上一个节点</span><br><span class="line">	elem     unsafe.Pointer &#x2F;&#x2F; data element (may point to stack)</span><br><span class="line"></span><br><span class="line">	acquiretime int64 &#x2F;&#x2F; 创建时间</span><br><span class="line">	releasetime int64 &#x2F;&#x2F; 释放时间</span><br><span class="line">	ticket      uint32</span><br><span class="line">	parent      *sudog &#x2F;&#x2F; semaRoot binary tree</span><br><span class="line">	waitlink    *sudog &#x2F;&#x2F; g.waiting list or semaRoot</span><br><span class="line">	waittail    *sudog &#x2F;&#x2F; semaRoot</span><br><span class="line">	c           *hchan &#x2F;&#x2F; channel 在等待哪个channel</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="创建sudog——acquireSudog"><a href="#创建sudog——acquireSudog" class="headerlink" title="创建sudog——acquireSudog"></a>创建sudog——acquireSudog</h3><p>大概逻辑就是现在当前goroutine所在调度器(P)的缓存中找，如果没有就从全局缓存中找，如果还没有就new一个</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">func acquireSudog() *sudog &#123;</span><br><span class="line">	&#x2F;&#x2F; 获得当前goroutine所在的线程(M)</span><br><span class="line">	mp :&#x3D; acquirem()</span><br><span class="line">	&#x2F;&#x2F; 获得当前goroutine所在调度器(P)</span><br><span class="line">	pp :&#x3D; mp.p.ptr()</span><br><span class="line">	if len(pp.sudogcache) &#x3D;&#x3D; 0 &#123; &#x2F;&#x2F; 如果调度器的sudog缓存为空，就从中央缓存找，如果再为空就new一个</span><br><span class="line">		lock(&amp;sched.sudoglock)</span><br><span class="line">		&#x2F;&#x2F; First, try to grab a batch from central cache.</span><br><span class="line">		for len(pp.sudogcache) &lt; cap(pp.sudogcache)&#x2F;2 &amp;&amp; sched.sudogcache !&#x3D; nil &#123;</span><br><span class="line">			s :&#x3D; sched.sudogcache</span><br><span class="line">			sched.sudogcache &#x3D; s.next</span><br><span class="line">			s.next &#x3D; nil</span><br><span class="line">			pp.sudogcache &#x3D; append(pp.sudogcache, s)</span><br><span class="line">		&#125;</span><br><span class="line">		unlock(&amp;sched.sudoglock)</span><br><span class="line">		&#x2F;&#x2F; If the central cache is empty, allocate a new one.</span><br><span class="line">		if len(pp.sudogcache) &#x3D;&#x3D; 0 &#123;</span><br><span class="line">			pp.sudogcache &#x3D; append(pp.sudogcache, new(sudog))</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	n :&#x3D; len(pp.sudogcache)</span><br><span class="line">	s :&#x3D; pp.sudogcache[n-1]</span><br><span class="line">	pp.sudogcache[n-1] &#x3D; nil</span><br><span class="line">	pp.sudogcache &#x3D; pp.sudogcache[:n-1]</span><br><span class="line">	if s.elem !&#x3D; nil &#123;</span><br><span class="line">		throw(&quot;acquireSudog: found s.elem !&#x3D; nil in cache&quot;)</span><br><span class="line">	&#125;</span><br><span class="line">	releasem(mp)</span><br><span class="line">	return s</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="销毁sudog——releaseSudog"><a href="#销毁sudog——releaseSudog" class="headerlink" title="销毁sudog——releaseSudog"></a>销毁sudog——releaseSudog</h3><p>大概逻辑就是如果当前goroutine所在调度器(P)的缓存满了，就将调度器(P)的缓存一半放入全局缓存，然后在把sudog放入</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">func releaseSudog(s *sudog) &#123;</span><br><span class="line">	&#x2F;&#x2F; 这部分都是check sudog 是否合法</span><br><span class="line">	if s.elem !&#x3D; nil &#123;</span><br><span class="line">		throw(&quot;runtime: sudog with non-nil elem&quot;)</span><br><span class="line">	&#125;</span><br><span class="line">	if s.isSelect &#123;</span><br><span class="line">		throw(&quot;runtime: sudog with non-false isSelect&quot;)</span><br><span class="line">	&#125;</span><br><span class="line">	if s.next !&#x3D; nil &#123;</span><br><span class="line">		throw(&quot;runtime: sudog with non-nil next&quot;)</span><br><span class="line">	&#125;</span><br><span class="line">	if s.prev !&#x3D; nil &#123;</span><br><span class="line">		throw(&quot;runtime: sudog with non-nil prev&quot;)</span><br><span class="line">	&#125;</span><br><span class="line">	if s.waitlink !&#x3D; nil &#123;</span><br><span class="line">		throw(&quot;runtime: sudog with non-nil waitlink&quot;)</span><br><span class="line">	&#125;</span><br><span class="line">	if s.c !&#x3D; nil &#123;</span><br><span class="line">		throw(&quot;runtime: sudog with non-nil c&quot;)</span><br><span class="line">	&#125;</span><br><span class="line">	gp :&#x3D; getg()</span><br><span class="line">	if gp.param !&#x3D; nil &#123;</span><br><span class="line">		throw(&quot;runtime: releaseSudog with non-nil gp.param&quot;)</span><br><span class="line">	&#125;</span><br><span class="line">	mp :&#x3D; acquirem() &#x2F;&#x2F; avoid rescheduling to another P</span><br><span class="line">	pp :&#x3D; mp.p.ptr()</span><br><span class="line">	&#x2F;&#x2F; 如果当前调度器的缓存满了，就将一半放入中央缓存</span><br><span class="line">	if len(pp.sudogcache) &#x3D;&#x3D; cap(pp.sudogcache) &#123;</span><br><span class="line">		&#x2F;&#x2F; Transfer half of local cache to the central cache.</span><br><span class="line">		var first, last *sudog</span><br><span class="line">		for len(pp.sudogcache) &gt; cap(pp.sudogcache)&#x2F;2 &#123;</span><br><span class="line">			n :&#x3D; len(pp.sudogcache)</span><br><span class="line">			p :&#x3D; pp.sudogcache[n-1]</span><br><span class="line">			pp.sudogcache[n-1] &#x3D; nil</span><br><span class="line">			pp.sudogcache &#x3D; pp.sudogcache[:n-1]</span><br><span class="line">			if first &#x3D;&#x3D; nil &#123;</span><br><span class="line">				first &#x3D; p</span><br><span class="line">			&#125; else &#123;</span><br><span class="line">				last.next &#x3D; p</span><br><span class="line">			&#125;</span><br><span class="line">			last &#x3D; p</span><br><span class="line">		&#125;</span><br><span class="line">		lock(&amp;sched.sudoglock)</span><br><span class="line">		last.next &#x3D; sched.sudogcache</span><br><span class="line">		sched.sudogcache &#x3D; first</span><br><span class="line">		unlock(&amp;sched.sudoglock)</span><br><span class="line">	&#125;</span><br><span class="line">	pp.sudogcache &#x3D; append(pp.sudogcache, s)</span><br><span class="line">	releasem(mp)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="实现细节"><a href="#实现细节" class="headerlink" title="实现细节"></a>实现细节</h1><h2 id="创建channel"><a href="#创建channel" class="headerlink" title="创建channel"></a>创建channel</h2><p><em>go中所有的channel的创建都会使用make关键字，make(arg1, arg2)函数最终会调用到runtime.makechan和runtime.makechan64，下面讲解go在编译时期是如何做这些事情的</em></p>
+<p><a href="https://github.com/golang/go/blob/go1.13.8/src/cmd/compile/internal/gc/typecheck.go">typecheck.go</a><br>编译器会将make(arg1, arg2)转化成OMAKE类型的节点，并在类型检查阶段将OMAKE类型的节点按照arg1的类型转化为OMAKECHAN，OMAKEMAP，OMAKESLICE等类型</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">func typecheck1(n *Node, top int) (res *Node) &#123;</span><br><span class="line">    ...</span><br><span class="line">    switch n.Op &#123;</span><br><span class="line">    ...</span><br><span class="line">    case OMAKE:</span><br><span class="line">        ... </span><br><span class="line">        switch t.Etype &#123;</span><br><span class="line">        ...</span><br><span class="line">        case TCHAN:</span><br><span class="line">            l &#x3D; nil</span><br><span class="line">            if i &lt; len(args) &#123;</span><br><span class="line">                ....</span><br><span class="line">            &#125; else &#123;</span><br><span class="line">                n.Left &#x3D; nodintconst(0)</span><br><span class="line">            &#125;</span><br><span class="line">            n.Op &#x3D; OMAKECHAN &#x2F;&#x2F; 节点类型转化为OMAKECHAN</span><br><span class="line">        &#125;</span><br><span class="line">    ...</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><a href="https://github.com/golang/go/blob/go1.13.8/src/cmd/compile/internal/gc/walk.go">walk.go</a><br>OMAKECHAN类型的节点最终会在SSA中间代码生成之前被转化成runtime.makechan或者runtime.makechan64</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">func walkexpr(n *Node, init *Nodes) *Node &#123;</span><br><span class="line">    ...</span><br><span class="line">    switch n.Op &#123;</span><br><span class="line">    ...</span><br><span class="line">    case OMAKECHAN:</span><br><span class="line">        &#x2F;&#x2F; When size fits into int, use makechan instead of</span><br><span class="line">        &#x2F;&#x2F; makechan64, which is faster and shorter on 32 bit platforms.</span><br><span class="line">        size :&#x3D; n.Left</span><br><span class="line">        fnname :&#x3D; &quot;makechan64&quot;</span><br><span class="line">        argtype :&#x3D; types.Types[TINT64]</span><br><span class="line"></span><br><span class="line">        &#x2F;&#x2F; Type checking guarantees that TIDEAL size is positive and fits in an int.</span><br><span class="line">        &#x2F;&#x2F; The case of size overflow when converting TUINT or TUINTPTR to TINT</span><br><span class="line">        &#x2F;&#x2F; will be handled by the negative range checks in makechan during runtime.</span><br><span class="line">        if size.Type.IsKind(TIDEAL) || maxintval[size.Type.Etype].Cmp(maxintval[TUINT]) &lt;&#x3D; 0 &#123;</span><br><span class="line">            fnname &#x3D; &quot;makechan&quot;</span><br><span class="line">            argtype &#x3D; types.Types[TINT]</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        n &#x3D; mkcall1(chanfn(fnname, 1, n.Type), n.Type, init, typename(n.Type), conv(size, argtype))</span><br><span class="line">    ...</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="makechan64"><a href="#makechan64" class="headerlink" title="makechan64"></a>makechan64</h3><p>check一下size是否是int，然后就执行makechan了</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">func makechan64(t *chantype, size int64) *hchan &#123;</span><br><span class="line">	if int64(int(size)) !&#x3D; size &#123;</span><br><span class="line">		panic(plainError(&quot;makechan: size out of range&quot;))</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	return makechan(t, int(size))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="makechan"><a href="#makechan" class="headerlink" title="makechan"></a>makechan</h3><ol>
+<li>安全检查: channel能存的元素类型大小是否超过2^16</li>
+<li>判断<a href="https://www.cnblogs.com/wuwangchuxin0924/p/12735129.html">hchanSize</a>是否关于maxAlign对齐，判断元素对齐是否maxAlign小，如果大maxAlign就没用了，这里hchanSize设计十分巧妙，位运算神操作优化，可以看另一篇文章<a href="https://www.cnblogs.com/wuwangchuxin0924/p/12735129.html">关于2的n次幂对齐</a></li>
+<li>判断申请的空间大小是否uint64大，判断所需空间是否超过最大可申请空间，判断size是否小于0(非法)</li>
+<li>然后就是给hchan申请内存空间了<ol>
+<li>无缓冲的size=0的，只需要给hchan申请hchansize大小的内存空间即可</li>
+<li>有缓冲，但是元素是非指针类型的，就申请hchanSize+mem大小的连续内存空间, 并将hchanSize之后的首地址赋值给buf</li>
+<li>有缓冲，并且元素类型是指针的，hchan和底层buf内存就可以分开申请不用连续</li>
+</ol>
+</li>
+<li>给其他变量赋值</li>
+<li>返回hchan指针，<strong>注意这里返回的是指针，所以channel在各函数之间传递时，就不是值传递了</strong></li>
+</ol>
+<p><strong>为什么元素类型是非指针hchan和buf要在一段地址连续的内存中，而指针类型的则可以分开</strong><br>这是源码注释的原话:<br>Hchan does not contain pointers interesting for GC when elements stored in buf do not contain pointers.<br>buf points into the same allocation, elemtype is persistent.<br>SudoG’s are referenced from their owning thread so they can’t be collected.<br>TODO(dvyukov,rlh): Rethink when collector can move allocated objects.<br><strong>猜想:</strong><br>大概意思是，当channel中元素类型不包含指针时，gc时需要回收这段空间的，当channel中元素类型包含指针时，这些指针被自己所在线程引用gc是不能回收，所以当元素不包含指针时申请一段连续的空间可以减小gc的压力</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">func makechan(t *chantype, size int) *hchan &#123;</span><br><span class="line">	elem :&#x3D; t.elem</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; compiler checks this but be safe.</span><br><span class="line">	if elem.size &gt;&#x3D; 1&lt;&lt;16 &#123;</span><br><span class="line">		throw(&quot;makechan: invalid channel element type&quot;)</span><br><span class="line">	&#125;</span><br><span class="line">	if hchanSize%maxAlign !&#x3D; 0 || elem.align &gt; maxAlign &#123;</span><br><span class="line">		throw(&quot;makechan: bad alignment&quot;)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 计算大小需要多少空间，check是否</span><br><span class="line">	&#x2F;&#x2F; 	math.MulUintptr(a, b)函数返回a * b，以及结果是否超过uintptr的最大值</span><br><span class="line">	&#x2F;&#x2F; 判断所需空间是否比uint64大，判断所需空间是否超过最大可申请空间，判断size是否小于0(非法)</span><br><span class="line">	mem, overflow :&#x3D; math.MulUintptr(elem.size, uintptr(size))</span><br><span class="line">	if overflow || mem &gt; maxAlloc-hchanSize || size &lt; 0 &#123;</span><br><span class="line">		panic(plainError(&quot;makechan: size out of range&quot;))</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	var c *hchan</span><br><span class="line">	switch &#123;</span><br><span class="line">	case mem &#x3D;&#x3D; 0:</span><br><span class="line">		&#x2F;&#x2F; 就是无缓冲channel，只需要申请hchan需要的大小就行</span><br><span class="line">		c &#x3D; (*hchan)(mallocgc(hchanSize, nil, true))</span><br><span class="line">		c.buf &#x3D; c.raceaddr()</span><br><span class="line">	case elem.ptrdata &#x3D;&#x3D; 0:</span><br><span class="line">		&#x2F;&#x2F; 有缓冲队列channel，但是存放元素不是指针类型的，就要申请hchanSize+这些元素大小的内存空间，然后把申请下来空间首地址赋给buf</span><br><span class="line">		c &#x3D; (*hchan)(mallocgc(hchanSize+mem, nil, true))</span><br><span class="line">		c.buf &#x3D; add(unsafe.Pointer(c), hchanSize)</span><br><span class="line">	default:</span><br><span class="line">		&#x2F;&#x2F; 默认除了给hchan申请内存空间之外还需要申请size个元素大小的内存空间，并且把首地址赋给c.buf</span><br><span class="line">		c &#x3D; new(hchan)</span><br><span class="line">		c.buf &#x3D; mallocgc(mem, elem, true)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	c.elemsize &#x3D; uint16(elem.size)</span><br><span class="line">	c.elemtype &#x3D; elem</span><br><span class="line">	c.dataqsiz &#x3D; uint(size)</span><br><span class="line"></span><br><span class="line">	if debugChan &#123;</span><br><span class="line">		print(&quot;makechan: chan&#x3D;&quot;, c, &quot;; elemsize&#x3D;&quot;, elem.size, &quot;; elemalg&#x3D;&quot;, elem.alg, &quot;; dataqsiz&#x3D;&quot;, size, &quot;\n&quot;)</span><br><span class="line">	&#125;</span><br><span class="line">	return c</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+<h2 id="发送"><a href="#发送" class="headerlink" title="发送"></a>发送</h2><p><strong>具体编译时做的转换可参考makechan，代码都在类似的地方</strong></p>
+<h3 id="chansend"><a href="#chansend" class="headerlink" title="chansend"></a>chansend</h3><ol>
+<li>首先检测channel是否为空, 如果为空直接报错</li>
+<li>check是否开启了竞争检测，golang的竞争检测通过ThreadSanitizer库(C++)做的</li>
+<li>然后kill掉一些不用加锁就可以判断的情况，如果是非阻塞并且channel未关闭，size = 0或者channel满了, 直接返回false(发送失败)</li>
+<li>如果已经有goroutine在等待了，就直接调send(c *hchan, sg *sudog, ep unsafe.Pointer, unlockf func(), skip int)发给那个goroutine</li>
+<li>如果没有goroutine在等待.</li>
+<li>如果channel是非阻塞并且还地方，就放入buffer中，如果没地方了就直接返回false</li>
+<li>如果channel是阻塞并且不在select中或者在select中且没有其他出口的，就将创建一个sudog，将sudog初始化并且放入待发送队列(sendq), 并且调用goparkunlock(&amp;c.lock, waitReasonChanSend, traceEvGoBlockSend, 3)使当前goroutine陷入沉睡直到被唤醒(已经发出去了)</li>
+<li>清理这个过程的垃圾数据</li>
+</ol>
+<p><strong>第四步中如果有goroutine在等待就直接发送，会影响非阻塞channel数据的顺序吗？</strong><br>不会，channel的数据由唯一全局锁保护，读写互斥，假设一个goroutine来读channel，只有两种情况:</p>
+<ol>
+<li>channel buffer中有数据，这时goroutine会直接读取数据，不会被阻塞。</li>
+<li>channel buffer中没有数据，这时goroutine会被阻塞。</li>
+</ol>
+<p>只有当buffer中有数据且有goroutine被阻塞时，顺序才会被打乱，但这两个条件是互斥的，有数据就不可能阻塞，阻塞就不可能有数据。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;&#x2F; entry point for c &lt;- x from compiled code</span><br><span class="line">&#x2F;&#x2F;go:nosplit</span><br><span class="line">func chansend1(c *hchan, elem unsafe.Pointer) &#123;</span><br><span class="line">	chansend(c, elem, true, getcallerpc())</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">func chansend(c *hchan, ep unsafe.Pointer, block bool, callerpc uintptr) bool &#123;</span><br><span class="line">	&#x2F;&#x2F; 如果c为空</span><br><span class="line">	if c &#x3D;&#x3D; nil &#123;</span><br><span class="line">		&#x2F;&#x2F; 如果是非阻塞的，就是那种有容量的，就返回false写channel失败</span><br><span class="line">		if !block &#123;</span><br><span class="line">			return false</span><br><span class="line">		&#125;</span><br><span class="line">		&#x2F;&#x2F; 如果是非阻塞的就让当前goroutine停止(这里写个小程序就能看效果，这个goroutine的defer不会执行)</span><br><span class="line">		gopark(nil, nil, waitReasonChanSendNilChan, traceEvGoStop, 2)</span><br><span class="line">		throw(&quot;unreachable&quot;)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	if debugChan &#123;</span><br><span class="line">		print(&quot;chansend: chan&#x3D;&quot;, c, &quot;\n&quot;)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	if raceenabled &#123; &#x2F;&#x2F; 开启竞争检测</span><br><span class="line">		racereadpc(c.raceaddr(), callerpc, funcPC(chansend))</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 先不加锁判断非阻塞channel且没关闭</span><br><span class="line">	&#x2F;&#x2F; 如果size &#x3D; 0或者channel满了, 直接返回false(发送失败)</span><br><span class="line">	if !block &amp;&amp; c.closed &#x3D;&#x3D; 0 &amp;&amp; ((c.dataqsiz &#x3D;&#x3D; 0 &amp;&amp; c.recvq.first &#x3D;&#x3D; nil) ||</span><br><span class="line">		(c.dataqsiz &gt; 0 &amp;&amp; c.qcount &#x3D;&#x3D; c.dataqsiz)) &#123;</span><br><span class="line">		return false</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	var t0 int64</span><br><span class="line">	if blockprofilerate &gt; 0 &#123;</span><br><span class="line">		t0 &#x3D; cputicks()</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; channel加锁</span><br><span class="line">	lock(&amp;c.lock)</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 如果channel关闭了，就返回panic</span><br><span class="line">	if c.closed !&#x3D; 0 &#123;</span><br><span class="line">		unlock(&amp;c.lock)</span><br><span class="line">		panic(plainError(&quot;send on closed channel&quot;))</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 等receive队列的队首中取出一个接收者，如果这个接收者不是nil就绕过buffer直接把ep发给他，并且释放锁</span><br><span class="line">	if sg :&#x3D; c.recvq.dequeue(); sg !&#x3D; nil &#123;</span><br><span class="line">		&#x2F;&#x2F; Found a waiting receiver. We pass the value we want to send</span><br><span class="line">		&#x2F;&#x2F; directly to the receiver, bypassing the channel buffer (if any).</span><br><span class="line">		send(c, sg, ep, func() &#123; unlock(&amp;c.lock) &#125;, 3)</span><br><span class="line">		return true</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; channel还没满就将元素放入buffer</span><br><span class="line">	if c.qcount &lt; c.dataqsiz &#123;</span><br><span class="line">		&#x2F;&#x2F; Space is available in the channel buffer. Enqueue the element to send.</span><br><span class="line">		&#x2F;&#x2F; 获取一下发送数据的位置</span><br><span class="line">		qp :&#x3D; chanbuf(c, c.sendx)</span><br><span class="line">		if raceenabled &#123;</span><br><span class="line">			raceacquire(qp)</span><br><span class="line">			racerelease(qp)</span><br><span class="line">		&#125;</span><br><span class="line">		&#x2F;&#x2F; 将元素拷贝进buffer</span><br><span class="line">		typedmemmove(c.elemtype, qp, ep)</span><br><span class="line">		c.sendx++</span><br><span class="line">		if c.sendx &#x3D;&#x3D; c.dataqsiz &#123; &#x2F;&#x2F; 循环一下</span><br><span class="line">			c.sendx &#x3D; 0</span><br><span class="line">		&#125;</span><br><span class="line">		c.qcount++</span><br><span class="line">		unlock(&amp;c.lock)</span><br><span class="line">		return true</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 如果是非阻塞channel满了就返回false</span><br><span class="line">	if !block &#123;</span><br><span class="line">		unlock(&amp;c.lock)</span><br><span class="line">		return false</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; Block on the channel. Some receiver will complete our operation for us.</span><br><span class="line">	&#x2F;&#x2F; 获取当前goroutine</span><br><span class="line">	gp :&#x3D; getg()</span><br><span class="line">	&#x2F;&#x2F; 创建sudog</span><br><span class="line">	mysg :&#x3D; acquireSudog()</span><br><span class="line">	mysg.releasetime &#x3D; 0</span><br><span class="line">	if t0 !&#x3D; 0 &#123;</span><br><span class="line">		mysg.releasetime &#x3D; -1</span><br><span class="line">	&#125;</span><br><span class="line">	&#x2F;&#x2F; No stack splits between assigning elem and enqueuing mysg</span><br><span class="line">	&#x2F;&#x2F; on gp.waiting where copystack can find it.</span><br><span class="line">	&#x2F;&#x2F; 完善sudog的信息</span><br><span class="line">	mysg.elem &#x3D; ep</span><br><span class="line">	mysg.waitlink &#x3D; nil</span><br><span class="line">	mysg.g &#x3D; gp</span><br><span class="line">	mysg.isSelect &#x3D; false</span><br><span class="line">	mysg.c &#x3D; c</span><br><span class="line">	gp.waiting &#x3D; mysg</span><br><span class="line">	gp.param &#x3D; nil</span><br><span class="line">	&#x2F;&#x2F; 放入发送列表中</span><br><span class="line">	c.sendq.enqueue(mysg)</span><br><span class="line">	&#x2F;&#x2F; 将当前goroutine陷入沉睡</span><br><span class="line">	goparkunlock(&amp;c.lock, waitReasonChanSend, traceEvGoBlockSend, 3)</span><br><span class="line">	KeepAlive(ep)</span><br><span class="line">	&#x2F;&#x2F; 再次唤醒的时候说明元素已经发送完毕了</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; someone woke us up.</span><br><span class="line">	if mysg !&#x3D; gp.waiting &#123;</span><br><span class="line">		throw(&quot;G waiting list is corrupted&quot;)</span><br><span class="line">	&#125;</span><br><span class="line">	gp.waiting &#x3D; nil</span><br><span class="line">	if gp.param &#x3D;&#x3D; nil &#123;</span><br><span class="line">		if c.closed &#x3D;&#x3D; 0 &#123;</span><br><span class="line">			throw(&quot;chansend: spurious wakeup&quot;)</span><br><span class="line">		&#125;</span><br><span class="line">		panic(plainError(&quot;send on closed channel&quot;))</span><br><span class="line">	&#125;</span><br><span class="line">	gp.param &#x3D; nil</span><br><span class="line">	if mysg.releasetime &gt; 0 &#123;</span><br><span class="line">		blockevent(mysg.releasetime-t0, 2)</span><br><span class="line">	&#125;</span><br><span class="line">	mysg.c &#x3D; nil</span><br><span class="line">	releaseSudog(mysg)</span><br><span class="line">	return true</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="racereadpc"><a href="#racereadpc" class="headerlink" title="racereadpc"></a>racereadpc</h4><p>go/src/runtime/race_amd64.s</p>
+<p>PC: 指令计数器寄存器<br>FP: 函数的帧指针，引用函数的参数。使用形如 symbol+offset(FP) 的方式，引用函数的输入参数。例如 arg0+0(FP)，arg1+8(FP)，使用 FP 不加 symbol 时，无法通过编译，在汇编层面来讲，symbol 并没有什么用，加 symbol 主要是为了提升代码可读性。<br>SP: 当前函数栈帧的底部<br>SB: 全局静态基指针，一般用来声明函数或全局变量<br>参数0放在DI通用寄存器<br>参数1放在SI通用寄存器<br>参数2放在DX通用寄存器<br>参数3放在CX通用寄存器</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#define RARG0 DI</span><br><span class="line">#define RARG1 SI</span><br><span class="line">#define RARG2 DX</span><br><span class="line">#define RARG3 CX</span><br><span class="line">&#x2F;&#x2F; void runtime·racereadpc(void *addr, void *callpc, void *pc)</span><br><span class="line">TEXT    runtime·racereadpc(SB), NOSPLIT, $0-24</span><br><span class="line">        MOVQ    addr+0(FP), RARG1</span><br><span class="line">        MOVQ    callpc+8(FP), RARG2</span><br><span class="line">        MOVQ    pc+16(FP), RARG3</span><br><span class="line">        ADDQ    $1, RARG3 &#x2F;&#x2F; pc is function start, tsan wants return address</span><br><span class="line">        &#x2F;&#x2F; void __tsan_read_pc(ThreadState *thr, void *addr, void *callpc, void *pc);</span><br><span class="line"></span><br><span class="line">        MOVQ    $__tsan_read_pc(SB), AX</span><br><span class="line">        JMP     racecalladdr&lt;&gt;(SB)</span><br></pre></td></tr></table></figure>
+
+<h4 id="send"><a href="#send" class="headerlink" title="send"></a>send</h4><p>用于给goroutine直接发送数据</p>
+<ol>
+<li>如果数据没问题就直接将数据拷贝到x := &lt;- c表达式x的内存地址上</li>
+<li>然后将该goroutine放到处理器(P)的runnext上面等待执行，这里不是直接让goroutine执行，而是等下一次调度的时候直接调这个goroutine</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">func send(c *hchan, sg *sudog, ep unsafe.Pointer, unlockf func(), skip int) &#123;</span><br><span class="line">	if raceenabled &#123;</span><br><span class="line">		if c.dataqsiz &#x3D;&#x3D; 0 &#123;</span><br><span class="line">			racesync(c, sg)</span><br><span class="line">		&#125; else &#123;</span><br><span class="line">			qp :&#x3D; chanbuf(c, c.recvx)</span><br><span class="line">			raceacquire(qp)</span><br><span class="line">			racerelease(qp)</span><br><span class="line">			raceacquireg(sg.g, qp)</span><br><span class="line">			racereleaseg(sg.g, qp)</span><br><span class="line">			c.recvx++</span><br><span class="line">			if c.recvx &#x3D;&#x3D; c.dataqsiz &#123;</span><br><span class="line">				c.recvx &#x3D; 0</span><br><span class="line">			&#125;</span><br><span class="line">			c.sendx &#x3D; c.recvx &#x2F;&#x2F; c.sendx &#x3D; (c.sendx+1) % c.dataqsiz</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">	if sg.elem !&#x3D; nil &#123; &#x2F;&#x2F; 如果元素没问题就将发送的数据拷贝到x :&#x3D; &lt;- c表达式x所在内存地址上</span><br><span class="line">		sendDirect(c.elemtype, sg, ep)</span><br><span class="line">		sg.elem &#x3D; nil</span><br><span class="line">	&#125;</span><br><span class="line">	&#x2F;&#x2F; 然后将将该goroutine放到处理器(P)的runnext上面等待执行，这里不是直接让goroutine执行，而是等下一次调度的时候直接调这个goroutine</span><br><span class="line">	gp :&#x3D; sg.g</span><br><span class="line">	unlockf()</span><br><span class="line">	gp.param &#x3D; unsafe.Pointer(sg)</span><br><span class="line">	if sg.releasetime !&#x3D; 0 &#123;</span><br><span class="line">		sg.releasetime &#x3D; cputicks()</span><br><span class="line">	&#125;</span><br><span class="line">	goready(gp, skip+1)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="接收"><a href="#接收" class="headerlink" title="接收"></a>接收</h2><p><strong>具体编译时做的转换可参考makechan，代码都在类似的地方</strong></p>
+<h3 id="chanrecv"><a href="#chanrecv" class="headerlink" title="chanrecv"></a>chanrecv</h3><p>两种接收方式：<br>chanrecv1是丢弃channel出来的元素，类似 &lt;- c这中表达式<br>chanrecv2是使用channel出来的元素，类似 elem := &lt;- c<br>最终都会调用到chanrecv</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#x2F;&#x2F; entry points for &lt;- c from compiled code</span><br><span class="line">&#x2F;&#x2F;go:nosplit</span><br><span class="line">func chanrecv1(c *hchan, elem unsafe.Pointer) &#123;</span><br><span class="line">	chanrecv(c, elem, true)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&#x2F;&#x2F;go:nosplit</span><br><span class="line">func chanrecv2(c *hchan, elem unsafe.Pointer) (received bool) &#123;</span><br><span class="line">	_, received &#x3D; chanrecv(c, elem, true)</span><br><span class="line">	return</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li>判断chan是否为nil，如果是直接报错</li>
+<li>kill掉一些不用枷锁就可以判断的情况，如果是非阻塞并且队列为空并且channel未关闭就返回false</li>
+<li>如果channel已经关闭了，就清空ep中的数据，立即返回</li>
+<li>如果已经有sendq在等待了(发送端提到过，如果没有goroutine等待接受，就加入sendq), 就直接接收这个元素</li>
+<li>如果此时没有goroutine等待发送</li>
+<li>如果是非阻塞且buffer中有数据直接从buffer中取出，如果没有数据直接返回false</li>
+<li>如果是阻塞的且当前goroutine没在select中或者在select中但没有其他出口，就把自己加入recvq，然后调用goparkunlock(&amp;c.lock, waitReasonChanReceive, traceEvGoBlockRecv, 3)，等待被唤醒（如果被唤醒说明有有数据来了)</li>
+<li>清理这个过程中的垃圾数据</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">func chanrecv(c *hchan, ep unsafe.Pointer, block bool) (selected, received bool) &#123;</span><br><span class="line">	if debugChan &#123;</span><br><span class="line">		print(&quot;chanrecv: chan&#x3D;&quot;, c, &quot;\n&quot;)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; channel为空就使goroutine 停止并报错</span><br><span class="line">	if c &#x3D;&#x3D; nil &#123;</span><br><span class="line">		if !block &#123;</span><br><span class="line">			return</span><br><span class="line">		&#125;</span><br><span class="line">		gopark(nil, nil, waitReasonChanReceiveNilChan, traceEvGoStop, 2)</span><br><span class="line">		throw(&quot;unreachable&quot;)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 如果是非阻塞并且队列为空并且channel未关闭就返回false</span><br><span class="line">	if !block &amp;&amp; (c.dataqsiz &#x3D;&#x3D; 0 &amp;&amp; c.sendq.first &#x3D;&#x3D; nil ||</span><br><span class="line">		c.dataqsiz &gt; 0 &amp;&amp; atomic.Loaduint(&amp;c.qcount) &#x3D;&#x3D; 0) &amp;&amp;</span><br><span class="line">		atomic.Load(&amp;c.closed) &#x3D;&#x3D; 0 &#123;</span><br><span class="line">		return</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	var t0 int64</span><br><span class="line">	if blockprofilerate &gt; 0 &#123;</span><br><span class="line">		t0 &#x3D; cputicks()</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	lock(&amp;c.lock)</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 如果channel已关闭, 并且没有数据了就清除ep中的数据立刻返回</span><br><span class="line">	if c.closed !&#x3D; 0 &amp;&amp; c.qcount &#x3D;&#x3D; 0 &#123;</span><br><span class="line">		if raceenabled &#123;</span><br><span class="line">			raceacquire(c.raceaddr())</span><br><span class="line">		&#125;</span><br><span class="line">		unlock(&amp;c.lock)</span><br><span class="line">		if ep !&#x3D; nil &#123;</span><br><span class="line">			typedmemclr(c.elemtype, ep)</span><br><span class="line">		&#125;</span><br><span class="line">		return true, false</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 如果已经有goroutine等着了，就直接让这个goroutine recive</span><br><span class="line">	if sg :&#x3D; c.sendq.dequeue(); sg !&#x3D; nil &#123;</span><br><span class="line">		recv(c, sg, ep, func() &#123; unlock(&amp;c.lock) &#125;, 3)</span><br><span class="line">		return true, true</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; channel不为空将元素复制到ep中(ep :&#x3D; &lt;- c)</span><br><span class="line">	if c.qcount &gt; 0 &#123;</span><br><span class="line">		&#x2F;&#x2F; Receive directly from queue</span><br><span class="line">		qp :&#x3D; chanbuf(c, c.recvx)</span><br><span class="line">		if raceenabled &#123;</span><br><span class="line">			raceacquire(qp)</span><br><span class="line">			racerelease(qp)</span><br><span class="line">		&#125;</span><br><span class="line">		if ep !&#x3D; nil &#123;</span><br><span class="line">			typedmemmove(c.elemtype, ep, qp)</span><br><span class="line">		&#125;</span><br><span class="line">		typedmemclr(c.elemtype, qp)</span><br><span class="line">		c.recvx++</span><br><span class="line">		if c.recvx &#x3D;&#x3D; c.dataqsiz &#123;</span><br><span class="line">			c.recvx &#x3D; 0</span><br><span class="line">		&#125;</span><br><span class="line">		c.qcount--</span><br><span class="line">		unlock(&amp;c.lock)</span><br><span class="line">		return true, true</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 如果是非阻塞直接返回false</span><br><span class="line">	if !block &#123;</span><br><span class="line">		unlock(&amp;c.lock)</span><br><span class="line">		return false, false</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 获取当前goroutine</span><br><span class="line">	gp :&#x3D; getg()</span><br><span class="line">	&#x2F;&#x2F; 创建sudog</span><br><span class="line">	mysg :&#x3D; acquireSudog()</span><br><span class="line">	mysg.releasetime &#x3D; 0</span><br><span class="line">	if t0 !&#x3D; 0 &#123;</span><br><span class="line">		mysg.releasetime &#x3D; -1</span><br><span class="line">	&#125;</span><br><span class="line">	mysg.elem &#x3D; ep</span><br><span class="line">	mysg.waitlink &#x3D; nil</span><br><span class="line">	gp.waiting &#x3D; mysg</span><br><span class="line">	mysg.g &#x3D; gp</span><br><span class="line">	mysg.isSelect &#x3D; false</span><br><span class="line">	mysg.c &#x3D; c</span><br><span class="line">	gp.param &#x3D; nil</span><br><span class="line">	c.recvq.enqueue(mysg)</span><br><span class="line">	goparkunlock(&amp;c.lock, waitReasonChanReceive, traceEvGoBlockRecv, 3)</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; someone woke us up</span><br><span class="line">	if mysg !&#x3D; gp.waiting &#123;</span><br><span class="line">		throw(&quot;G waiting list is corrupted&quot;)</span><br><span class="line">	&#125;</span><br><span class="line">	gp.waiting &#x3D; nil</span><br><span class="line">	if mysg.releasetime &gt; 0 &#123;</span><br><span class="line">		blockevent(mysg.releasetime-t0, 2)</span><br><span class="line">	&#125;</span><br><span class="line">	closed :&#x3D; gp.param &#x3D;&#x3D; nil</span><br><span class="line">	gp.param &#x3D; nil</span><br><span class="line">	mysg.c &#x3D; nil</span><br><span class="line">	releaseSudog(mysg)</span><br><span class="line">	return true, !closed</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="关闭channel"><a href="#关闭channel" class="headerlink" title="关闭channel"></a>关闭channel</h2><p>关闭channel大概逻辑就是，将buffer中的数据都释放掉，然后close设置为0</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">func closechan(c *hchan) &#123;</span><br><span class="line">	&#x2F;&#x2F; 如果为空抛出异常</span><br><span class="line">	if c &#x3D;&#x3D; nil &#123;</span><br><span class="line">		panic(plainError(&quot;close of nil channel&quot;))</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	lock(&amp;c.lock)</span><br><span class="line">	&#x2F;&#x2F; 如果channel已经关闭就抛出异常</span><br><span class="line">	if c.closed !&#x3D; 0 &#123;</span><br><span class="line">		unlock(&amp;c.lock)</span><br><span class="line">		panic(plainError(&quot;close of closed channel&quot;))</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	if raceenabled &#123;</span><br><span class="line">		callerpc :&#x3D; getcallerpc()</span><br><span class="line">		racewritepc(c.raceaddr(), callerpc, funcPC(closechan))</span><br><span class="line">		racerelease(c.raceaddr())</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	c.closed &#x3D; 1</span><br><span class="line"></span><br><span class="line">	var glist gList</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; 清理所有的数据</span><br><span class="line">	&#x2F;&#x2F; release all readers</span><br><span class="line">	for &#123;</span><br><span class="line">		sg :&#x3D; c.recvq.dequeue()</span><br><span class="line">		if sg &#x3D;&#x3D; nil &#123;</span><br><span class="line">			break</span><br><span class="line">		&#125;</span><br><span class="line">		if sg.elem !&#x3D; nil &#123;</span><br><span class="line">			typedmemclr(c.elemtype, sg.elem)</span><br><span class="line">			sg.elem &#x3D; nil</span><br><span class="line">		&#125;</span><br><span class="line">		if sg.releasetime !&#x3D; 0 &#123;</span><br><span class="line">			sg.releasetime &#x3D; cputicks()</span><br><span class="line">		&#125;</span><br><span class="line">		gp :&#x3D; sg.g</span><br><span class="line">		gp.param &#x3D; nil</span><br><span class="line">		if raceenabled &#123;</span><br><span class="line">			raceacquireg(gp, c.raceaddr())</span><br><span class="line">		&#125;</span><br><span class="line">		glist.push(gp)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; release all writers (they will panic)</span><br><span class="line">	for &#123;</span><br><span class="line">		sg :&#x3D; c.sendq.dequeue()</span><br><span class="line">		if sg &#x3D;&#x3D; nil &#123;</span><br><span class="line">			break</span><br><span class="line">		&#125;</span><br><span class="line">		sg.elem &#x3D; nil</span><br><span class="line">		if sg.releasetime !&#x3D; 0 &#123;</span><br><span class="line">			sg.releasetime &#x3D; cputicks()</span><br><span class="line">		&#125;</span><br><span class="line">		gp :&#x3D; sg.g</span><br><span class="line">		gp.param &#x3D; nil</span><br><span class="line">		if raceenabled &#123;</span><br><span class="line">			raceacquireg(gp, c.raceaddr())</span><br><span class="line">		&#125;</span><br><span class="line">		glist.push(gp)</span><br><span class="line">	&#125;</span><br><span class="line">	unlock(&amp;c.lock)</span><br><span class="line"></span><br><span class="line">	&#x2F;&#x2F; Ready all Gs now that we&#39;ve dropped the channel lock.</span><br><span class="line">	for !glist.empty() &#123;</span><br><span class="line">		gp :&#x3D; glist.pop()</span><br><span class="line">		gp.schedlink &#x3D; 0</span><br><span class="line">		goready(gp, 3)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="附录"><a href="#附录" class="headerlink" title="附录"></a>附录</h1><h2 id="chan-dot"><a href="#chan-dot" class="headerlink" title="chan.dot"></a>chan.dot</h2><figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">digraph &#123;</span><br><span class="line">    bgcolor&#x3D;&quot;#C6CFD532&quot;; </span><br><span class="line"></span><br><span class="line">    node [shape&#x3D;record, fontsize&#x3D;&quot;8&quot;, margin&#x3D;&quot;0.04&quot;, height&#x3D;0.2, color&#x3D;gray] </span><br><span class="line">	edge [fontname&#x3D;&quot;Inconsolata, Consolas&quot;, fontsize&#x3D;10, arrowhead&#x3D;normal]</span><br><span class="line"></span><br><span class="line">    hchan [shape&#x3D;record,label&#x3D;&quot;&#123;qcount|dataqsiz|buf|elemsize|closed|elemtype|&lt;sendx&gt;sendx|&lt;recvx&gt;recvx|recvq|sendq|lock&#125;&quot;,xlabel&#x3D;&quot;hchan&quot;]</span><br><span class="line">    waitq[shape&#x3D;record,label&#x3D;&quot;&#123;&lt;first&gt;first|&lt;last&gt;last&#125;&quot;,xlabel&#x3D;&quot;waitq&quot;]</span><br><span class="line">    sudog[shape&#x3D;record,label&#x3D;&quot;&#123;g|isSelect|next|prev|elem|acquiretime|releasetime|ticket|parent|waitlink|waittail|c&#125;&quot;,xlabel&#x3D;&quot;sudog&quot;]</span><br><span class="line"></span><br><span class="line">    hchan:sendx -&gt; waitq [label&#x3D;&quot;发送队列&quot;]</span><br><span class="line">    hchan:recvx -&gt; waitq [label&#x3D;&quot;接收队列&quot;]</span><br><span class="line">    waitq:first -&gt; sudog</span><br><span class="line">    waitq:last -&gt; sudog</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+]]></content>
+      <categories>
+        <category>语言</category>
+        <category>Golang</category>
+      </categories>
+      <tags>
+        <tag>源码</tag>
+        <tag>Golang</tag>
       </tags>
   </entry>
   <entry>
@@ -351,10 +832,12 @@
 <p><a href="https://www.cnblogs.com/abozhang/p/10766628.html">参考资料go语言调度器源代码情景分析</a></p>
 ]]></content>
       <categories>
-        <category>golang</category>
+        <category>语言</category>
+        <category>Golang</category>
       </categories>
       <tags>
         <tag>源码</tag>
+        <tag>Golang</tag>
       </tags>
   </entry>
 </search>
