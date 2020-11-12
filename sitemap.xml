@@ -102,13 +102,6 @@
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/tags/%E9%BB%91%E7%A7%91%E6%8A%80/</loc>
-    <lastmod>2020-11-12</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://journey-c.github.io/tags/%E7%AE%97%E6%B3%95/</loc>
     <lastmod>2020-11-12</lastmod>
     <changefreq>daily</changefreq>
@@ -117,6 +110,13 @@
   
   <url>
     <loc>https://journey-c.github.io/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/</loc>
+    <lastmod>2020-11-12</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://journey-c.github.io/tags/%E9%BB%91%E7%A7%91%E6%8A%80/</loc>
     <lastmod>2020-11-12</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>

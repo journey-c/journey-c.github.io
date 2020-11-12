@@ -75,12 +75,12 @@
     </div>
 
     <div class="post-content">
-        <h1 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h1><p>内存对齐时基本都会求关于n位对齐的向上取整</p>
+        <h1 id="应用场景"><a class="markdownIt-Anchor" href="#应用场景"></a> 应用场景</h1>
+<p>内存对齐时基本都会求关于n位对齐的向上取整</p>
 <a id="more"></a>
-
-<h1 id="讲解"><a href="#讲解" class="headerlink" title="讲解"></a>讲解</h1><p>go1.13.8 中channel源码中有这样一个变量<a target="_blank" rel="noopener" href="https://github.com/golang/go/blob/885099d1550dad8387013c8f35ad3d4ad9f17c66/src/runtime/chan.go#L28">hchansize</a>用来表示hchan(channel对应的实际结构体)所需大小(申请内存空间时，是根据hchansize给hchan申请对应大小的内存空间)，这个变量的值大概就是hchan的size关于maxAlign向上取整下一个较大倍数，看到源码实现时，就感觉真是怪物。</p>
+<h1 id="讲解"><a class="markdownIt-Anchor" href="#讲解"></a> 讲解</h1>
+<p>go1.13.8 中channel源码中有这样一个变量<a target="_blank" rel="noopener" href="https://github.com/golang/go/blob/885099d1550dad8387013c8f35ad3d4ad9f17c66/src/runtime/chan.go#L28">hchansize</a>用来表示hchan(channel对应的实际结构体)所需大小(申请内存空间时，是根据hchansize给hchan申请对应大小的内存空间)，这个变量的值大概就是hchan的size关于maxAlign向上取整下一个较大倍数，看到源码实现时，就感觉真是怪物。</p>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hchanSize = unsafe.Sizeof(hchan&#123;&#125;) + <span class="keyword">uintptr</span>(-<span class="keyword">int</span>(unsafe.Sizeof(hchan&#123;&#125;))&amp;(maxAlign<span class="number">-1</span>))</span><br></pre></td></tr></table></figure>
-
 <p>为了方便将上述表达式简化为 n + ( (-n) &amp; (a - 1))，n是unsafe.Sizeof(hchan{})，a是maxAlign。等价于 n + (a - (n % a))</p>
 <p><strong>( (-n) &amp; (a - 1) ) 等价 a - (n % a) ?</strong></p>
 <p>向上取整的问题实际可以转化为求出n距离下一个a的倍数差多少，然后n加上这个数就可以。</p>
@@ -88,7 +88,6 @@
 <p>计算机实际计算时是以<a target="_blank" rel="noopener" href="https://www.cnblogs.com/wuwangchuxin0924/p/5851067.html">补码</a>进行运算的，-n转化为补码，符号位不变其他位取反转化为反码，然后最低位+1转化为补码，下面分两步讲。</p>
 <p>以n = 3, a = 8为例(实际计算时是8字节，下面用一字节举例):</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">原码: -n &#x3D; 1000 0011</span><br><span class="line">反码: -n &#x3D; 1111 1100</span><br><span class="line">此时(-n) &amp; (a - 1)实际为 (a - 1) - n % a，而咱们要求的是a - (n % a)</span><br><span class="line">补码：-n &#x3D; 1111 1101</span><br><span class="line">因为-n的反码变补码时最低位要+1，所以刚好(a - 1) - n % a + 1 &#x3D; a - (n % a)</span><br></pre></td></tr></table></figure>
-
 <p>所以( (-n) &amp; (a - 1) ) 等价 a - (n % a)</p>
 
     </div>
