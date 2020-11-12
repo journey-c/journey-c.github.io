@@ -2,13 +2,6 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>https://journey-c.github.io/tags/index.html</loc>
-    
-    <lastmod>2020-11-12</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://journey-c.github.io/2020/10/21/%E9%95%BF%E8%BF%9E%E6%8E%A5%E5%B9%B3%E6%BB%91%E9%87%8D%E5%90%AF%E5%AE%9E%E7%8E%B0/</loc>
     
     <lastmod>2020-11-12</lastmod>
@@ -37,13 +30,6 @@
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/2020/10/29/sync.pool%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB/</loc>
-    
-    <lastmod>2020-11-12</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>https://journey-c.github.io/2020/10/21/goroutine%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB/</loc>
     
     <lastmod>2020-11-12</lastmod>
@@ -51,7 +37,21 @@
   </url>
   
   <url>
+    <loc>https://journey-c.github.io/2020/10/29/sync.pool%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB/</loc>
+    
+    <lastmod>2020-11-12</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://journey-c.github.io/2020/10/29/channel%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB/</loc>
+    
+    <lastmod>2020-11-12</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>https://journey-c.github.io/tags/index.html</loc>
     
     <lastmod>2020-11-12</lastmod>
     
@@ -102,6 +102,13 @@
   </url>
   
   <url>
+    <loc>https://journey-c.github.io/tags/%E9%BB%91%E7%A7%91%E6%8A%80/</loc>
+    <lastmod>2020-11-12</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://journey-c.github.io/tags/%E7%AE%97%E6%B3%95/</loc>
     <lastmod>2020-11-12</lastmod>
     <changefreq>daily</changefreq>
@@ -110,13 +117,6 @@
   
   <url>
     <loc>https://journey-c.github.io/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/</loc>
-    <lastmod>2020-11-12</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://journey-c.github.io/tags/%E9%BB%91%E7%A7%91%E6%8A%80/</loc>
     <lastmod>2020-11-12</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
