@@ -377,6 +377,7 @@
     <content><![CDATA[<p>(年初的时候go语言的学习提上了日程，前一篇sync.pool阅读之后，阅读代码进度本该更快些，奈何身体被掏空，所以这篇文章断断续续一个月终于攒起来了。)</p>
 <a id="more"></a>
 
+<p>[toc]</p>
 <h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><p>channel是golang中用于goroutine之间通讯的数据结构，有以下特点：</p>
 <ol>
 <li>线程安全</li>

@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <link rel="shortcut icon" type="image/png" href="/favicon.png"/>
     
-<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+<link rel="stylesheet" href="/libs/highlight/styles/atom-one-dark.css">
 
     
 <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
@@ -42,7 +42,15 @@
     <hr class="breadcrumbhr">
 </div>
 
+
 <div class="hd posts">
+    <!-- 右侧导航栏 -->
+    
+    	<div style="position: fixed; left: 1300px; top: 0px; overflow: auto;">
+            <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="toc-text">数据结构</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#G"><span class="toc-text">G</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#g"><span class="toc-text">g</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#gobuf"><span class="toc-text">gobuf</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#M"><span class="toc-text">M</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#m"><span class="toc-text">m</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#P"><span class="toc-text">P</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#p"><span class="toc-text">p</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#schedt"><span class="toc-text">schedt</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%87%8D%E8%A6%81%E7%9A%84%E5%85%A8%E5%B1%80%E5%8F%98%E9%87%8F"><span class="toc-text">重要的全局变量</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%88%86%E6%AD%A5%E9%AA%A4%E5%89%96%E6%9E%90%E8%B0%83%E5%BA%A6%E7%9A%84%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">分步骤剖析调度的初始化</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BC%96%E8%AF%91"><span class="toc-text">编译</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B0%83%E8%AF%95"><span class="toc-text">调试</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="toc-text">初始化</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96%E5%8F%82%E6%95%B0%E4%BB%A5%E5%8F%8A%E5%88%9B%E5%BB%BAg0"><span class="toc-text">初始化参数以及创建g0</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9B%E5%BB%BAm0"><span class="toc-text">创建m0</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#m0%E5%92%8Cg0%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="toc-text">m0和g0的关系</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96%E8%B0%83%E5%BA%A6"><span class="toc-text">初始化调度</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#runtime-schedinit"><span class="toc-text">runtime.schedinit</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#runtime-procresize"><span class="toc-text">runtime.procresize</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E2%80%9D%E7%AC%AC%E4%B8%80%E4%B8%AA%E2%80%9Dgoroutine"><span class="toc-text">创建”第一个”goroutine</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#newproc"><span class="toc-text">newproc</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#newproc1%E5%87%BD%E6%95%B0%E4%B8%BB%E8%A6%81%E7%9A%84%E5%B7%A5%E4%BD%9C"><span class="toc-text">newproc1函数主要的工作</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B0%83%E5%BA%A6%E5%BE%AA%E7%8E%AF"><span class="toc-text">调度循环</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#runtime-mstart"><span class="toc-text">runtime.mstart</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#runtime-mstart1"><span class="toc-text">runtime.mstart1</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#runtime-schedule"><span class="toc-text">runtime.schedule</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A6%E5%8F%91%E8%B0%83%E5%BA%A6"><span class="toc-text">触发调度</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BB%E5%8A%A8%E6%8C%82%E8%B5%B7"><span class="toc-text">主动挂起</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%8F%E4%BD%9C%E5%BC%8F%E8%B0%83%E5%BA%A6"><span class="toc-text">协作式调度</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%9D%9Emain-goroutine%E7%BB%93%E6%9D%9F"><span class="toc-text">非main goroutine结束</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8"><span class="toc-text">系统调用</span></a></li></ol></li></ol></li></ol>
+    	</div>
+    
+
     
   
 
@@ -54,7 +62,8 @@
         </p>
         <hr>
     </div>
-
+    
+    <!-- tags 和 时间 -->
     <div class=posttime>
         2020-10-21
     </div>
@@ -364,7 +373,7 @@
 <p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/abozhang/p/10766628.html">参考资料go语言调度器源代码情景分析</a></p>
 
     </div>
-    
+
     
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
 <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
@@ -384,6 +393,7 @@
 
     
 </div>
+
 
     <div class="footer" id="footer">
     <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://github.com/journey-c">Journey-C</a>.
@@ -407,6 +417,12 @@
 
 <script src="/js/js.js"></script>
 
+
+<div id="totop" style="position:fixed;bottom:150px;right:50px;cursor: pointer;">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+</div>
+
+<script src="/js/totop.js"></script>
 
 <style type="text/css">
 .v * {

@@ -305,9 +305,11 @@ hr {
   margin: 0.67em 0;
 }
 .post-content img {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
   border-style: none;
   border-radius: 5px;
-  width: 100%;
 }
 .post-content code,
 .post-content kbd,

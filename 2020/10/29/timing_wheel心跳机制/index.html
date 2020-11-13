@@ -9,7 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <link rel="shortcut icon" type="image/png" href="/favicon.png"/>
     
-<link rel="stylesheet" href="/libs/highlight/styles/monokai-sublime.css">
+<link rel="stylesheet" href="/libs/highlight/styles/atom-one-dark.css">
 
     
 <link rel="stylesheet" href="/libs/font-awesome/css/font-awesome.min.css">
@@ -42,7 +42,15 @@
     <hr class="breadcrumbhr">
 </div>
 
+
 <div class="hd posts">
+    <!-- 右侧导航栏 -->
+    
+    	<div style="position: fixed; left: 1300px; top: 0px; overflow: auto;">
+            <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%80%E7%A7%8D%E7%AE%80%E5%8D%95%E7%B2%97%E6%9A%B4%E7%9A%84%E6%96%B9%E5%BC%8F%EF%BC%9A"><span class="toc-text">一种简单粗暴的方式：</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8E%9F%E7%90%86"><span class="toc-text">原理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BE%8B%E5%AD%90"><span class="toc-text">例子</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%9E%E7%8E%B0%EF%BC%9A"><span class="toc-text">实现：</span></a></li></ol>
+    	</div>
+    
+
     
   
 
@@ -54,7 +62,8 @@
         </p>
         <hr>
     </div>
-
+    
+    <!-- tags 和 时间 -->
     <div class=posttime>
         2020-10-29
     </div>
@@ -91,7 +100,7 @@
 <h1 id="实现："><a href="#实现：" class="headerlink" title="实现："></a>实现：</h1><p>C++以及一些指针友好型语言实现比较简单，轮子转动一次格子的指针引用数-1即可，当某个格子指针引用数为0时，代表格子时间到了，会析构掉。<br>事例代码可见: <a target="_blank" rel="noopener" href="https://github.com/lyuc0924/basket/tree/master/forward">journey-c(basket网络库)</a>中workthread的实现。</p>
 
     </div>
-    
+
     
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
 <script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
@@ -111,6 +120,7 @@
 
     
 </div>
+
 
     <div class="footer" id="footer">
     <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://github.com/journey-c">Journey-C</a>.
@@ -134,6 +144,12 @@
 
 <script src="/js/js.js"></script>
 
+
+<div id="totop" style="position:fixed;bottom:150px;right:50px;cursor: pointer;">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+</div>
+
+<script src="/js/totop.js"></script>
 
 <style type="text/css">
 .v * {
