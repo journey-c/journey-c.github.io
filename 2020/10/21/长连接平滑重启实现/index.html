@@ -24,7 +24,7 @@
 
 <title>长连接平滑重启</title>
 
-<body id="bodyx">
+<body>
     <div class="hd">
     <ol class="breadcrumb">
         
@@ -43,19 +43,25 @@
 </div>
 
 
-<div class="hd posts">
+
+<div class="toc">
     <!-- 右侧导航栏 -->
     
-    	<div style="position: fixed; left: 1300px; top: 0px; overflow: auto;">
+    	<div>
             <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%9A%BE%E7%82%B9"><span class="toc-text">难点</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3"><span class="toc-text">解决</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E5%81%9A%E5%88%B0%E4%B8%8D%E4%B8%AD%E6%96%AD%E6%8E%A5%E5%8F%97%E8%BF%9E%E6%8E%A5"><span class="toc-text">如何做到不中断接受连接</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E5%81%9A%E5%88%B0%E5%B7%B2%E6%9C%89%E8%BF%9E%E6%8E%A5%E4%B8%8D%E4%B8%AD%E6%96%AD"><span class="toc-text">如何做到已有连接不中断</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Demo%E5%AE%9E%E7%8E%B0"><span class="toc-text">Demo实现</span></a></li></ol>
     	</div>
     
+</div>
+
+<div class="hd posts">
 
     
   
 
 
     <a href="/index.html"><i class="fa fa-reply replay-btn" aria-hidden="true"></i></a>
+
+
     <div class="post-title">
         <p>
             长连接平滑重启
@@ -63,25 +69,22 @@
         <hr>
     </div>
     
-    <!-- tags 和 时间 -->
-    <div class=posttime>
-        2020-10-21
-    </div>
-
     
-        <div>
-             
+   	<!-- tags 和 时间 -->
+   	<div style="float: right">
+   	    2020-10-21
+   	</div>
+
+   	
+   	    <div>
+   	         
 
 <a href="/tags/Golang/">#Golang</a> <a href="/tags/网络/">#网络</a>
 
-        </div>
+   	    </div>
+   	
+	<br>
     
-
-    <div>
-        </br>
-        <p></p>
-        <p></p>
-    </div>
 
     <div class="post-content">
         <blockquote>
@@ -157,16 +160,7 @@
 
 
     <div class="footer" id="footer">
-    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://github.com/journey-c">Journey-C</a>.
-        <label class="el-switch el-switch-green el-switch-sm" style="vertical-align: sub;">
-            <input type="checkbox" name="switch" id="update_style">
-            <span class="el-switch-style"></span>
-        </label>
-<!--         <script type="text/javascript">
-        var cnzz_protocol = (("https:" == document.location.protocol) ? "https://" : "http://");
-        document.write(unescape("%3Cspan id='cnzz_stat_icon_1278548644'%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "v1.cnzz.com/stat.php%3Fid%3D1278548644%26show%3Dpic1' type='text/javascript'%3E%3C/script%3E"));
-        </script> -->
-    </p>
+    <p>Copyright © 2020-<script>document.write(new Date().getFullYear())</script> <a class="flink" target="_blank" rel="noopener" href="https://github.com/journey-c">Journey-C</a>. </p>
 </div>
 
 

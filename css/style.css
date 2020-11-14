@@ -7,6 +7,16 @@ body {
   line-height: 1.725;
   text-rendering: geometricPrecision;
 }
+.toc-item {
+  list-style: none;
+}
+.toc {
+  width: 100%;
+  left: calc(50% + 400px);
+  position: fixed;
+  border-left: 2px groove;
+  border-color: #58606b;
+}
 a {
   color: #d2d2d2;
   text-decoration: none;
@@ -14,7 +24,7 @@ a {
 a:focus,
 a:hover {
   color: #699be9;
-  text-decoration: underline;
+  text-decoration: none;
 }
 .footer {
   text-align: center;
@@ -28,7 +38,7 @@ a:hover {
   width: 100%;
 }
 .hd {
-  width: 650px;
+  width: 750px;
   height: 100%;
   margin: auto;
 }
@@ -93,6 +103,29 @@ a:hover {
 }
 hr {
   border-color: #58606b;
+}
+body {
+  height: 100%;
+}
+#sidebar {
+  display: flex;
+  height: 100vh;
+  width: 200px;
+  flex-direction: column;
+  background-color: #eaeaea;
+}
+#searchResults {
+  overflow: scroll;
+}
+#search {
+  position: absolute;
+  left: 220px;
+  top: 15px;
+}
+#searchLong {
+  position: absolute;
+  left: 220px;
+  top: 35px;
 }
 .posts .replay-btn {
   background-color: #4b5e7b;
@@ -1217,6 +1250,11 @@ label.el-checkbox {
 }
 .vcomments {
   margin-top: 20px;
+}
+@media screen and (max-width: 1200px) {
+  .toc {
+    display: none;
+  }
 }
 @media screen and (max-width: 800px) {
   .hd {

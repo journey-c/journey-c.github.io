@@ -24,7 +24,7 @@
 
 <title>关于2的n次幂对齐</title>
 
-<body id="bodyx">
+<body>
     <div class="hd">
     <ol class="breadcrumb">
         
@@ -43,19 +43,25 @@
 </div>
 
 
-<div class="hd posts">
+
+<div class="toc">
     <!-- 右侧导航栏 -->
     
-    	<div style="position: fixed; left: 1300px; top: 0px; overflow: auto;">
-            <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">应用场景</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%AE%B2%E8%A7%A3"><span class="toc-text">讲解</span></a></li></ol>
+    	<div>
+            <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#1-%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">1. 应用场景</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#2-%E8%AE%B2%E8%A7%A3"><span class="toc-text">2. 讲解</span></a></li></ol>
     	</div>
     
+</div>
+
+<div class="hd posts">
 
     
   
 
 
     <a href="/index.html"><i class="fa fa-reply replay-btn" aria-hidden="true"></i></a>
+
+
     <div class="post-title">
         <p>
             关于2的n次幂对齐
@@ -63,31 +69,26 @@
         <hr>
     </div>
     
-    <!-- tags 和 时间 -->
-    <div class=posttime>
-        2020-10-29
-    </div>
-
     
-        <div>
-             
+   	<!-- tags 和 时间 -->
+   	<div style="float: right">
+   	    2020-10-29
+   	</div>
+
+   	
+   	    <div>
+   	         
 
 <a href="/tags/黑科技/">#黑科技</a>
 
-        </div>
+   	    </div>
+   	
+	<br>
     
 
-    <div>
-        </br>
-        <p></p>
-        <p></p>
-    </div>
-
     <div class="post-content">
-        <h1 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h1><p>内存对齐时基本都会求关于n位对齐的向上取整</p>
-<a id="more"></a>
-
-<h1 id="讲解"><a href="#讲解" class="headerlink" title="讲解"></a>讲解</h1><p>go1.13.8 中channel源码中有这样一个变量<a target="_blank" rel="noopener" href="https://github.com/golang/go/blob/885099d1550dad8387013c8f35ad3d4ad9f17c66/src/runtime/chan.go#L28">hchansize</a>用来表示hchan(channel对应的实际结构体)所需大小(申请内存空间时，是根据hchansize给hchan申请对应大小的内存空间)，这个变量的值大概就是hchan的size关于maxAlign向上取整下一个较大倍数，看到源码实现时，就感觉真是怪物。</p>
+        <h1 id="1-应用场景"><a href="#1-应用场景" class="headerlink" title="1. 应用场景"></a>1. 应用场景</h1><p>内存对齐时基本都会求关于n位对齐的向上取整</p>
+<h1 id="2-讲解"><a href="#2-讲解" class="headerlink" title="2. 讲解"></a>2. 讲解</h1><p>go1.13.8 中channel源码中有这样一个变量<a target="_blank" rel="noopener" href="https://github.com/golang/go/blob/885099d1550dad8387013c8f35ad3d4ad9f17c66/src/runtime/chan.go#L28">hchansize</a>用来表示hchan(channel对应的实际结构体)所需大小(申请内存空间时，是根据hchansize给hchan申请对应大小的内存空间)，这个变量的值大概就是hchan的size关于maxAlign向上取整下一个较大倍数，看到源码实现时，就感觉真是怪物。</p>
 <figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hchanSize = unsafe.Sizeof(hchan&#123;&#125;) + <span class="keyword">uintptr</span>(-<span class="keyword">int</span>(unsafe.Sizeof(hchan&#123;&#125;))&amp;(maxAlign<span class="number">-1</span>))</span><br></pre></td></tr></table></figure>
 
 <p>为了方便将上述表达式简化为 n + ( (-n) &amp; (a - 1))，n是unsafe.Sizeof(hchan{})，a是maxAlign。等价于 n + (a - (n % a))</p>
@@ -124,16 +125,7 @@
 
 
     <div class="footer" id="footer">
-    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://github.com/journey-c">Journey-C</a>.
-        <label class="el-switch el-switch-green el-switch-sm" style="vertical-align: sub;">
-            <input type="checkbox" name="switch" id="update_style">
-            <span class="el-switch-style"></span>
-        </label>
-<!--         <script type="text/javascript">
-        var cnzz_protocol = (("https:" == document.location.protocol) ? "https://" : "http://");
-        document.write(unescape("%3Cspan id='cnzz_stat_icon_1278548644'%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "v1.cnzz.com/stat.php%3Fid%3D1278548644%26show%3Dpic1' type='text/javascript'%3E%3C/script%3E"));
-        </script> -->
-    </p>
+    <p>Copyright © 2020-<script>document.write(new Date().getFullYear())</script> <a class="flink" target="_blank" rel="noopener" href="https://github.com/journey-c">Journey-C</a>. </p>
 </div>
 
 

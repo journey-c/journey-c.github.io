@@ -24,7 +24,7 @@
 
 <title>红黑树</title>
 
-<body id="bodyx">
+<body>
     <div class="hd">
     <ol class="breadcrumb">
         
@@ -43,13 +43,17 @@
 </div>
 
 
-<div class="hd posts">
+
+<div class="toc">
     <!-- 右侧导航栏 -->
     
-    	<div style="position: fixed; left: 1300px; top: 0px; overflow: auto;">
+    	<div>
             <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%A7%E8%B4%A8"><span class="toc-text">性质</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E7%BA%A2%E9%BB%91%E6%A0%91%E5%8F%AF%E4%BB%A5%E5%B9%B3%E8%A1%A1"><span class="toc-text">为什么红黑树可以平衡</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%95%E7%90%86"><span class="toc-text">引理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AF%81%E6%98%8E"><span class="toc-text">证明</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%BA%A2%E9%BB%91%E6%A0%91%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E8%87%AA%E5%B9%B3%E8%A1%A1"><span class="toc-text">红黑树如何实现自平衡</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%8B%E8%BD%AC"><span class="toc-text">旋转</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B7%A6%E6%97%8B"><span class="toc-text">左旋</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%B3%E6%97%8B"><span class="toc-text">右旋</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8F%92%E5%85%A5"><span class="toc-text">插入</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BF%AE%E5%A4%8D"><span class="toc-text">修复</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%9D%E5%8F%8D%E6%80%A7%E8%B4%A81"><span class="toc-text">违反性质1</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%9D%E5%8F%8D%E6%80%A7%E8%B4%A84"><span class="toc-text">违反性质4</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#case-1"><span class="toc-text">case 1</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#case-2"><span class="toc-text">case 2</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#case-3"><span class="toc-text">case 3</span></a></li></ol></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8F%92%E5%85%A5%E8%8A%82%E7%82%B9%E4%B8%BA%E4%BB%80%E4%B9%88%E8%AE%BE%E7%BD%AE%E4%B8%BA%E7%BA%A2%E8%89%B2"><span class="toc-text">插入节点为什么设置为红色?</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%A0%E9%99%A4"><span class="toc-text">删除</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BF%AE%E5%A4%8D%E8%A7%A3%E6%9E%90"><span class="toc-text">修复解析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5"><span class="toc-text">修复策略</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#case-1-1"><span class="toc-text">case 1</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#case-2-1"><span class="toc-text">case 2</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#case-3-1"><span class="toc-text">case 3</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#case-4"><span class="toc-text">case 4</span></a></li></ol></li></ol></li></ol></li></ol>
     	</div>
     
+</div>
+
+<div class="hd posts">
 
     
   
@@ -78,6 +82,8 @@
 
 
     <a href="/index.html"><i class="fa fa-reply replay-btn" aria-hidden="true"></i></a>
+
+
     <div class="post-title">
         <p>
             红黑树
@@ -85,25 +91,22 @@
         <hr>
     </div>
     
-    <!-- tags 和 时间 -->
-    <div class=posttime>
-        2020-10-22
-    </div>
-
     
-        <div>
-             
+   	<!-- tags 和 时间 -->
+   	<div style="float: right">
+   	    2020-10-22
+   	</div>
+
+   	
+   	    <div>
+   	         
 
 <a href="/tags/算法/">#算法</a> <a href="/tags/数据结构/">#数据结构</a>
 
-        </div>
+   	    </div>
+   	
+	<br>
     
-
-    <div>
-        </br>
-        <p></p>
-        <p></p>
-    </div>
 
     <div class="post-content">
         <p>红黑树是一种自平衡二叉搜索树。二叉搜索树就是插入的时候，比当前节点小的放到左子树，大的放到右子树。这样查找的时候可以沿着树的一条路径找到想要的值，所以时间复杂度是树的深度，最坏$O(N)$，平均$O(lg^N)$。</p>
@@ -295,16 +298,7 @@
 
 
     <div class="footer" id="footer">
-    <p>Copyright © 2020 <a class="flink" target="_blank" rel="noopener" href="https://github.com/journey-c">Journey-C</a>.
-        <label class="el-switch el-switch-green el-switch-sm" style="vertical-align: sub;">
-            <input type="checkbox" name="switch" id="update_style">
-            <span class="el-switch-style"></span>
-        </label>
-<!--         <script type="text/javascript">
-        var cnzz_protocol = (("https:" == document.location.protocol) ? "https://" : "http://");
-        document.write(unescape("%3Cspan id='cnzz_stat_icon_1278548644'%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "v1.cnzz.com/stat.php%3Fid%3D1278548644%26show%3Dpic1' type='text/javascript'%3E%3C/script%3E"));
-        </script> -->
-    </p>
+    <p>Copyright © 2020-<script>document.write(new Date().getFullYear())</script> <a class="flink" target="_blank" rel="noopener" href="https://github.com/journey-c">Journey-C</a>. </p>
 </div>
 
 
