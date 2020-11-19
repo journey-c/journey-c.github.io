@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://journey-c.github.io/2020/11/19/%E5%A6%82%E6%9E%9C%E4%BD%BF%E7%94%A8vim%E4%BD%9C%E4%B8%BAgolang%E5%92%8Ccxx%E5%BC%80%E5%8F%91IDE/</loc>
+    
+    <lastmod>2020-11-19</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://journey-c.github.io/2020/10/21/%E9%95%BF%E8%BF%9E%E6%8E%A5%E5%B9%B3%E6%BB%91%E9%87%8D%E5%90%AF%E5%AE%9E%E7%8E%B0/</loc>
     
     <lastmod>2020-11-19</lastmod>
@@ -81,14 +88,14 @@
 
   
   <url>
-    <loc>https://journey-c.github.io/tags/%E9%BB%91%E7%A7%91%E6%8A%80/</loc>
+    <loc>https://journey-c.github.io/tags/%E5%B7%A5%E7%A8%8B/</loc>
     <lastmod>2020-11-19</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/tags/%E5%B7%A5%E7%A8%8B/</loc>
+    <loc>https://journey-c.github.io/tags/%E9%BB%91%E7%A7%91%E6%8A%80/</loc>
     <lastmod>2020-11-19</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -109,13 +116,6 @@
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/tags/%E7%BD%91%E7%BB%9C/</loc>
-    <lastmod>2020-11-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://journey-c.github.io/tags/%E7%AE%97%E6%B3%95/</loc>
     <lastmod>2020-11-19</lastmod>
     <changefreq>daily</changefreq>
@@ -124,6 +124,27 @@
   
   <url>
     <loc>https://journey-c.github.io/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/</loc>
+    <lastmod>2020-11-19</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://journey-c.github.io/tags/%E7%BD%91%E7%BB%9C/</loc>
+    <lastmod>2020-11-19</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://journey-c.github.io/tags/vim/</loc>
+    <lastmod>2020-11-19</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://journey-c.github.io/tags/CXX/</loc>
     <lastmod>2020-11-19</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
