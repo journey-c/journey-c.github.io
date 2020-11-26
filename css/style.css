@@ -50,6 +50,10 @@ a:hover {
   font-weight: bold;
   margin-top: 30px;
 }
+.sketch {
+  font-size: 20px;
+  font-weight: bold;
+}
 .list {
   padding-left: 25px;
   padding-right: 25px;
@@ -142,6 +146,9 @@ body {
   font-size: 24px;
   line-height: 40px;
   margin-bottom: 10px;
+}
+.posts .post-content {
+  font-size: 16px;
 }
 .posts .post-content a {
   color: #699be9;

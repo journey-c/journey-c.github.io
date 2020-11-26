@@ -489,6 +489,18 @@
       </tags>
   </entry>
   <entry>
+    <title>博客重新装修美化</title>
+    <url>/2020/11/26/sketch/the-first-sketch/</url>
+    <content><![CDATA[<p><img src="/images/yiheyuan_hu.jpeg" alt="yangguo"><br>从最开始的新浪博客，到迁移到博客园，再到现在的静态blog。</p>
+<a id="more"></a>
+
+<p>今年开始一直想给博客换个地方，一来写的东西本地没有，总觉得不方便，二来博客园不好看…哈哈哈哈哈。</p>
+<p>十月初的时候恰好看到了kuangbin大佬的新博客，突然有种“这就是我想要的”感觉，所以就开始做一个静态blog，一开始的方案是hexo+next，但是看了一周左右视觉疲劳了，全是next。所以开始找简约的主题，简单到极致才好。</p>
+<p>最后的版本也看到了，主页只有文章标题，所有的都在一页，一眼看完方便至极，没有花里胡哨的东西。</p>
+<p>以后写的东西基本都会发在这里了～</p>
+]]></content>
+  </entry>
+  <entry>
     <title>channel 源码阅读</title>
     <url>/2020/10/29/channel-read/</url>
     <content><![CDATA[<p>(年初的时候go语言的学习提上了日程，前一篇sync.pool阅读之后，阅读代码进度本该更快些，奈何身体被掏空，所以这篇文章断断续续一个月终于攒起来了。)</p>
