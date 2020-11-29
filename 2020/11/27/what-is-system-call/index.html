@@ -155,7 +155,7 @@
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">➜  ~ ldd &#x2F;bin&#x2F;cat </span><br><span class="line">	linux-vdso.so.1 &#x3D;&gt;  (0x00007ffc03be0000)</span><br><span class="line">	libc.so.6 &#x3D;&gt; &#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;libc.so.6 (0x00007f52236dd000)</span><br><span class="line">	&#x2F;lib64&#x2F;ld-linux-x86-64.so.2 (0x00007f5223aa7000)</span><br></pre></td></tr></table></figure>
 <p>但是并不存在实际的.so文件，vsyscall以及vDOS将系统调用变为函数调用，并把他们映射到用户空间，明显的提高了系统调用的性能。<br>Linux 2.6时，vsyscall就支持了clock_gettime, gettimeofday, time。<a target="_blank" rel="noopener" href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/arch/x86/entry/vdso/vdso.lds.S">vdso.lds.S</a></p>
 <p><img src="/images/vdso.jpeg" alt="vdso"></p>
-<p>看到这里的时候突然想到，刚参加工作的时候一位前辈和我说获取时间可以不使用系统调用，当时一脸懵逼，现在想想确实知道的太少。</p>
+<p>看到这里的时候突然想到，刚参加工作的时候一位前辈和我说获取时间可以不使用系统调用，当时一脸懵逼，现在想想确实知道的太少。一些知识不是需要多高的智商才能学到，而是就摆在那，看了就不知道，不看就不知道。</p>
 <h1 id="3-总结"><a href="#3-总结" class="headerlink" title="3. 总结"></a>3. 总结</h1><p>系统调用是用户和硬件交互的媒介</p>
 <ol>
 <li>软中断实现是最初Linux实现系统调用方式，但现在还有使用的方式，例如golang在一些架构上系统调用还是使用软中断的方式，因为golang团队在做基准测试的时候发现，软中断方式和快速指令方式效率差不多。<a target="_blank" rel="noopener" href="https://go-review.googlesource.com/c/go/+/16996/">runtime, syscall: use int $0x80 to invoke syscalls on android/386</a></li>
