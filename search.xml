@@ -489,6 +489,67 @@
       </tags>
   </entry>
   <entry>
+    <title>系统调用</title>
+    <url>/2020/11/27/what-is-system-call/</url>
+    <content><![CDATA[<h1 id="1-简介"><a href="#1-简介" class="headerlink" title="1 .简介"></a>1 .简介</h1><p>系统调用就是操作系统提供给用户态应用与硬件交互的一组接口。在用户空间和硬件之间添加一个中间层(系统调用)主要的作用有:</p>
+<ol>
+<li>为用户空间提供抽象接口，用户不需要关心硬件种类介质等。</li>
+<li>保障系统的稳定和安全，避免用户错误的使用硬件危害系统或者窃取其他进程的资源。</li>
+<li>由于Linux进程都是运行在虚拟系统中，如果操作系统对用户访问硬件一无所知，就几乎无法实现多任务和虚拟内存。</li>
+</ol>
+<p><img src="/images/unix_arch.jpeg" alt="unix_arch"></p>
+<div>
+    <center>图片来源<a href="https://www.amazon.com/Advanced-Programming-UNIX-Environment-3rd/dp/0321637739">《Advanced Programming in the UNIX Environment, 3rd Edition》</a></center>
+</div>
+
+<h1 id="2-三种使用系统调用方式"><a href="#2-三种使用系统调用方式" class="headerlink" title="2. 三种使用系统调用方式"></a>2. 三种使用系统调用方式</h1><p><img src="/images/syscall_method.png" alt="syscall_method"></p>
+<h2 id="2-1-软件中断"><a href="#2-1-软件中断" class="headerlink" title="2.1 软件中断"></a>2.1 软件中断</h2><p><img src="/images/interrupt.png" alt="interrupt"></p>
+<p>没有外界打扰的情况下处理器会一直执行给定指令，中断就是打断处理器的执行并且告诉他先执行另一段指令，执行完毕再接着执行中断前的指令。从中断指令发出的对象可以分为硬件中断和软件中断。</p>
+<ul>
+<li>硬件中断就是硬件通过传输电信号到中断控制器的输入引脚，中断控制器收到电信号之后会给处理器发送一个电信号，处理器一经检测到电信号之后就中断当前工作转而处理中断。之后会通知操作系统已经产生中断，进而操作系统可以处理这个中断了。</li>
+<li>软件中断就是处理器执行特定指令时触发的中断，之后也会通知操作系统。</li>
+<li>除了系统调用，还有中断下半部tasklet也是用软件中断实现的。</li>
+</ul>
+<p>在x86的机器上可以使用$INT$指令触发软件中断，Linux早期的时候就是使用软件中断来处理系统调用，中断号为128。<br>软件中断执行系统调用的流程为:</p>
+<ol>
+<li>用户将中断号放入$eax$寄存器，前六个参数按顺序放入$ebx$、$ecx$、$edx$、$esi$、$edi$、$ebp$寄存器，六个以上的情况，需要把所有参数放在用户空间的一段连续内存中(类似用struct传参)，然后将指向该内存区域的指针放入$ebx$中。</li>
+<li>执行$int$ 0x80指令，处理器在中断向量表(<a href="https://en.wikipedia.org/wiki/Interrupt_descriptor_table">IDT</a>)中查找对应的中端处理程序，执行中断处理程序(操作系统由ring3进入ring0)<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/arch/x86/entry/entry_32.S#L1052">entry_INT80_32</a>:<br>a. 调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/arch/x86/entry/entry_32.S#L1056">SAVE_ALL</a>将当前上下文保存到内核栈，然后调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/arch/x86/entry/common.c#L84">do_int80_syscall_32</a>。<br>b. <a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/arch/x86/entry/common.c#L84">do_int80_syscall_32</a> 从用户空间进入内核空间然后调用 <a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/arch/x86/entry/common.c#L72">do_syscall_32_irqs_on</a>，退出内核空间返回用户空间。<br>c. <a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/arch/x86/entry/common.c#L72">do_syscall_32_irqs_on</a> 检查系统调用号，从系统调用表<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/arch/x86/entry/syscall_32.c#L18">ia32_sys_call_table</a> <a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/arch/x86/entry/syscalls/syscall_32.tbl">syscall_32.tbl</a>中找出对应函数，并且将参数传给对应系统调用函数，唤起软件中断，将返回值放入$eax$寄存器。<br>d. 从内核栈恢复上下文。</li>
+</ol>
+<p><img src="/images/interrupt_call.png" alt="interrupt_call"><br>下面就是一个通过软件中断调用write系统调用的例子:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">global _start</span><br><span class="line"></span><br><span class="line">section .text</span><br><span class="line">_start:</span><br><span class="line">    mov eax,4      ; system call number</span><br><span class="line">    mov ebx,1      ; args 1: fd&#x3D;1(STDOUT)</span><br><span class="line">    mov ecx,msg    ; args 2: &quot;Hello World!&quot;</span><br><span class="line">    mov edx,msglen ; args 3: len(&quot;Hello World!&quot;)</span><br><span class="line">    int 0x80       ; soft interrupt</span><br><span class="line">    mov eax,1      ; syscall exit number</span><br><span class="line">    mov ebx,0      ; args 1: 0 (exit(0))</span><br><span class="line">    int 0x80       ; soft interrupt</span><br><span class="line"></span><br><span class="line">section .rodata</span><br><span class="line">    msg: db &quot;Hello, World!&quot;, 10</span><br><span class="line">    msglen: equ $ - msg </span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">nasm -g -f elf64 -o sys_call.o sys_call.s</span><br><span class="line">ld -o sys_call sys_call.o</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-2-汇编指令"><a href="#2-2-汇编指令" class="headerlink" title="2.2 汇编指令"></a>2.2 汇编指令</h2><p>由于中断实现的系统调用在个别处理器上表现非常差，Linux在较新版本上使用了intel和amd上实现的快速系统调用指令syscall/sysret(64)和sysenter/sysexit(32)。这也是目前最常用的系统调用方式。<br><img src="/images/asm.png" alt="asm"></p>
+<p>具体流程为: </p>
+<ol>
+<li>cpu初始化<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/arch/x86/kernel/cpu/common.c#L1869">cpu_init</a> 调用 <a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/arch/x86/kernel/cpu/common.c#L1702">syscall_init</a></li>
+<li><a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/arch/x86/kernel/cpu/common.c#L1702">syscall_init</a> 将系统调用处理函数<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/arch/x86/entry/entry_64.S#L95">entry_SYSCALL_64</a>和<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/arch/x86/entry/entry_32.S#L903">entry_SYSENTER_32</a>注册到<a href="https://en.wikipedia.org/wiki/Model-specific_register">MSR</a>寄存器，<a href="https://en.wikipedia.org/wiki/Model-specific_register">MSR</a>寄存器是用于控制CPU运行、功能开关、调试、跟踪程序执行、监测CPU性能等方面的寄存器。</li>
+<li>触发系统调用后，它会在<a href="https://en.wikipedia.org/wiki/Model-specific_register">MSR</a>中读取需要执行的函数然后执行。</li>
+<li>剩余流程和软件中断方式差不多。</li>
+</ol>
+<p><img src="/images/asm_call.png" alt="asm_call"></p>
+<h2 id="2-3-vDOS"><a href="#2-3-vDOS" class="headerlink" title="2.3 vDOS"></a>2.3 vDOS</h2><p>Linux平台的用户使用系统调用的方式大多是通过<a href="https://www.gnu.org/software/libc/">libc</a>, 由于<a href="https://www.gnu.org/software/libc/">libc</a>库要兼容BSD，SysV Windows等平台，所以每当Linux新增系统调用时，<a href="https://www.gnu.org/software/libc/">libc</a>库都要间隔一段时间才会支持。并且有的用户升级Linux时并不会顺带升级<a href="https://www.gnu.org/software/libc/">libc</a>，导致双方都带有沉重历史包袱。</p>
+<p>后来Linux实现了快速系统调用vsyscall，内核提供.so通过动态链接直接map到进程空间里供用户使用，但是vsyscall有一个风险点——map 的起始地址固定（0xffffffffff600000)，有潜在的安全风险。</p>
+<p>为了改善vsyscall的局限性，设计了<a href="https://en.wikipedia.org/wiki/VDSO">vDSO</a>。但为了兼容vsyscall现在还保留着。</p>
+<p>vDSO利用<a href="https://en.wikipedia.org/wiki/Address_space_layout_randomization">ASLR</a>增强里安全性，随机地址。</p>
+<p>可以看到Linux中的进程大多包含vDSO的动态库</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">➜  ~ ldd &#x2F;bin&#x2F;cat </span><br><span class="line">	linux-vdso.so.1 &#x3D;&gt;  (0x00007ffc03be0000)</span><br><span class="line">	libc.so.6 &#x3D;&gt; &#x2F;lib&#x2F;x86_64-linux-gnu&#x2F;libc.so.6 (0x00007f52236dd000)</span><br><span class="line">	&#x2F;lib64&#x2F;ld-linux-x86-64.so.2 (0x00007f5223aa7000)</span><br></pre></td></tr></table></figure>
+<p>但是并不存在实际的.so文件，vsyscall以及vDOS将系统调用变为函数调用，并把他们映射到用户空间，明显的提高了系统调用的性能。<br>Linux 2.6时，vsyscall就支持了clock_gettime, gettimeofday, time。<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/arch/x86/entry/vdso/vdso.lds.S">vdso.lds.S</a></p>
+<p><img src="/images/vdso.jpeg" alt="vdso"></p>
+<p>看到这里的时候突然想到，刚参加工作的时候一位前辈和我说获取时间可以不使用系统调用，当时一脸懵逼，现在想想确实知道的太少。</p>
+<h1 id="3-总结"><a href="#3-总结" class="headerlink" title="3. 总结"></a>3. 总结</h1><p>系统调用是用户和硬件交互的媒介</p>
+<ol>
+<li>软中断实现是最初Linux实现系统调用方式，但现在还有使用的方式，例如golang在一些架构上系统调用还是使用软中断的方式，因为golang团队在做基准测试的时候发现，软中断方式和快速指令方式效率差不多。<a href="https://go-review.googlesource.com/c/go/+/16996/">runtime, syscall: use int $0x80 to invoke syscalls on android/386</a></li>
+<li>快速汇编指令，intel和amd专门用于系统调用的指令。</li>
+<li>vsyscall和vDSO通过动态库的方式。</li>
+</ol>
+]]></content>
+      <tags>
+        <tag>操作系统</tag>
+        <tag>linux</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>博客重新装修美化</title>
     <url>/2020/11/26/sketch/the-first-sketch/</url>
     <content><![CDATA[<p><img src="/images/yiheyuan_hu.jpeg" alt="yangguo"><br>从最开始的新浪博客，到迁移到博客园，再到现在的静态blog。</p>
