@@ -30,8 +30,6 @@
         
             <li><a class="ba" href="/">首页</a></li>
         
-            <li><a class="ba" href="/tags">标签</a></li>
-        
             <li><a class="ba" href="/about">关于</a></li>
         
             <li><a class="ba" href="/sketch">随笔</a></li>
@@ -53,6 +51,7 @@
     	</div>
     
 </div>
+
 
 <div class="hd posts">
 
@@ -102,7 +101,7 @@
    	    <div>
    	         
 
-<a href="/tags/算法/">#算法</a> <a href="/tags/数据结构/">#数据结构</a>
+<a class="article-tag" href="/tags/算法/">算法</a> <a class="article-tag" href="/tags/数据结构/">数据结构</a>
 
    	    </div>
    	
@@ -292,7 +291,7 @@
 <p>删除操作完成之后，相当于少了y指向节点的颜色，所以只要y是黑色节点，就会产生违反性质的情况。</p>
 <blockquote>
 <ol>
-<li>如果y是根结点，删除y后，如果提到y位置节点颜色是红色就违反了性质2。(性质1最好修复，所有修复操作完成后直接把根变为黑色就行)</li>
+<li>如果y是根结点，删除y后，如果提到y位置节点颜色是红色就违反了性质2。(性质2最好修复，所有修复操作完成后直接把根变为黑色就行)</li>
 <li>如果x是红色，并且x的父节点也是红色，就违反性质4。</li>
 <li>因为y是黑色节点，所以删掉后经过y的路径上黑色节点都少1就违反性质5了，解决这个问题的办法是假设x除了自身颜色外还有一层黑色，就是双重颜色，所以现在x违反性质1。</li>
 </ol>
@@ -332,14 +331,22 @@
 </tr>
 </tbody></table>
 <p><strong>现在可能违反的性质有1，2，4</strong></p>
-<h3 id="3-3-2-修复策略"><a href="#3-3-2-修复策略" class="headerlink" title="3.3.2 修复策略"></a>3.3.2 修复策略</h3><p>因为删除操作后，红黑树少了一个黑色，所以把这个黑色放在x，x变为双重颜色(下图用紫色表示)。解决办法就是慢慢把双重颜色传递到根结点，然后简单的去掉额外红色。</p>
+<h3 id="3-3-2-修复策略"><a href="#3-3-2-修复策略" class="headerlink" title="3.3.2 修复策略"></a>3.3.2 修复策略</h3><p>因为删除操作后，红黑树少了一个黑色，所以把这个黑色放在x，x变为双重颜色(下图用紫色表示)。</p>
+<ul>
+<li>如果x原来是红色，刚好将x变为黑色，修复完成。</li>
+<li>如果x原来是黑色，那么x为双重黑色，下面就是剖析如果修复x的双重黑色。</li>
+</ul>
 <p>修复是从x向上遍历，因为x为根的子树没有做过操作(删除操作的时候记录下来)，所以不会违反性质。修复策略分为四种情况:(以下情况都是x为父节点左儿子的情况，右儿子的情况相反而已)</p>
 <h4 id="3-3-2-1-case-1"><a href="#3-3-2-1-case-1" class="headerlink" title="3.3.2.1 case 1"></a>3.3.2.1 case 1</h4><blockquote>
 <p>x的兄弟节点w是红色 </p>
 </blockquote>
 <p><img src="/images/delete_fix_case1.png" alt="delete_fix_case1"></p>
 <blockquote>
-<p>此时，因为w是红色，所以p是黑色，且w的子节点是黑色。将w变为黑色，p变为红色，且对p做左旋，就变成case 2<br>操作前l，r，x到p的父节点之前的路径有1个黑色节点(p)，操作后还是1个(w)，所以没改变黑色个数的性质。且x有黑色性质，所以p为红色也没违反性质。</p>
+<p>此时: 1) 因为w是红色，所以p是黑色。 2) 因为x是双重黑色，所以w一定有儿子且w的子节点是黑色。如果没有，那么从p到叶子各路径上的黑节点数量就不一样了。<br>措施:</p>
+<ul>
+<li>将w变为黑色，p变为红色，且对p做左旋，就变成case 2</li>
+<li>操作前l，r，x到p的父节点之前的路径有1个黑色节点(p)，操作后还是1个(w)，所以没改变黑色个数的性质。且x有黑色性质，所以p为红色也没违反性质。</li>
+</ul>
 </blockquote>
 <p><img src="/images/delete_fix_case1_fix.png" alt="delete_fix_case1_fix"></p>
 <h4 id="3-3-2-2-case-2"><a href="#3-3-2-2-case-2" class="headerlink" title="3.3.2.2 case 2"></a>3.3.2.2 case 2</h4><blockquote>
@@ -351,13 +358,13 @@
 </div>
 
 <blockquote>
-<p>因为w是黑色且x本来就一层黑色，所以从x，w上去掉一层黑色。将这层黑色加到x的父节点身上，指针指向从x到x的父节点。指针移动x的父节点继续判断是哪种情况。(w变为红色，x变为原来的颜色，p变为双层颜色)黑色只是上移了一位，所以不违反性质。</p>
+<p>w是黑色且x本来就一层黑色，所以从x，w上去掉一层黑色。将这层黑色加到x的父节点身上，指针指向x的父节点。<br>黑色加到x的父节点之后，有两种情况:</p>
+<ul>
+<li>x的父节点原来是红色，这种情况就不是双重黑色了，直接将x的父节点变为黑色，修复结束。</li>
+<li>x的父节点原来是黑色，那么继续遍历，一直将双重黑色传递至根，这样去掉一重黑色，相当于所有路径都去了一个黑节点，依然满足性质。</li>
+</ul>
 </blockquote>
 <p><img src="/images/delete_fix_case2_fix.png" alt="delete_fix_case2_fix"></p>
-<div>
-<center>x变为原来的原色，不确定是什么，用白色表示<center>
-</div>
-
 <h4 id="3-3-2-3-case-3"><a href="#3-3-2-3-case-3" class="headerlink" title="3.3.2.3 case 3"></a>3.3.2.3 case 3</h4><blockquote>
 <p>x的兄弟节点w是黑色，且w的左儿子是红色，右儿子是黑色</p>
 </blockquote>
@@ -370,6 +377,10 @@
 <p>交换w和左儿子的颜色，然后关于w做一次右旋，变成case 4。黑色节点的个数都没有变，所以没改变性质。</p>
 </blockquote>
 <p><img src="/images/delete_fix_case3_fix.png" alt="delete_fix_case3_fix"></p>
+<div>
+<center>因为w是黑色，所以p不确定是什么颜色，用白色表示<center>
+</div>
+
 <h4 id="3-3-2-4-case-4"><a href="#3-3-2-4-case-4" class="headerlink" title="3.3.2.4 case 4"></a>3.3.2.4 case 4</h4><blockquote>
 <p>x的兄弟节点w是黑色，且w的右儿子是红色</p>
 </blockquote>
@@ -387,7 +398,7 @@
 </blockquote>
 <p><img src="/images/delete_fix_case4_fix.png" alt="delete_fix_case4"></p>
 <div>
-<center>w为p之前的颜色(未知)，x为x本来的颜色(未知)，l颜色随便，用白色表示<center>
+<center>w为p之前的颜色(未知)，l颜色随便，用白色表示<center>
 </div>
 
 <h3 id="3-3-4-小结"><a href="#3-3-4-小结" class="headerlink" title="3.3.4 小结"></a>3.3.4 小结</h3><p>按照正常二叉树删除<br>修复:</p>
@@ -430,7 +441,8 @@
 </script>
 
     <div class="footer" id="footer">
-    <p>Copyright © 2020-<script>document.write(new Date().getFullYear())</script> <a class="flink" target="_blank" rel="noopener" href="https://github.com/journey-c">Journey-C</a>. </p>
+    <p>Copyright © 2020-<script>document.write(new Date().getFullYear())</script> <a class="flink" target="_blank" rel="noopener" href="https://github.com/journey-c">Journey-C</a>. 
+    </p>
 </div>
 
 

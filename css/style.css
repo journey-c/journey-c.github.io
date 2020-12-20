@@ -17,6 +17,17 @@ body {
   border-left: 2px groove;
   border-color: #58606b;
 }
+.article-tag {
+  margin-left: 3px;
+  padding: 2px 10px;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  color: #9eabb3;
+  border: #e3e9ed 1px solid;
+  transition: color 0.3s ease;
+}
 a {
   color: #d2d2d2;
   text-decoration: none;
