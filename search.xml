@@ -568,6 +568,25 @@
       </tags>
   </entry>
   <entry>
+    <title>为什么redis有多个数据库?</title>
+    <url>/2021/01/01/why-redis-has-multiple-databases/</url>
+    <content><![CDATA[<h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p><a href="https://zh.wikipedia.org/wiki/Redis">Redis</a>是一个开源内存数据库，在今天几乎每个服务端程序员都会或多或少的使用到。但是很少有人会注意到一个Redis实例并不是只有一个数据库。</p>
+<h1 id="设计"><a href="#设计" class="headerlink" title="设计"></a>设计</h1><p>Redis实例使用<a href="https://github.com/redis/redis/blob/25214bd7dc2f4c995d76020e95180eb4e6d51672/src/server.h#L1055">redisServer</a>结构体表示，结构体成员变量中的<a href="https://github.com/redis/redis/blob/25214bd7dc2f4c995d76020e95180eb4e6d51672/src/server.h#L1068">redisDb *db;</a>是redisServer用来存储用户存入的键值。(默认有16个，通过配置文件中databases配置。每个客户端可以通过<code>SELECT index</code>命令选择要访问的数据库)</p>
+<p><a href="https://github.com/redis/redis/blob/25214bd7dc2f4c995d76020e95180eb4e6d51672/src/server.h#L1068">redisDb *db</a>成员变量如下图最右边方框。</p>
+<p><img src="/images/server_data_structure.png" alt="server"></p>
+<h1 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h1><h2 id="数据分块优化查询速度"><a href="#数据分块优化查询速度" class="headerlink" title="数据分块优化查询速度?"></a>数据分块优化查询速度?</h2><p>将数据分块添加多级索引，但是找了很多地方发现每个db都是独立的，而且客户端对单个数据库操作时不会访问其他数据库，并且其他客户端无关操作例如RDB、AOF持久化操作也不会将各db关联起来。</p>
+<p>并且redisdb中的dict本身就会在数据增多时对数据进行rehash，所以这个可能大概率不存在。</p>
+<h2 id="对数据进行分类"><a href="#对数据进行分类" class="headerlink" title="对数据进行分类?"></a>对数据进行分类?</h2><p>redis本身是一个nosql数据库，想查询部分特征的数据本身操作会非常复杂，所以可能作者想用户可以根据需要将不同数据存入不同的db，但是db本身不支持自定义名称，只有编号，用户如果想将数据分类只能记住db的编号，每次访问数据时先用<code>SELECT index</code>命令切换数据库然后再操作。这个可能性很高，但也说服力不强。</p>
+<p>因为实在没有想到其他的可能，所以我开始在网上找一下其他同行对此的见解，意外的搜到了作者一封邮件…</p>
+<p><img src="/images/mail.jpeg" alt="mail"></p>
+<p>原来作者最初的想法很多，但最后觉得很鸡肋，由于要保持向下兼容，所以就保留了这个功能。虽然实际生产中Redis实例很少会用到多个DB，但每个DB大概1m左右也不是十分耗费资源，所以无伤大雅。</p>
+]]></content>
+      <tags>
+        <tag>redis</tag>
+        <tag>无用的冷知识</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>博客重新装修美化</title>
     <url>/2020/11/26/sketch/the-first-sketch/</url>
     <content><![CDATA[<p><img src="/images/yiheyuan_hu.jpeg" alt="yangguo"><br>从最开始的新浪博客，到迁移到博客园，再到现在的静态blog。</p>
@@ -1072,90 +1091,39 @@
 <li>系统调用函数入口在<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L722">SYSCALL_DEFINE5</a>，可能是历史原因想保留这个接口，所以这个函数没做事情直接调用了<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L700">kern_select</a>。</li>
 <li>Select传入的时间是一个相对时间，<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L700">kern_select</a>判断如果时间参数不为空的话，就调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L273">poll_select_set_timeout</a>将相对时间转化为绝对时间(准确的几点几分几秒)，然后就调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L621">core_sys_select</a></li>
 <li><a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L621">core_sys_select</a>主要的工作就是为Select工作分配资源空间。<ul>
-<li>1 获取<a href="https://en.wikipedia.org/wiki/Read-copy-update">rcu锁</a>，check一下第一个参数n是不是比进程最大可打开文件描述符数还大，如果还大的话修正n为最大可打开文件描述符数。释放<a href="https://en.wikipedia.org/wiki/Read-copy-update">rcu锁</a>，rcu实际就是延迟更新，读操作不需要获取锁，只需要标记一下还有用户在读。写操作时拷贝一份数据，更新副本，当所有没有读者读旧数据的时候再将副本数据更新到原始数据上。</li>
-<li>2 接下来就是给输入的三个变量fds.in, fds.out, fds.ex，保存结果的三个变量(fds.res_in, fds.res_out, fds.res_ex)分配存储空间，先从<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L630">栈</a>分配，栈空间不够时从<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L658">堆</a>分配。</li>
-<li>3 资源分配结束后就调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L476">do_select</a>开始真正的检查每个FD是否可用。</li>
-<li>4 <a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L476">do_select</a>是select的核心，流程如下: <ul>
-<li><ol>
+<li>获取<a href="https://en.wikipedia.org/wiki/Read-copy-update">rcu锁</a>，check一下第一个参数n是不是比进程最大可打开文件描述符数还大，如果还大的话修正n为最大可打开文件描述符数。释放<a href="https://en.wikipedia.org/wiki/Read-copy-update">rcu锁</a>，rcu实际就是延迟更新，读操作不需要获取锁，只需要标记一下还有用户在读。写操作时拷贝一份数据，更新副本，当所有没有读者读旧数据的时候再将副本数据更新到原始数据上。</li>
+<li>接下来就是给输入的三个变量fds.in, fds.out, fds.ex，保存结果的三个变量(fds.res_in, fds.res_out, fds.res_ex)分配存储空间，先从<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L630">栈</a>分配，栈空间不够时从<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L658">堆</a>分配。</li>
+<li>资源分配结束后就调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L476">do_select</a>开始真正的检查每个FD是否可用。</li>
+<li><a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L476">do_select</a>是select的核心，流程如下: <ul>
 <li>首先调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L419">max_select_fd</a>找出传入FD的最大值+1，比较一下参数n是不是比最大FD+1还大，如果是就修正n为最大FD+1(<code>这里之所以总是将n修正为最大值+1，是因为do_select遍历范围是[0,n)</code>)，顺便检查下，传入的FD是不是有已关闭或者未打开的，如果有就报错<code>EBADF</code>:<ul>
-<li><ol>
 <li>传入fd_set是long的数组，openfiles也是long的数组，因为之前n根据线程最大打开文件数修正过，所以通过(n/(long的位数))可以最高位可以比较的数组下表，然后fd_set数组的那一位根据(n % (long的位数))来去掉不满足条件的FD</li>
-</ol>
-</li>
-<li><ol start="2">
 <li>然后就从最高位开始fd_set和open_file做AND操作，第一个匹配的就是最大FD。</li>
-</ol>
-</li>
-<li><ol start="3">
 <li><img src="/images/max_select_fd.png" alt="max_select_fd"></li>
-</ol>
-</li>
 </ul>
 </li>
-</ol>
-</li>
-<li><ol start="2">
 <li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L121">poll_initwait</a>初始化<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/include/linux/poll.h#L103">poll_wqueues</a>(维护select/poll任务的主要struct)，并且将<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L221">__pollwait</a>注册为<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/include/linux/poll.h#L43">poll_table</a>的proc函数，file_operations-&gt;poll会调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/include/linux/poll.h#L48">poll_wait</a>将此时所在线程(task)放入队列，poll_wait对调用__poll_wait，这个_poll_wait此时注册的函数。主要作用就是将任务放入队列，以及做一些其他任务。</li>
-</ol>
-</li>
-<li><ol start="3">
 <li>如果timeout不为空，调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L236">poll_schedule_timeout</a>设置超时时间。</li>
-</ol>
-</li>
-<li><ol start="4">
 <li>重复遍历所有fd_set:<ul>
-<li><ol>
 <li>这个循环是个死循环，跳出条件为:<ul>
-<li><ol>
 <li>超时时间到(如果设置了超时时间)。</li>
-</ol>
-</li>
-<li><ol start="2">
 <li>线程被唤醒。</li>
-</ol>
-</li>
-<li><ol start="3">
 <li>当前线程被信号唤醒。</li>
-</ol>
-</li>
 </ul>
 </li>
-</ol>
-</li>
-<li><ol start="2">
 <li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/include/linux/file.h#L63">fdget</a>获取fd对应的file结构体。</li>
-</ol>
-</li>
-<li><ol start="3">
 <li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/include/linux/poll.h#L86">vfs_poll</a>，获取file的事件mask，如果有in，out，ex就放入对应结果的fd_set中。<ul>
-<li><ol>
 <li><a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/include/linux/poll.h#L86">vfs_poll</a>最终会调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/include/linux/fs.h#L1801">file_operations</a>的poll函数获取FD的事件状态mask，vfs_poll会调用file_operations-&gt;poll函数检查FD的事件，如果没有就调用poll_wait将线程放入等待队列。</li>
-</ol>
-</li>
 </ul>
 </li>
-</ol>
-</li>
-<li><ol start="4">
 <li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/include/linux/file.h#L43">fdput</a>释放fd对应file结构体。</li>
-</ol>
-</li>
-<li><ol start="5">
 <li>如果本次遍历一个有事件的FD也没有就调用cond_resched出让CPU，并且把线程状态设为INTERRUPTIBLE(睡眠可打断状态)，休眠直到被唤醒。</li>
-</ol>
-</li>
-<li><ol start="6">
 <li>等到有<a href="#event_callback">事件回调</a>，就会重新遍历FD集合这次肯定有事件了，如果超时或者被信号唤醒也有相应操作。</li>
-</ol>
+</ul>
 </li>
 </ul>
 </li>
-</ol>
-</li>
-</ul>
-</li>
-<li>5 <a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L476">do_select</a>将可用FD返回之后，调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L688">set_fd_set</a>拷贝回用户空间。</li>
-<li>6 如果传入参数的BitsMap一开始是分配在堆上的就释放调。</li>
+<li><a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L476">do_select</a>将可用FD返回之后，调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L688">set_fd_set</a>拷贝回用户空间。</li>
+<li>如果传入参数的BitsMap一开始是分配在堆上的就释放调。</li>
 </ul>
 </li>
 <li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L297">poll_select_finish</a>将剩余时间拷贝回用户空间。</li>
@@ -1192,40 +1160,16 @@
 <ol>
 <li>Poll的入口在<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L1057">SYSCALL_DEFINE3</a>，<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L1057">SYSCALL_DEFINE3</a>的主要工作是将timeout由相对时间转化为绝对时间。然后调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L970">do_sys_poll</a></li>
 <li><a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L970">do_sys_poll</a>流程:<ul>
-<li><ol>
 <li>检查nfds是否超过进程最大可打开文件数，如果是就报错-EINVAL。</li>
-</ol>
-</li>
-<li><ol start="2">
 <li>给输入参数分配空间再从用户空间拷贝过来，先试图在栈上分配，如果不够再从堆上分配。</li>
-</ol>
-</li>
-<li><ol start="3">
 <li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L121">poll_initwait</a>初始化poll_wqueues(和select一样)，然后调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L881">do_poll</a>，do_poll主要流程为:<ul>
-<li><ol>
 <li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L75">select_estimate_accuracy</a>设置过期时间。</li>
-</ol>
-</li>
-<li><ol start="2">
 <li>然后就轮训所有的FD，调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L851">do_pollfd</a>检查FD的事件。do_pollfd也是调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/include/linux/poll.h#L86">vfs_poll</a>来检测FD事件的，如果没有就将线程放入对应FD的等待队列等待被激活，自己休眠。(和select一样)</li>
-</ol>
-</li>
 </ul>
 </li>
-</ol>
-</li>
-<li><ol start="4">
 <li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L138">poll_freewait</a>释放刚刚初始化的poll_wqueues。</li>
-</ol>
-</li>
-<li><ol start="5">
 <li>调用<code>__put_user</code>将结果拷贝回用户空间。</li>
-</ol>
-</li>
-<li><ol start="6">
 <li>如果最开始参数是在堆上分配的，就释放内存。</li>
-</ol>
-</li>
 </ul>
 </li>
 </ol>
@@ -1264,162 +1208,60 @@
 <h2 id="5-2-实现"><a href="#5-2-实现" class="headerlink" title="5.2 实现"></a>5.2 实现</h2><h3 id="5-2-1-epoll-create"><a href="#5-2-1-epoll-create" class="headerlink" title="5.2.1 epoll_create"></a>5.2.1 epoll_create</h3><ol>
 <li>epoll_create的入口在<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L2088">SYSCALL_DEFINE1</a>，这个函数只是简单的检查了一下size是否为0，epoll_create的size参数随便填只要大于0即可，不使用的。然后调用了<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L2040">do_epoll_create</a>对epoll_create操作统一处理。</li>
 <li><a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L2040">do_epoll_create</a>流程如下:<ul>
-<li><ol>
 <li>检查一下flags除了EPOLL_CLOEXEC，还有没有其他的flag</li>
-</ol>
-</li>
-<li><ol start="2">
 <li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L1006">ep_alloc</a>申请一个<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L181">eventpoll</a>结构，这是存储epoll所有数据的数据结构。</li>
-</ol>
-</li>
-<li><ol start="3">
 <li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/file.c#L561">get_unused_fd_flags</a>根据flags申请一个本进程最小未使用的fd。</li>
-</ol>
-</li>
-<li><ol start="4">
 <li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/anon_inodes.c#L74">anon_inode_getfile</a>创建一个对应匿名inode的file，file的私有数据存的是eventpoll结构体。inode在VFS中对应一个文件，记录了此文件在磁盘那些块以及文件各种信息，匿名inode就是将此文件的dentry(目录项)删掉了，在文件系统中一般是通过dentry(目录项)来查找使用文件，这样其他进程就用不了这个文件。相当于创建一个临时文件。</li>
-</ol>
-</li>
 <li><img src="/images/anonymous_inode.png" alt="anonymous_inode"></li>
-<li><ol start="5">
 <li>现在file(由进程打开的文件)有了，fd有了，把file和fd的关系放入本进程的open_files中，就相当于本进程打开了这个文件。</li>
-</ol>
-</li>
 </ul>
 </li>
 </ol>
 <h3 id="5-2-2-epoll-ctl"><a href="#5-2-2-epoll-ctl" class="headerlink" title="5.2.2 epoll_ctl"></a>5.2.2 epoll_ctl</h3><ol>
 <li>epoll_ctl的入口在<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L2272">SYSCALL_DEFINE4</a>，首先根据op选择要不要从用户空间拷贝参数(只要不是DEL都需要拷贝)，之后就调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L2108">do_epoll_ctl</a>做主要的工作了。</li>
 <li><a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L2108">do_epoll_ctl</a>主要流程如下:<ul>
-<li><ol>
 <li>参数获取:<ul>
-<li><ol>
 <li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/include/linux/file.h#L63">fdget</a>根据epfd获得epoll对应的file(epoll_create时创建的)，根据参数传入的fd获取对应的file。</li>
-</ol>
-</li>
 </ul>
 </li>
-</ol>
-</li>
-<li><ol start="2">
-<li>参数检查:<ul>
-<li><ol>
+<li>参数 :<ul>
 <li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/include/linux/poll.h#L81">file_can_poll</a>判断该文件支不支持poll函数，实际就是判断该文件对应的file_operation的poll函数为不为空。</li>
-</ol>
-</li>
-<li><ol start="2">
 <li>判断系统支不支持autosleep功能，如果支持且用户也传入了EPOLLWAKEUP标志，就调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/include/uapi/linux/eventpoll.h#L83">ep_take_care_of_epollwakeup</a>将标志加到事件中，否则就将EPOLLWAKEUP事件丢弃。</li>
-</ol>
-</li>
-<li><ol start="3">
 <li>check一下要操作的fd是不是epfd(操作自己epoll的fd)和epfd是不是一个epoll fd。</li>
-</ol>
-</li>
-<li><ol start="4">
 <li>EPOLLEXCLUSIVE(since Linux 3.5)是一个FD被多个epoll监听时，当这个FD事件来临只有一个epoll会被唤起(避免惊群效应)。而epoll只允许add的时传入不允许mod时传入，这里就是check一下这种情况。</li>
-</ol>
-</li>
-<li><ol start="5">
 <li>处理一种Epoll A包含Epoll B的FD，Epoll B也包含Epoll A的FD的情况，这时候如果其中一个FD有了事件，那么两个Epoll会循环被唤醒。</li>
-</ol>
-</li>
 </ul>
 </li>
-</ol>
-</li>
-<li><ol start="3">
 <li>接下来就是核心操作:<ul>
-<li><ol>
 <li>根据file地址和fd大小 调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L1041">ep_find</a> 查找传入fd是否在eventpoll结构体中的rbtree(存储所有监听的fd)已存在。rbtree的key就是<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L107">epoll_filefd</a>，比较规则，先比较file的地址，相同的话在比较fd的大小。</li>
-</ol>
-</li>
-<li><ol start="2">
 <li>如果是ADD就调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L1490">ep_insert</a>:<ul>
-<li><ol>
 <li>当前用用户的epoll_watch和<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L1502">max_user_watches</a>检查是否还有可用空间，内核给每个用户的epoll可以用空间限制为syscall可使用空间的$1/25$。</li>
-</ol>
-</li>
-<li><ol start="2">
 <li>从缓存中创建一个新的epitem(<a href="/2020/10/22/red-black-tree">红黑树</a>的value)。</li>
-</ol>
-</li>
-<li><ol start="3">
 <li>初始化rdllink(满足事件链表)，fllink(链接fd对应的file链表)，pwqlist(poll等待队列)。</li>
-</ol>
-</li>
-<li><ol start="4">
 <li>初始化epitem的参数，调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L322">ep_set_ffd</a>根据file，fd生成<a href="/2020/10/22/red-black-tree">红黑树</a>的key(struct epoll_filefd)等。</li>
-</ol>
-</li>
-<li><ol start="5">
 <li>向插入fd对应file的epoll事件链表(f_ep_links)中新增事件。</li>
-</ol>
-</li>
-<li><ol start="6">
 <li>将epitem插入<a href="/2020/10/22/red-black-tree">红黑树</a>。</li>
-</ol>
-</li>
-<li><ol start="7">
 <li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/include/linux/poll.h#L75">init_poll_funcptr</a>注册poll回调函数<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L1309">ep_ptable_queue_proc</a>。在前select一节有描述。这里回调函数<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L1309">ep_ptable_queue_proc</a>除了将task放入FD对应file的等待队列之外，事件来临还会调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L1204">ep_poll_callback</a>函数。</li>
-</ol>
-</li>
-<li><ol start="8">
-<li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L877">ep_item_poll</a></li>
-</ol>
-<ul>
-<li><ol>
+<li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L877">ep_item_poll</a><ul>
 <li>如果不是epoll的FD就调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/include/linux/poll.h#L86">vfs_poll</a>-&gt;file_operations.poll查询FD事件如果有就返回，没有就插入等待队列。</li>
-</ol>
-</li>
-<li><ol start="2">
 <li>如果是epoll的FD，就调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L677">ep_scan_ready_list</a>将epoll的rdllist(已就绪的FD)传入用户空间。</li>
-</ol>
-</li>
 </ul>
 </li>
-<li><ol start="9">
 <li>如果有事件的话并且之前不在就绪链表rdllist，就放入就绪链表</li>
-</ol>
-</li>
 </ul>
 </li>
-</ol>
-</li>
-<li><ol start="3">
 <li>如果是DEL就调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L767">ep_remove</a>:<ul>
-<li><ol>
 <li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L618">ep_unregister_pollwait</a>注销epoll_add时注册的file对应的poll_wait函数。</li>
-</ol>
-</li>
-<li><ol start="2">
 <li>从各链表中删除。</li>
-</ol>
-</li>
-<li><ol start="3">
 <li>从<a href="/2020/10/22/red-black-tree">红黑树</a>中删除。</li>
-</ol>
-</li>
 </ul>
 </li>
-</ol>
-</li>
-<li><ol start="4">
 <li>如果是MOD就调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L1622">ep_modify</a>:<ul>
-<li><ol>
 <li>修改FD事件。</li>
-</ol>
-</li>
-<li><ol start="2">
 <li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L877">ep_item_poll</a>查询是否修改后有事件，有的话就放入rdllist就绪链表。</li>
-</ol>
-</li>
 </ul>
 </li>
-</ol>
-</li>
 </ul>
-</li>
-</ol>
 </li>
 </ul>
 </li>
@@ -1427,41 +1269,17 @@
 <h3 id="5-2-3-epoll-wait"><a href="#5-2-3-epoll-wait" class="headerlink" title="5.2.3 epoll_wait"></a>5.2.3 epoll_wait</h3><ol>
 <li>epoll_wait入口在<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L2330">SYSCALL_DEFINE4</a>，之后调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L2288">do_epoll_wait</a></li>
 <li><a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L2288">do_epoll_wait</a>主要流程:<ul>
-<li><ol>
 <li>检查参数，参数是否正确，返回结果地址是否正确，要操作的epollfd是否正确。</li>
-</ol>
-</li>
-<li><ol start="2">
 <li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L1818">ep_poll</a><ul>
-<li><ol>
 <li>如果有timeout不为零，就将时间转化为绝对时间，如果为0就检查一下当前就绪队列是否为空，如果有事件直接返回，没有事件就返回空。</li>
-</ol>
-</li>
-<li><ol start="2">
 <li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L375">ep_events_available</a>检查当前有无就绪FD，有就直接返回，或者当前file_operations-&gt;poll函数正忙就等等，看工作完有没有。</li>
-</ol>
-</li>
-<li><ol start="3">
 <li>如果没有就进入死循环，和select一样，将task设为TASK_INTERRUPTIBLE，等待被唤醒或被信号唤醒或超时。</li>
-</ol>
-</li>
-<li><ol start="4">
 <li>直到被唤醒依然调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L375">ep_events_available</a>检查有没有就绪FD，有的话就调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L1778">ep_send_events</a>将结果传回用户空间。<ul>
-<li><ol>
 <li><a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L1778">ep_send_events</a>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L677">ep_scan_ready_list</a>扫描rdllist链表并且调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L1694">ep_send_events_proc</a>将事件发回用户空间，如果FD的使用的epoll的模式为EPOLLET(水平触发)发送完之后重新被加入rdllist链表，等待下次epoll_wait时，如果fd在rdllink中且已经不可读了就不再加入rdllist中了。</li>
-</ol>
-</li>
-<li><ol start="2">
 <li>发送会用户空间之后，将因为rdllist发送时加锁而没加入的事件(放入了ovflist)加入rdllist。</li>
-</ol>
-</li>
 </ul>
 </li>
-</ol>
-</li>
 </ul>
-</li>
-</ol>
 </li>
 </ul>
 </li>

@@ -1,6 +1,8 @@
 body {
-  background-color: #3a3e4a;
-  color: #d2d2d2;
+/* background-color: #3a3e4a; */
+/* color: #d2d2d2; */
+  background-color: transparent;
+  color: #343a40;
   font-weight: 400;
   font-size: 14px;
   font-family: "Menlo", "Meslo LG", monospace;
@@ -10,12 +12,20 @@ body {
 .toc-item {
   list-style: none;
 }
+.toc-text {
+  color: #477ccb;
+}
+.toc-text:focus,
+.toc-text:hover {
+  color: #d2d2d2;
+}
+.toc-text:visited {
+  color: #9b65f4;
+}
 .toc {
   width: 100%;
   left: calc(50% + 400px);
   position: fixed;
-  border-left: 2px groove;
-  border-color: #58606b;
 }
 .article-tag {
   margin-left: 3px;
@@ -24,12 +34,14 @@ body {
   text-decoration: none;
   border-radius: 5px;
   font-size: 1rem;
+  font-family: FangSong;
   color: #9eabb3;
   border: #e3e9ed 1px solid;
   transition: color 0.3s ease;
 }
 a {
-  color: #d2d2d2;
+/* color: #d2d2d2; */
+  color: #343a40;
   text-decoration: none;
 }
 a:focus,
@@ -40,7 +52,8 @@ a:hover {
 .footer {
   text-align: center;
   margin-top: 30px;
-  color: #ccc;
+/* color: #ccc; */
+  color: #343a40;
 }
 .clear {
   clear: both;
@@ -116,9 +129,6 @@ a:hover {
   top: 24px;
   position: absolute;
 }
-hr {
-  border-color: #58606b;
-}
 body {
   height: 100%;
 }
@@ -150,7 +160,7 @@ body {
   line-height: 40px;
   text-align: center;
   border-radius: 100%;
-  position: absolute;
+  position: relative;
 }
 .posts .post-title {
   text-align: center;
