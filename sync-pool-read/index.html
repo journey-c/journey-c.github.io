@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.74.3" />
+
+
+<title>sync.pool 源码阅读 - Journey-C</title>
+<meta property="og:title" content="sync.pool 源码阅读 - Journey-C">
+
+
+  <link href='https://journey-c.github.com/favicon.png' rel='icon' type='image/x-icon'/>
+
+
+
+  
+
+
+
+
+<link rel="icon" href="https://journey-c.github.comimages/" type="image/x-icon"/>
+<link rel="stylesheet" href="https://journey-c.github.comcss/main.css" media="all">
+<link rel="stylesheet" href="https://journey-c.github.comcss/fonts.css" media="all">
+<link rel="stylesheet" href="https://journey-c.github.comcss/prism.css" media="all">
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Merriweather:400|Lato:400,400italic,700">
+<script type="text/javascript" src="https://journey-c.github.comjs/main.js"></script>
+<script type="text/javascript" src="https://journey-c.github.comjs/prism.js"></script>
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="https://journey-c.github.com" class="nav-logo">
+    <img src="https://journey-c.github.comimages/yangguo.png" 
+         width="50" 
+         height="50" 
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/archives/"></a></li>
+    
+    <li><a href="/tags/"></a></li>
+    
+    <li><a href="/about/">About</a></li>
+    
+    <li><a href="https://github.com/journey-c">Github</a></li>
+    
+    <li><a href="https://www.cnblogs.com/wuwangchuxin0924/">博客园</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+  <article class="article">
+    
+    
+<section class="toc-section" id="toc-section">
+
+
+
+
+
+
+
+
+
+<div class="article-toc" id="article-toc">
+
+    <div class="article-toc-header"><strong>CONTENTS</strong></div>
+
+    <div id="page-scrollspy" class="article-toc-nav">
+
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#1-%e4%bb%8b%e7%bb%8d">
+                            1. 介绍
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#2-%e7%94%a8%e6%b3%95">
+                            2. 用法
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#3-%e7%bb%93%e6%9e%84%e5%9b%be">
+                            3. 结构图
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#4-%e5%ae%9e%e7%8e%b0%e7%bb%86%e8%8a%82">
+                            4. 实现细节
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#41-%e6%95%b0%e6%8d%ae%e7%bb%93%e6%9e%84">
+                            4.1 数据结构
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#411-eface">
+                            4.1.1 eface
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#412-pooldequeue">
+                            4.1.2 poolDequeue
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#413-poolchainelt">
+                            4.1.3 poolChainElt
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#414-poolchain">
+                            4.1.4 poolChain
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#415-poollocal">
+                            4.1.5 poolLocal
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#42-%e4%b8%bb%e8%a6%81%e5%87%bd%e6%95%b0">
+                            4.2 主要函数
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#421-put">
+                            4.2.1 Put
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#422-get">
+                            4.2.2 Get
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e9%99%84%e5%bd%95">
+                            附录
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#pooldot">
+                            pool.dot
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+
+    </div>
+    
+</div>
+
+
+
+</section>
+
+    
+
+    
+    <span class="article-duration">5 min read</span>
+    
+
+    <h1 class="article-title">sync.pool 源码阅读</h1>
+
+    
+    <span class="article-date">2020-10-27</span>
+    
+
+    
+        
+            
+            <a class="article-tag" href="https://journey-c.github.com/tags/%E6%BA%90%E7%A0%81">源码</a>
+            
+            <a class="article-tag" href="https://journey-c.github.com/tags/golang">Golang</a>
+            
+        
+    
+
+    <div class="article-content">
+      <p>阅读项目代码的时候发现很多地方用到了golang的sync.pool，所以好奇golang的sync.pool底层实现是什么样的，有哪些优化。
+本文是基于go1.13.8，做讲解。</p>
+<!-- raw HTML omitted -->
+<h1 id="1-介绍">1. 介绍</h1>
+<p>Pool翻译过来就是池子，主要功能就是: 需要使用某个Object的时候可以从Pool获取，使用完毕再归还，从而减少创建和销毁Object的开销。而本文讲的就是golang中的Pool源码实现。</p>
+<h1 id="2-用法">2. 用法</h1>
+<p><strong>千万不要想当然的认为put进去的Object和get出来的Object有什么关系，Pool存的Object在GC时会都清理掉</strong></p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
+
+<span style="color:#f92672">import</span> (
+	<span style="color:#e6db74">&#34;fmt&#34;</span>
+	<span style="color:#e6db74">&#34;sync&#34;</span>
+)
+
+<span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Book</span> <span style="color:#66d9ef">struct</span> {
+	<span style="color:#a6e22e">Name</span> <span style="color:#66d9ef">string</span>
+	<span style="color:#a6e22e">Info</span> <span style="color:#66d9ef">map</span>[<span style="color:#66d9ef">string</span>]<span style="color:#66d9ef">string</span>
+}
+
+<span style="color:#66d9ef">func</span> <span style="color:#a6e22e">NewBook</span>() <span style="color:#66d9ef">interface</span>{} {
+	<span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">Book</span>{
+		<span style="color:#a6e22e">Name</span>: <span style="color:#e6db74">&#34;&#34;</span>,
+		<span style="color:#a6e22e">Info</span>: make(<span style="color:#66d9ef">map</span>[<span style="color:#66d9ef">string</span>]<span style="color:#66d9ef">string</span>),
+	}
+}
+
+<span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+	<span style="color:#75715e">// 创建pool并定义创建object的函数
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">bookPool</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">sync</span>.<span style="color:#a6e22e">Pool</span>{<span style="color:#a6e22e">New</span>:<span style="color:#a6e22e">NewBook</span>}
+
+	<span style="color:#75715e">// 从pool获取object
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">a</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">bookPool</span>.<span style="color:#a6e22e">Get</span>().(<span style="color:#f92672">*</span><span style="color:#a6e22e">Book</span>)
+	<span style="color:#a6e22e">a</span>.<span style="color:#a6e22e">Name</span> = <span style="color:#e6db74">&#34;go&#34;</span>
+	<span style="color:#a6e22e">a</span>.<span style="color:#a6e22e">Info</span>[<span style="color:#e6db74">&#34;a&#34;</span>] = <span style="color:#e6db74">&#34;b&#34;</span>
+
+	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">a</span>)
+
+	<span style="color:#75715e">// 放回pool
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">bookPool</span>.<span style="color:#a6e22e">Put</span>(<span style="color:#a6e22e">a</span>)
+}
+</code></pre></div><h1 id="3-结构图">3. 结构图</h1>
+<p><img src="/images/pool.png" alt=""></p>
+<h1 id="4-实现细节">4. 实现细节</h1>
+<ul>
+<li>Pool实现源码是这两个文件go/src/sync/pool.go, go/src/sync/poolqueue.go</li>
+</ul>
+<h2 id="41-数据结构">4.1 数据结构</h2>
+<p><strong>从下往上讲一下Pool底层存储是如何实现</strong></p>
+<h3 id="411-eface">4.1.1 eface</h3>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// 存储元素的结构体，类型指针和值指针
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">eface</span> <span style="color:#66d9ef">struct</span> {
+        <span style="color:#a6e22e">typ</span>, <span style="color:#a6e22e">val</span> <span style="color:#a6e22e">unsafe</span>.<span style="color:#a6e22e">Pointer</span>
+}
+</code></pre></div><p>Pool底层用eface来存储单个Object, 包括typ指针: Object的类型，val指针: Object的值</p>
+<h3 id="412-pooldequeue">4.1.2 poolDequeue</h3>
+<p>poolDequeue是一个无锁、固定大小的单生产端多消费端的环形队列，单一producer可以在头部push和pop(可能和传统队列头部只能push的定义不同)，多consumer可以在尾部pop</p>
+<ol>
+<li>headTail:</li>
+</ol>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go">[<span style="color:#a6e22e">hhhhhhhh</span> <span style="color:#a6e22e">hhhhhhhh</span> <span style="color:#a6e22e">hhhhhhhh</span> <span style="color:#a6e22e">hhhhhhhh</span> <span style="color:#a6e22e">tttttttt</span> <span style="color:#a6e22e">tttttttt</span> <span style="color:#a6e22e">tttttttt</span> <span style="color:#a6e22e">tttttttt</span>] 
+<span style="color:#ae81ff">1.</span> <span style="color:#a6e22e">headTail表示下标</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">高32位表示头下标</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">低32位表示尾下标</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">poolDequeue定义了</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">head</span> <span style="color:#a6e22e">tail的pack和unpack函数方便转化</span><span style="color:#960050;background-color:#1e0010">，</span>
+	<span style="color:#a6e22e">实际用的时候都会mod</span> ( len(<span style="color:#a6e22e">vals</span>) <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span> ) <span style="color:#a6e22e">来防止溢出</span>
+<span style="color:#ae81ff">2.</span> <span style="color:#a6e22e">head和tail永远只用32位表示</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">溢出后会从0开始</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">这也满足循环队列的设计</span>
+<span style="color:#ae81ff">3.</span> <span style="color:#a6e22e">队列为空的条件</span>  <span style="color:#a6e22e">tail</span> <span style="color:#f92672">==</span> <span style="color:#a6e22e">head</span>
+<span style="color:#ae81ff">4.</span> <span style="color:#a6e22e">队列满的条件</span>    (<span style="color:#a6e22e">tail</span><span style="color:#f92672">+</span>uint32(len(<span style="color:#a6e22e">d</span>.<span style="color:#a6e22e">vals</span>)))<span style="color:#f92672">&amp;</span>(<span style="color:#ae81ff">1</span><span style="color:#f92672">&lt;&lt;</span><span style="color:#a6e22e">dequeueBits</span><span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>) <span style="color:#f92672">==</span> <span style="color:#a6e22e">head</span> <span style="color:#a6e22e">tail加上队列长度和head相等</span>(<span style="color:#a6e22e">实际上就是队列已有的空间都有值了</span>,<span style="color:#a6e22e">满了</span>)
+</code></pre></div><ol start="2">
+<li>vals:</li>
+</ol>
+<ol>
+<li>
+<p>poolDequeue是被poolChain使用，poolChain使用poolDequeue时
+a) 初始化vals长度为8，vals长度必须是2的幂
+b) 当队列满时，vals长度*2，最大扩展到 dequeueLimit = (1 &laquo; 32) / 4 = (1 &laquo; 30)，之后就不会扩展了</p>
+</li>
+<li>
+<p>为什么vals长度必须是2的幂
+这是因为go的内存管理策略是将内存分为2的幂大小的链表，申请2的幂大小的内存可以有效减小分配内存的开销</p>
+</li>
+<li>
+<p>为什么dequeueLimit是(1 &laquo; 32) / 4 = 1 &laquo; 30
+a) dequeueLimit 必须是2的幂(上边解释过)
+b) head和tail都是32位，最大是1 &laquo; 31，如果都用的话，head和tail就是无符号整型，无符号整型使用的时候会有很多上溢的错误，这类错误是不容易检测的，所以相比之下还不如用31位有符号整型，有错就报出来，结论参考https://stackoverrun.com/cn/q/10770747</p>
+</li>
+</ol>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">poolDequeue</span> <span style="color:#66d9ef">struct</span> {
+	<span style="color:#a6e22e">headTail</span> <span style="color:#66d9ef">uint64</span>
+
+	<span style="color:#a6e22e">vals</span> []<span style="color:#a6e22e">eface</span>
+}
+
+<span style="color:#75715e">// poolDequeue成员函数
+</span><span style="color:#75715e">// 这里的删除操作，是将指针置空，然后让GC来回收内存空间
+</span><span style="color:#75715e"></span><span style="color:#a6e22e">unpack</span>     <span style="color:#a6e22e">将headTail分解为head和tail</span>
+<span style="color:#a6e22e">pack</span>       <span style="color:#a6e22e">将head和tail组合成headTail</span>
+<span style="color:#a6e22e">pushHead</span>   <span style="color:#a6e22e">添加元素到队首</span>
+<span style="color:#a6e22e">popHead</span>    <span style="color:#a6e22e">获取并删除队首元素</span>
+<span style="color:#a6e22e">popTail</span>    <span style="color:#a6e22e">获取并删除队尾元素</span>
+<span style="color:#a6e22e">PushHead</span>   <span style="color:#a6e22e">添加元素到队首</span>
+<span style="color:#a6e22e">PopHead</span>    <span style="color:#a6e22e">获取并删除队首元素</span>
+<span style="color:#a6e22e">PopTail</span>    <span style="color:#a6e22e">获取并删除队尾元素</span>
+</code></pre></div><h3 id="413-poolchainelt">4.1.3 poolChainElt</h3>
+<p>链表的一个节点 Node</p>
+<pre><code>type poolChainElt struct {
+	poolDequeue
+
+	// next and prev link to the adjacent poolChainElts in this
+	// poolChain.
+	//
+	// next is written atomically by the producer and read
+	// atomically by the consumer. It only transitions from nil to
+	// non-nil.
+	//
+	// prev is written atomically by the consumer and read
+	// atomically by the producer. It only transitions from
+	// non-nil to nil.
+	next, prev *poolChainElt
+}
+</code></pre><h3 id="414-poolchain">4.1.4 poolChain</h3>
+<p>poolChain 是动态版的poolDequeue
+head(poolDequeue)[prev] &ndash;&gt; &lt;&mdash; <a href="...">next</a>[prev] &mdash;&gt; &lt;&mdash;[next]tail(poolDequeue)
+动态的队列，队列每个节点又是一个环形队列(poolDequeue)</p>
+<pre><code>type poolChain struct {
+	// 头指针，只能单一producer操作(push, pop)
+	head *poolChainElt
+
+	// 尾指针，可以被多个consumer pop，必须是原子操作
+	tail *poolChainElt
+}
+
+// poolChain成员函数
+func (c *poolChain) pushHead(val interface{})
+	1. 如果head为nil，说明队列现在是空的，那么新建一个节点，将head和tail都指向这个节点
+	2. 将val push到head的环形队列中，如果push成功了，可以返回了
+	3. 如果没push成功，则说明head的环形队列满了，就再创建一个两倍head大小的节点[最大(1 &lt;&lt; 32) / 4]，
+		将新节点作为head，并且处理好新head和旧head的next，prev关系
+	4. 将val push到head的环形队列中
+
+func (c *poolChain) popHead()
+	1. 先在head环形队列中popHead试试，如果空了，当前节点就没用了，就删掉当前节点，去prev节点并且把prev节点作为新head再取一值递归下去，
+		能取到就返回，取不到说明队列空了
+func (c *poolChain) popTail()
+	1. 如果tail为nil，说明队列是空的，直接返回
+	2. 如果tail非nil，就取取试试，有东西就返回
+	3. 如果没取出来东西，那么说明tail节点没存东西了，递归去prev节点环形队列中popTail，并且把prev节点作为tail，能取到就返回，取不到就是空了
+</code></pre><h3 id="415-poollocal">4.1.5 poolLocal</h3>
+<ol>
+<li>poolLocal是每个调度器(P)存Object的结构体</li>
+<li>private是每个调度器私有的，shared是所有调度器公有的，每个调度器pop时的逻辑是: 先看private，没有在看自己的shared，再没有就去其他调度器的shared偷，再没有才是空</li>
+<li>pad是防止伪共享，参考https://www.cnblogs.com/cyfonly/p/5800758.html</li>
+</ol>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">poolLocal</span> <span style="color:#66d9ef">struct</span> {
+	<span style="color:#a6e22e">poolLocalInternal</span>
+
+	<span style="color:#75715e">// Prevents false sharing on widespread platforms with
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// 128 mod (cache line size) = 0 .
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">pad</span> [<span style="color:#ae81ff">128</span> <span style="color:#f92672">-</span> <span style="color:#a6e22e">unsafe</span>.<span style="color:#a6e22e">Sizeof</span>(<span style="color:#a6e22e">poolLocalInternal</span>{})<span style="color:#f92672">%</span><span style="color:#ae81ff">128</span>]<span style="color:#66d9ef">byte</span>
+}
+
+<span style="color:#75715e">// Local per-P Pool appendix.
+</span><span style="color:#75715e">// 当前调度器的内部资源
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">poolLocalInternal</span> <span style="color:#66d9ef">struct</span> {
+	<span style="color:#75715e">// 当前调度器的私有资源
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">private</span> <span style="color:#66d9ef">interface</span>{} <span style="color:#75715e">// Can be used only by the respective P.
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// 所有调度器的公有资源
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">shared</span>  <span style="color:#a6e22e">poolChain</span>   <span style="color:#75715e">// Local P can pushHead/popHead; any P can popTail.
+</span><span style="color:#75715e"></span>}
+</code></pre></div><h2 id="42-主要函数">4.2 主要函数</h2>
+<h3 id="421-put">4.2.1 Put</h3>
+<p>Put adds x to the pool.</p>
+<ol>
+<li>首先关闭竞争检测，然后会将当前goroutine固定到一个调度器(P)上，且不允许抢占</li>
+<li>从Pool的local中取出来当前goroutine固定到那个调度器(P)对应的poolLocal, 没有就新建</li>
+<li>先判断这个当前调度器(P)专属poolLocal，私有空间是不是空的，如果是把x放到私有空间，并把x置nil</li>
+<li>判断x是否为nil，如果不为空说明私有空间满了，就push到该调度器专属poolLocal的shared head</li>
+<li>允许抢占，开启竞争检测</li>
+</ol>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">p</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Pool</span>) <span style="color:#a6e22e">Put</span>(<span style="color:#a6e22e">x</span> <span style="color:#66d9ef">interface</span>{}) {
+	<span style="color:#75715e">// 如果put进来的值为空直接返回
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">x</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#66d9ef">return</span>
+	}
+	<span style="color:#75715e">// 关闭竞争检测
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">race</span>.<span style="color:#a6e22e">Enabled</span> {
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">fastrand</span>()<span style="color:#f92672">%</span><span style="color:#ae81ff">4</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span> {
+			<span style="color:#75715e">// Randomly drop x on floor.
+</span><span style="color:#75715e"></span>			<span style="color:#66d9ef">return</span>
+		}
+		<span style="color:#a6e22e">race</span>.<span style="color:#a6e22e">ReleaseMerge</span>(<span style="color:#a6e22e">poolRaceAddr</span>(<span style="color:#a6e22e">x</span>))
+		<span style="color:#a6e22e">race</span>.<span style="color:#a6e22e">Disable</span>()
+	}
+	<span style="color:#75715e">// 
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">l</span>, <span style="color:#a6e22e">_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">pin</span>()
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">l</span>.<span style="color:#a6e22e">private</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#a6e22e">l</span>.<span style="color:#a6e22e">private</span> = <span style="color:#a6e22e">x</span>
+		<span style="color:#a6e22e">x</span> = <span style="color:#66d9ef">nil</span>
+	}
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">x</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#a6e22e">l</span>.<span style="color:#a6e22e">shared</span>.<span style="color:#a6e22e">pushHead</span>(<span style="color:#a6e22e">x</span>)
+	}
+	<span style="color:#a6e22e">runtime_procUnpin</span>()
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">race</span>.<span style="color:#a6e22e">Enabled</span> {
+		<span style="color:#a6e22e">race</span>.<span style="color:#a6e22e">Enable</span>()
+	}
+}
+</code></pre></div><p>把当前的goroutine固定到调度器(P)，不允许抢占, 返回该调度器(P)对应的poolLocal和调度器(P)ID
+运行时调度器的三个重要组成部分 — 线程 M、Goroutine G 和调度器 P(负责调度)</p>
+<p>判断pid是否小于[]poolLocal的长度，小于的话就在取出poolLocal[P]返回，否则就去执行pinSlow函数
+Caller must call runtime_procUnpin() when done with the pool.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">p</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Pool</span>) <span style="color:#a6e22e">pin</span>() (<span style="color:#f92672">*</span><span style="color:#a6e22e">poolLocal</span>, <span style="color:#66d9ef">int</span>) {
+	<span style="color:#75715e">// 关闭抢占，等这个goroutine工作完，其他goroutine才能获得时间片工作
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">pid</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">runtime_procPin</span>()
+	<span style="color:#75715e">// In pinSlow we store to local and then to localSize, here we load in opposite order.
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// Since we&#39;ve disabled preemption, GC cannot happen in between.
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// Thus here we must observe local at least as large localSize.
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// We can observe a newer/larger local, it is fine (we must observe its zero-initialized-ness).
+</span><span style="color:#75715e"></span>
+	<span style="color:#a6e22e">s</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">atomic</span>.<span style="color:#a6e22e">LoadUintptr</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">localSize</span>) <span style="color:#75715e">// load-acquire
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">l</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">local</span>                          <span style="color:#75715e">// load-consume
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> uintptr(<span style="color:#a6e22e">pid</span>) &lt; <span style="color:#a6e22e">s</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">indexLocal</span>(<span style="color:#a6e22e">l</span>, <span style="color:#a6e22e">pid</span>), <span style="color:#a6e22e">pid</span>
+	}
+	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">pinSlow</span>()
+}
+</code></pre></div><p>当goroutine固定到的调度器(P)没有poolLocal时，pins() 函数就会调用pinSlow() 来重新固定到其他调度器(P)，
+如果新固定到的调度器(P)还是没有poolLocal，就给该调度器创建一个poolLocal放到Pool的local中</p>
+<ol>
+<li>打开抢占并且pool加锁然后关闭抢占，这里如果不先打开抢占的话，其他goroutine如果之前获得锁了，但不能运行，当前goroutine在获取锁，就会死锁</li>
+<li>如果判断pid和len([]poolLocal)的关系，小于就返回[PID]poolLocal</li>
+<li>如果此Pool的[]poolLocal是空的，就把Pool加到allPools中</li>
+<li>获得当前cpu的数量，创建一个cpu数量大小的[]poolLocal</li>
+</ol>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">p</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Pool</span>) <span style="color:#a6e22e">pinSlow</span>() (<span style="color:#f92672">*</span><span style="color:#a6e22e">poolLocal</span>, <span style="color:#66d9ef">int</span>) {
+	<span style="color:#a6e22e">runtime_procUnpin</span>()
+	<span style="color:#a6e22e">allPoolsMu</span>.<span style="color:#a6e22e">Lock</span>()
+	<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">allPoolsMu</span>.<span style="color:#a6e22e">Unlock</span>()
+	<span style="color:#a6e22e">pid</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">runtime_procPin</span>()
+	<span style="color:#75715e">// poolCleanup won&#39;t be called while we are pinned.
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">s</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">localSize</span>
+	<span style="color:#a6e22e">l</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">local</span>
+	<span style="color:#66d9ef">if</span> uintptr(<span style="color:#a6e22e">pid</span>) &lt; <span style="color:#a6e22e">s</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">indexLocal</span>(<span style="color:#a6e22e">l</span>, <span style="color:#a6e22e">pid</span>), <span style="color:#a6e22e">pid</span>
+	}
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">local</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#a6e22e">allPools</span> = append(<span style="color:#a6e22e">allPools</span>, <span style="color:#a6e22e">p</span>)
+	}
+	<span style="color:#75715e">// If GOMAXPROCS changes between GCs, we re-allocate the array and lose the old one.
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">size</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">runtime</span>.<span style="color:#a6e22e">GOMAXPROCS</span>(<span style="color:#ae81ff">0</span>)
+	<span style="color:#a6e22e">local</span> <span style="color:#f92672">:=</span> make([]<span style="color:#a6e22e">poolLocal</span>, <span style="color:#a6e22e">size</span>)
+	<span style="color:#a6e22e">atomic</span>.<span style="color:#a6e22e">StorePointer</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">local</span>, <span style="color:#a6e22e">unsafe</span>.<span style="color:#a6e22e">Pointer</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">local</span>[<span style="color:#ae81ff">0</span>])) <span style="color:#75715e">// store-release
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">atomic</span>.<span style="color:#a6e22e">StoreUintptr</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">localSize</span>, uintptr(<span style="color:#a6e22e">size</span>))         <span style="color:#75715e">// store-release
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">local</span>[<span style="color:#a6e22e">pid</span>], <span style="color:#a6e22e">pid</span>
+}
+</code></pre></div><h3 id="422-get">4.2.2 Get</h3>
+<p>从Pool中获取对象，然后返回，如果Pool为空的就用New来创建
+不要假设Put进来的对象和Get得到的对象有什么关系</p>
+<ol>
+<li>关掉竞争检测</li>
+<li>将goroutine固定到一个调度器(P), 并获取他的poolLocal和PID</li>
+<li>判断该调度器(P)的poolLocal的私有空间是不是空的，如果是空的，就从该调度器(P)的poolLocal shared空间头
+pop一下看有没有</li>
+<li>如果没有，就说明该调度器(P)自己的poolLocal没有对象了，就调用getSlow</li>
+</ol>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">p</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Pool</span>) <span style="color:#a6e22e">Get</span>() <span style="color:#66d9ef">interface</span>{} {
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">race</span>.<span style="color:#a6e22e">Enabled</span> {
+		<span style="color:#a6e22e">race</span>.<span style="color:#a6e22e">Disable</span>()
+	}
+	<span style="color:#a6e22e">l</span>, <span style="color:#a6e22e">pid</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">pin</span>()
+	<span style="color:#a6e22e">x</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">l</span>.<span style="color:#a6e22e">private</span>
+	<span style="color:#a6e22e">l</span>.<span style="color:#a6e22e">private</span> = <span style="color:#66d9ef">nil</span>
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">x</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#75715e">// Try to pop the head of the local shard. We prefer
+</span><span style="color:#75715e"></span>		<span style="color:#75715e">// the head over the tail for temporal locality of
+</span><span style="color:#75715e"></span>		<span style="color:#75715e">// reuse.
+</span><span style="color:#75715e"></span>		<span style="color:#a6e22e">x</span>, <span style="color:#a6e22e">_</span> = <span style="color:#a6e22e">l</span>.<span style="color:#a6e22e">shared</span>.<span style="color:#a6e22e">popHead</span>()
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">x</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#a6e22e">x</span> = <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">getSlow</span>(<span style="color:#a6e22e">pid</span>)
+		}
+	}
+	<span style="color:#a6e22e">runtime_procUnpin</span>()
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">race</span>.<span style="color:#a6e22e">Enabled</span> {
+		<span style="color:#a6e22e">race</span>.<span style="color:#a6e22e">Enable</span>()
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">x</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#a6e22e">race</span>.<span style="color:#a6e22e">Acquire</span>(<span style="color:#a6e22e">poolRaceAddr</span>(<span style="color:#a6e22e">x</span>))
+		}
+	}
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">x</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">New</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#a6e22e">x</span> = <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">New</span>()
+	}
+	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">x</span>
+}
+</code></pre></div><p>懒获取函数</p>
+<ol>
+<li>取到Pool的localSize和local</li>
+<li>然后遍历其他调度器(P)对应的poolLocal，看看能不能从对应poolLocal中的shared tail中取出对象, 如果能取到，直接返回</li>
+<li>如果取不到就到victim中查询，有就返回，没有调用New创建一个新的Object返回</li>
+</ol>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">p</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Pool</span>) <span style="color:#a6e22e">getSlow</span>(<span style="color:#a6e22e">pid</span> <span style="color:#66d9ef">int</span>) <span style="color:#66d9ef">interface</span>{} {
+	<span style="color:#75715e">// See the comment in pin regarding ordering of the loads.
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">size</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">atomic</span>.<span style="color:#a6e22e">LoadUintptr</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">localSize</span>) <span style="color:#75715e">// load-acquire
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">locals</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">local</span>                        <span style="color:#75715e">// load-consume
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// Try to steal one element from other procs.
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; int(<span style="color:#a6e22e">size</span>); <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+		<span style="color:#a6e22e">l</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">indexLocal</span>(<span style="color:#a6e22e">locals</span>, (<span style="color:#a6e22e">pid</span><span style="color:#f92672">+</span><span style="color:#a6e22e">i</span><span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>)<span style="color:#f92672">%</span>int(<span style="color:#a6e22e">size</span>))
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">x</span>, <span style="color:#a6e22e">_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">l</span>.<span style="color:#a6e22e">shared</span>.<span style="color:#a6e22e">popTail</span>(); <span style="color:#a6e22e">x</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">x</span>
+		}
+	}
+
+	<span style="color:#75715e">// Try the victim cache. We do this after attempting to steal
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// from all primary caches because we want objects in the
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// victim cache to age out if at all possible.
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">size</span> = <span style="color:#a6e22e">atomic</span>.<span style="color:#a6e22e">LoadUintptr</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">victimSize</span>)
+	<span style="color:#66d9ef">if</span> uintptr(<span style="color:#a6e22e">pid</span>) <span style="color:#f92672">&gt;=</span> <span style="color:#a6e22e">size</span> {
+		<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>
+	}
+	<span style="color:#a6e22e">locals</span> = <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">victim</span>
+	<span style="color:#a6e22e">l</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">indexLocal</span>(<span style="color:#a6e22e">locals</span>, <span style="color:#a6e22e">pid</span>)
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">x</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">l</span>.<span style="color:#a6e22e">private</span>; <span style="color:#a6e22e">x</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#a6e22e">l</span>.<span style="color:#a6e22e">private</span> = <span style="color:#66d9ef">nil</span>
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">x</span>
+	}
+	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; int(<span style="color:#a6e22e">size</span>); <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+		<span style="color:#a6e22e">l</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">indexLocal</span>(<span style="color:#a6e22e">locals</span>, (<span style="color:#a6e22e">pid</span><span style="color:#f92672">+</span><span style="color:#a6e22e">i</span>)<span style="color:#f92672">%</span>int(<span style="color:#a6e22e">size</span>))
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">x</span>, <span style="color:#a6e22e">_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">l</span>.<span style="color:#a6e22e">shared</span>.<span style="color:#a6e22e">popTail</span>(); <span style="color:#a6e22e">x</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">x</span>
+		}
+	}
+
+	<span style="color:#75715e">// Mark the victim cache as empty for future gets don&#39;t bother
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// with it.
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">atomic</span>.<span style="color:#a6e22e">StoreUintptr</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">victimSize</span>, <span style="color:#ae81ff">0</span>)
+
+	<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>
+}
+</code></pre></div><h1 id="附录">附录</h1>
+<h2 id="pooldot">pool.dot</h2>
+<pre><code>digraph {
+    bgcolor=&quot;#C6CFD532&quot;;
+
+    node [shape=record, fontsize=&quot;8&quot;, margin=&quot;0.04&quot;, height=0.2, color=gray]
+    edge [fontname=&quot;Inconsolata, Consolas&quot;, fontsize=10, arrowhead=normal]
+
+    pool [shape=record,label=&quot;{noCopy|&lt;local&gt;local|localSize|&lt;victim&gt;victim|victimSize|New}&quot;,xlabel=&quot;Pool&quot;]
+    poolLocal[shape=record,label=&quot;{&lt;poolLocalInternal&gt;poolLocalInternal|pad}&quot;,xlabel=&quot;poolLocal&quot;]
+    poolLocalInternal[shape=record,label=&quot;{private|&lt;shared&gt;shared}&quot;,xlabel=&quot;poolLocalInternal&quot;]
+    poolChain[shape=record,label=&quot;{&lt;head&gt;head|&lt;tail&gt;tail}&quot;,xlabel=&quot;poolChain&quot;]
+    poolChainElt[shape=record,label=&quot;{&lt;poolDequeue&gt;poolDequeue|next|prev}&quot;,xlabel=&quot;poolChainElt&quot;]
+    poolDequeue[shape=record,label=&quot;{headTail|&lt;vals&gt;vals}&quot;,xlabel=&quot;poolDequeue&quot;]
+    eface[shape=record,label=&quot;{typ|val}&quot;,xlabel=&quot;eface&quot;]
+    victim[shape=record,label=&quot;GC的时候，首先把local中每个处理器(P)对应的poolLocal赋给victim，然后清空local，所以victim就是缓存GC前的local&quot;,xlabel=&quot;victim&quot;]
+
+    pool:local -&gt; poolLocal [label=&quot;local指针指向[]poolLocal首地址&quot;,rankdir=LR]
+    poolLocal:poolLocalInternal -&gt; poolLocalInternal
+    poolLocalInternal:shared -&gt; poolChain[label=&quot;shared是一个队列&quot;]
+    poolChain:head -&gt; poolChainElt[label=&quot;head和tail是队列的收尾节点指针&quot;]
+    poolChain:tail -&gt; poolChainElt
+    poolChainElt:poolDequeue -&gt; poolDequeue[label=&quot;poolDequeue是一个环形队列&quot;]
+    poolDequeue:vals -&gt; eface[label=&quot;eface存储Object的结构体，typ和val是Object的类型和值指针&quot;]
+    pool:victim -&gt; victim
+}
+</code></pre>
+    </div>
+  </article>
+
+  
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <p>Copyright @ 2020-<script>document.write(new Date().getFullYear())</script> <a class="footer-links-kudos" href="https://github.com/journey-c">Journey-C</a>.
+    </p>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+
+    
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+	ga('create', 'xxxxx', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+
+
+    <script type=text/javascript async src="https://cdn.staticfile.org/mathjax/2.7.7/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$']],
+            processEscapes: true,
+            processEnvironments: true,
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+            TeX: {
+                equationNumbers: {
+                    autoNumber: "AMS"
+                },
+                extensions: ["AMSmath.js", "AMSsymbols.js"]
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(),
+            i;
+        for (i = 0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+    MathJax.Hub.Config({
+        TeX: {
+            equationNumbers: {
+                autoNumber: "AMS"
+            }
+        }
+    });
+    </script>
+
+    
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+	var gitalk = new Gitalk({
+    		clientID: 'a60f22cd3c5d7e6aafa8',
+    		clientSecret: 'db8f7c66f2e8e20275173155975b749870291c5b',
+    		repo: 'journey-c.github.io',
+    		owner: 'journey-c',
+    		admin: ['journey-c'],
+    		id: '<%=page.title%>',
+    		distractionFreeMode: true
+  	});
+  	gitalk.render('gitalk-container');
+</script>
+
+    
+  </body>
+</html>
+

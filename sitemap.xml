@@ -1,218 +1,153 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>https://journey-c.github.io/2021/01/01/why-redis-has-multiple-databases/</loc>
-    
-    <lastmod>2021-01-01</lastmod>
-    
+    <loc>https://journey-c.github.com/</loc>
+    <lastmod>2021-01-01T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/2020/12/20/IO-multiplexing/</loc>
-    
-    <lastmod>2020-12-30</lastmod>
-    
+    <loc>https://journey-c.github.com/post/</loc>
+    <lastmod>2021-01-01T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/2020/10/22/red-black-tree/</loc>
-    
-    <lastmod>2020-12-12</lastmod>
-    
+    <loc>https://journey-c.github.com/tags/redis/</loc>
+    <lastmod>2021-01-01T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/2020/11/27/what-is-system-call/</loc>
-    
-    <lastmod>2020-11-29</lastmod>
-    
+    <loc>https://journey-c.github.com/tags/</loc>
+    <lastmod>2021-01-01T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/2020/11/26/sketch/the-first-sketch/</loc>
-    
-    <lastmod>2020-11-27</lastmod>
-    
+    <loc>https://journey-c.github.com/why-redis-has-multiple-databases/</loc>
+    <lastmod>2021-01-01T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/sketch/index.html</loc>
-    
-    <lastmod>2020-11-26</lastmod>
-    
+    <loc>https://journey-c.github.com/tags/%E6%97%A0%E7%94%A8%E7%9A%84%E5%86%B7%E7%9F%A5%E8%AF%86/</loc>
+    <lastmod>2021-01-01T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/about/index.html</loc>
-    
-    <lastmod>2020-11-26</lastmod>
-    
+    <loc>https://journey-c.github.com/tags/linux/</loc>
+    <lastmod>2020-12-20T21:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/2020/11/19/how-to-use-vim-as-golang-and-cxx-development-ide/</loc>
-    
-    <lastmod>2020-11-19</lastmod>
-    
+    <loc>https://journey-c.github.com/io-multiplexing/</loc>
+    <lastmod>2020-12-20T21:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/2020/10/21/long-connection-smooth-restart-realization/</loc>
-    
-    <lastmod>2020-11-19</lastmod>
-    
+    <loc>https://journey-c.github.com/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/</loc>
+    <lastmod>2020-11-27T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/2020/10/21/goroutine-read/</loc>
-    
-    <lastmod>2020-11-19</lastmod>
-    
+    <loc>https://journey-c.github.com/what-is-system-call/</loc>
+    <lastmod>2020-11-27T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/2020/10/29/channel-read/</loc>
-    
-    <lastmod>2020-11-14</lastmod>
-    
+    <loc>https://journey-c.github.com/tags/cxx/</loc>
+    <lastmod>2020-11-19T23:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/2020/10/29/sync-pool-read/</loc>
-    
-    <lastmod>2020-11-14</lastmod>
-    
+    <loc>https://journey-c.github.com/tags/golang/</loc>
+    <lastmod>2020-11-19T23:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/2020/10/29/timing-wheel/</loc>
-    
-    <lastmod>2020-11-14</lastmod>
-    
+    <loc>https://journey-c.github.com/tags/vim/</loc>
+    <lastmod>2020-11-19T23:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/2020/10/29/regarding-the-n-th-power-alignment-of-2/</loc>
-    
-    <lastmod>2020-11-14</lastmod>
-    
+    <loc>https://journey-c.github.com/how-to-use-vim-as-golang-and-cxx-development-ide/</loc>
+    <lastmod>2020-11-19T23:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/tags/index.html</loc>
-    
-    <lastmod>2020-11-12</lastmod>
-    
-  </url>
-  
-
-  <url>
-    <loc>https://journey-c.github.io/</loc>
-    <lastmod>2021-01-01</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
-
-  
-  <url>
-    <loc>https://journey-c.github.io/tags/%E7%BD%91%E7%BB%9C/</loc>
-    <lastmod>2021-01-01</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
+    <loc>https://journey-c.github.com/channel-read/</loc>
+    <lastmod>2020-10-29T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/tags/Golang/</loc>
-    <lastmod>2021-01-01</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
+    <loc>https://journey-c.github.com/goroutine-read/</loc>
+    <lastmod>2020-10-29T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/tags/%E7%AE%97%E6%B3%95/</loc>
-    <lastmod>2021-01-01</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
+    <loc>https://journey-c.github.com/tags/%E6%BA%90%E7%A0%81/</loc>
+    <lastmod>2020-10-29T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/</loc>
-    <lastmod>2021-01-01</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
+    <loc>https://journey-c.github.com/timing-wheel/</loc>
+    <lastmod>2020-10-29T19:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/tags/%E9%BB%91%E7%A7%91%E6%8A%80/</loc>
-    <lastmod>2021-01-01</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
+    <loc>https://journey-c.github.com/tags/%E5%B7%A5%E7%A8%8B/</loc>
+    <lastmod>2020-10-29T19:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/tags/%E6%BA%90%E7%A0%81/</loc>
-    <lastmod>2021-01-01</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
+    <loc>https://journey-c.github.com/regarding-the-n-th-power-alignment-of-2/</loc>
+    <lastmod>2020-10-28T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/tags/%E5%B7%A5%E7%A8%8B/</loc>
-    <lastmod>2021-01-01</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
+    <loc>https://journey-c.github.com/tags/%E9%BB%91%E7%A7%91%E6%8A%80/</loc>
+    <lastmod>2020-10-28T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/</loc>
-    <lastmod>2021-01-01</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
+    <loc>https://journey-c.github.com/sync-pool-read/</loc>
+    <lastmod>2020-10-27T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/tags/linux/</loc>
-    <lastmod>2021-01-01</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
+    <loc>https://journey-c.github.com/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/</loc>
+    <lastmod>2020-10-22T21:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/tags/redis/</loc>
-    <lastmod>2021-01-01</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
+    <loc>https://journey-c.github.com/tags/%E7%AE%97%E6%B3%95/</loc>
+    <lastmod>2020-10-22T21:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/tags/%E6%97%A0%E7%94%A8%E7%9A%84%E5%86%B7%E7%9F%A5%E8%AF%86/</loc>
-    <lastmod>2021-01-01</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
+    <loc>https://journey-c.github.com/red-black-tree/</loc>
+    <lastmod>2020-10-22T21:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/tags/vim/</loc>
-    <lastmod>2021-01-01</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
+    <loc>https://journey-c.github.com/about/</loc>
+    <lastmod>2020-10-21T21:28:08+00:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/tags/CXX/</loc>
-    <lastmod>2021-01-01</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
+    <loc>https://journey-c.github.com/tags/%E7%BD%91%E7%BB%9C/</loc>
+    <lastmod>2020-10-21T22:48:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://journey-c.github.io/tags/I-O%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/</loc>
-    <lastmod>2021-01-01</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
+    <loc>https://journey-c.github.com/long-connection-smooth-restart-realization/</loc>
+    <lastmod>2020-10-21T22:48:31+08:00</lastmod>
   </url>
   
-
+  <url>
+    <loc>https://journey-c.github.com/tags/</loc>
+  </url>
+  
+  <url>
+    <loc>https://journey-c.github.com/tags/i/o%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/</loc>
+  </url>
   
 </urlset>

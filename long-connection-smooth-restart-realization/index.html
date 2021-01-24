@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.74.3" />
+
+
+<title>长连接平滑重启 - Journey-C</title>
+<meta property="og:title" content="长连接平滑重启 - Journey-C">
+
+
+  <link href='https://journey-c.github.com/favicon.png' rel='icon' type='image/x-icon'/>
+
+
+
+  
+
+
+
+
+<link rel="icon" href="https://journey-c.github.comimages/" type="image/x-icon"/>
+<link rel="stylesheet" href="https://journey-c.github.comcss/main.css" media="all">
+<link rel="stylesheet" href="https://journey-c.github.comcss/fonts.css" media="all">
+<link rel="stylesheet" href="https://journey-c.github.comcss/prism.css" media="all">
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Merriweather:400|Lato:400,400italic,700">
+<script type="text/javascript" src="https://journey-c.github.comjs/main.js"></script>
+<script type="text/javascript" src="https://journey-c.github.comjs/prism.js"></script>
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="https://journey-c.github.com" class="nav-logo">
+    <img src="https://journey-c.github.comimages/yangguo.png" 
+         width="50" 
+         height="50" 
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/archives/"></a></li>
+    
+    <li><a href="/tags/"></a></li>
+    
+    <li><a href="/about/">About</a></li>
+    
+    <li><a href="https://github.com/journey-c">Github</a></li>
+    
+    <li><a href="https://www.cnblogs.com/wuwangchuxin0924/">博客园</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+  <article class="article">
+    
+    
+<section class="toc-section" id="toc-section">
+
+
+
+
+
+
+
+
+
+<div class="article-toc" id="article-toc">
+
+    <div class="article-toc-header"><strong>CONTENTS</strong></div>
+
+    <div id="page-scrollspy" class="article-toc-nav">
+
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#1%e9%9a%be%e7%82%b9">
+                            1.难点
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#2%e8%a7%a3%e5%86%b3">
+                            2.解决
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#21-%e5%a6%82%e4%bd%95%e5%81%9a%e5%88%b0%e4%b8%8d%e4%b8%ad%e6%96%ad%e6%8e%a5%e5%8f%97%e8%bf%9e%e6%8e%a5">
+                            2.1 如何做到不中断接受连接
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#22-%e5%a6%82%e4%bd%95%e5%81%9a%e5%88%b0%e5%b7%b2%e6%9c%89%e8%bf%9e%e6%8e%a5%e4%b8%8d%e4%b8%ad%e6%96%ad">
+                            2.2 如何做到已有连接不中断
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#3-demo%e5%ae%9e%e7%8e%b0">
+                            3. Demo实现
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+
+    </div>
+    
+</div>
+
+
+
+</section>
+
+    
+
+    
+    <span class="article-duration">5 min read</span>
+    
+
+    <h1 class="article-title">长连接平滑重启</h1>
+
+    
+    <span class="article-date">2020-10-21</span>
+    
+
+    
+        
+            
+            <a class="article-tag" href="https://journey-c.github.com/tags/%E7%BD%91%E7%BB%9C">网络</a>
+            
+            <a class="article-tag" href="https://journey-c.github.com/tags/golang">Golang</a>
+            
+        
+    
+
+    <div class="article-content">
+      <blockquote>
+<p>最近小编一直在做长连接相关的事情，最大的感触就是发版太痛苦，一个个踢掉连接然后发版，导致发版时长过长，操作繁琐。所以在想能不能实现优雅重启, 发版时客户端无感知。</p>
+</blockquote>
+<h1 id="1难点">1.难点</h1>
+<ul>
+<li>
+<p>如何做到不中断接收连接</p>
+</li>
+<li>
+<p>如何做到已有连接不中断</p>
+</li>
+</ul>
+<h1 id="2解决">2.解决</h1>
+<h2 id="21-如何做到不中断接受连接">2.1 如何做到不中断接受连接</h2>
+<p>以下是linux源码中bind的实现(linux-1.0)</p>
+<pre><code>// linux-1.0/net/socket.c 536
+static int
+sock_bind(int fd, struct sockaddr *umyaddr, int addrlen)
+{
+  struct socket *sock;
+  int i;
+
+  DPRINTF((net_debug, &quot;NET: sock_bind: fd = %d\n&quot;, fd));
+  if (fd &lt; 0 || fd &gt;= NR_OPEN || current-&gt;filp[fd] == NULL)
+								return(-EBADF);
+  //获取fd对应的socket结构
+  if (!(sock = sockfd_lookup(fd, NULL))) return(-ENOTSOCK);
+  // 转调用bind指向的函数，下层函数(inet_bind)
+  if ((i = sock-&gt;ops-&gt;bind(sock, umyaddr, addrlen)) &lt; 0) {
+	DPRINTF((net_debug, &quot;NET: sock_bind: bind failed\n&quot;));
+	return(i);
+  }
+  return(0);
+}
+
+// linux-1.0/net/inet/sock.c 1012
+static int
+inet_bind(struct socket *sock, struct sockaddr *uaddr,
+	       int addr_len)
+{
+  ...
+outside_loop:
+  for(sk2 = sk-&gt;prot-&gt;sock_array[snum &amp; (SOCK_ARRAY_SIZE -1)];
+					sk2 != NULL; sk2 = sk2-&gt;next) {
+#if 	1	/* should be below! */
+	if (sk2-&gt;num != snum) continue;
+/*	if (sk2-&gt;saddr != sk-&gt;saddr) continue; */
+#endif
+	if (sk2-&gt;dead) {
+		destroy_sock(sk2);
+		goto outside_loop;
+	}
+	if (!sk-&gt;reuse) {
+		sti();
+		return(-EADDRINUSE);
+	}
+	if (sk2-&gt;num != snum) continue;		/* more than one */
+	if (sk2-&gt;saddr != sk-&gt;saddr) continue;	/* socket per slot ! -FB */
+	if (!sk2-&gt;reuse) {
+		sti();
+		return(-EADDRINUSE);
+	}
+  }
+  ... 
+}
+
+</code></pre><ul>
+<li>sock_array是一个链式哈希表，保存着各端口号的sock结构</li>
+<li>通过源码可以看到，bind的时候会检测要绑定的地址和端口是否合法以及已被绑定, 如果发版时另一个进程和旧进程没有关系，则bind会返回错误Address already in use</li>
+<li>若旧进程fork出新进程，新进程和旧进程为父子关系，新进程继承旧进程的文件表，本身&quot;本进程&quot;就已经监听这个端口了，则不会出现上面的问题</li>
+</ul>
+<h2 id="22-如何做到已有连接不中断">2.2 如何做到已有连接不中断</h2>
+<ul>
+<li>
+<p>新进程继承旧进程的用于连接的fd，并且继续维持与客户端的心跳</p>
+<p>linux提供了unix域套接字可用于socket的传输, 新进程起来后通过unix socket通信继承旧进程所维护的连接</p>
+</li>
+</ul>
+<pre><code>#include &lt;sys/types.h&gt;
+#include &lt;sys/socket.h&gt;
+
+ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags);
+ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags);
+</code></pre><p>发送端调用sendmsg发送文件描述符，接收端调用revmsg接收文件描述符。</p>
+<p>两进程共享同一打开文件表，这与fork之后的父子进程共享打开文件表的情况完全相同。</p>
+<p><em><strong>由此解决了文章开头提出的两个问题</strong></em></p>
+<h1 id="3-demo实现">3. Demo实现</h1>
+<ul>
+<li>
+<p>进程每次启动时必须check有无继承socket(尝试连接本地的unix server，如果连接失败，说明是第一次启动，否则可能有继承的socket)，如果有，就将socket加入到自己的连接池中, 并初始化连接状态</p>
+</li>
+<li>
+<p>旧进程监听USR2信号(通知进程需要重启，使用信号、http接口等都可)，监听后动作:</p>
+<ol>
+<li>监听Unix socket, 等待新进程初始化完成，发来开始继承连接的请求</li>
+<li>使用旧进程启动的命令fork一个子进程(发布到线上的新二进制)。</li>
+<li>accept到新进程的请求，关闭旧进程listener(保证旧进程不会再接收新请求，同时所有connector不在进行I/O操作。</li>
+<li>旧进程将现有连接的socket，以及连接状态(读写buffer，connect session)通过 unix socket发送到新进程。</li>
+<li>最后旧进程给新进程发送发送完毕信号，随后退出</li>
+</ol>
+</li>
+<li>
+<p>以下是简单实现的demo, demo中实现较为简单，只实现了文件描述符的传递，没有实现各连接状态的传递。</p>
+</li>
+</ul>
+<pre><code>// server.go
+
+package main
+
+import (
+	&quot;flag&quot;
+	&quot;fmt&quot;
+	&quot;golang.org/x/sys/unix&quot;
+	&quot;log&quot;
+	&quot;net&quot;
+	&quot;os&quot;
+	&quot;os/signal&quot;
+	&quot;path/filepath&quot;
+	&quot;sync&quot;
+	&quot;syscall&quot;
+	&quot;time&quot;
+)
+
+var (
+	workSpace string
+
+	logger *log.Logger
+
+	writeTimeout = time.Second * 5
+	readTimeout  = time.Second * 5
+
+	signalChan = make(chan os.Signal)
+
+	connFiles sync.Map
+
+	serverListener net.Listener
+
+	isUpdate = false
+)
+
+func init() {
+	flag.StringVar(&amp;workSpace, &quot;w&quot;, &quot;.&quot;, &quot;Usage:\n ./server -w=workspace&quot;)
+	flag.Parse()
+
+	file, err := os.OpenFile(filepath.Join(workSpace, &quot;server.log&quot;), os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0777)
+	if err != nil {
+		panic(err)
+	}
+	logger = log.New(file, &quot;&quot;, 11)
+	go beforeStart()
+	go signalHandler()
+}
+
+func main() {
+	var err error
+	serverListener, err = net.Listen(&quot;tcp&quot;, &quot;:7000&quot;)
+	if err != nil {
+		panic(err)
+	}
+	for {
+		if isUpdate == true {
+			continue
+		}
+		conn, err := serverListener.Accept()
+		if err != nil {
+			logger.Println(&quot;conn error&quot;)
+			continue
+		}
+		c := conn.(*net.TCPConn)
+		go connectionHandler(c)
+	}
+}
+
+func connectionHandler(conn *net.TCPConn) {
+	file, _ := conn.File()
+	connFiles.Store(file, true)
+	logger.Printf(&quot;conn fd %d\n&quot;, file.Fd())
+	defer func() {
+		connFiles.Delete(file)
+		_ = conn.Close()
+	}()
+	for {
+		if isUpdate == true {
+			continue
+		}
+		err := conn.SetReadDeadline(time.Now().Add(readTimeout))
+		if err != nil {
+			logger.Println(err.Error())
+			return
+		}
+		rBuf := make([]byte, 4)
+		_, err = conn.Read(rBuf)
+		if err != nil {
+			logger.Println(err.Error())
+			return
+		}
+		if string(rBuf) != &quot;ping&quot; {
+			logger.Println(&quot;failed to parse the message &quot; + string(rBuf))
+			return
+		}
+		err = conn.SetWriteDeadline(time.Now().Add(writeTimeout))
+		if err != nil {
+			logger.Println(err.Error())
+			return
+		}
+		_, err = conn.Write([]byte(`pong`))
+		if err != nil {
+			logger.Println(err.Error())
+			return
+		}
+	}
+}
+
+func beforeStart() {
+	connInterface, err := net.Dial(&quot;unix&quot;, filepath.Join(workSpace, &quot;conn.sock&quot;))
+	if err != nil {
+		logger.Println(err.Error())
+		return
+	}
+	defer func() {
+		_ = connInterface.Close()
+	}()
+
+	unixConn := connInterface.(*net.UnixConn)
+
+	b := make([]byte, 1)
+	oob := make([]byte, 32)
+	for {
+		err = unixConn.SetWriteDeadline(time.Now().Add(time.Minute * 3))
+		if err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+		n, oobn, _, _, err := unixConn.ReadMsgUnix(b, oob)
+		if err != nil {
+			logger.Println(err.Error())
+			return
+		}
+		if n != 1 || b[0] != 0 {
+			if n != 1 {
+				logger.Printf(&quot;recv fd type error: %d\n&quot;, n)
+			} else {
+				logger.Println(&quot;init finish&quot;)
+			}
+			return
+		}
+		scms, err := unix.ParseSocketControlMessage(oob[0:oobn])
+		if err != nil {
+			logger.Println(err.Error())
+			return
+		}
+		if len(scms) != 1 {
+			logger.Printf(&quot;recv fd num != 1 : %d\n&quot;, len(scms))
+			return
+		}
+		fds, err := unix.ParseUnixRights(&amp;scms[0])
+		if err != nil {
+			logger.Println(err.Error())
+			return
+		}
+		if len(fds) != 1 {
+			logger.Printf(&quot;recv fd num != 1 : %d\n&quot;, len(fds))
+			return
+		}
+		logger.Printf(&quot;recv fd %d\n&quot;, fds[0])
+		file := os.NewFile(uintptr(fds[0]), &quot;fd-from-old&quot;)
+		conn, err := net.FileConn(file)
+		if err != nil {
+			logger.Println(err.Error())
+			return
+		}
+		go connectionHandler(conn.(*net.TCPConn))
+	}
+}
+
+func signalHandler() {
+	signal.Notify(
+		signalChan,
+		syscall.SIGUSR2,
+	)
+	for {
+		sc := &lt;-signalChan
+		switch sc {
+		case syscall.SIGUSR2:
+			gracefulExit()
+		default:
+			continue
+		}
+	}
+}
+
+func gracefulExit() {
+	var connWait sync.WaitGroup
+	_ = syscall.Unlink(filepath.Join(workSpace, &quot;conn.sock&quot;))
+	listenerInterface, err := net.Listen(&quot;unix&quot;, filepath.Join(workSpace, &quot;conn.sock&quot;))
+	if err != nil {
+		logger.Println(err.Error())
+		return
+	}
+	defer func() {
+		_ = listenerInterface.Close()
+	}()
+	unixListener := listenerInterface.(*net.UnixListener)
+	connWait.Add(1)
+	go func() {
+		defer connWait.Done()
+		unixConn, err := unixListener.AcceptUnix()
+		if err != nil {
+			logger.Println(err.Error())
+			return
+		}
+		defer func() {
+			_ = unixConn.Close()
+		}()
+		connFiles.Range(func(key, value interface{}) bool {
+			if key == nil || value == nil {
+				return false
+			}
+			file := key.(*os.File)
+			defer func() {
+				_ = file.Close()
+			}()
+			buf := make([]byte, 1)
+			buf[0] = 0
+			rights := syscall.UnixRights(int(file.Fd()))
+			_, _, err := unixConn.WriteMsgUnix(buf, rights, nil)
+			if err != nil {
+				logger.Println(err.Error())
+			}
+			logger.Printf(&quot;send fd %d\n&quot;, file.Fd())
+			return true
+		})
+		finish := make([]byte, 1)
+		finish[0] = 1
+		_, _, err = unixConn.WriteMsgUnix(finish, nil, nil)
+		if err != nil {
+			logger.Println(err.Error())
+		}
+	}()
+
+	isUpdate = true
+	execSpec := &amp;syscall.ProcAttr{
+		Env:   os.Environ(),
+		Files: append([]uintptr{os.Stdin.Fd(), os.Stdout.Fd(), os.Stderr.Fd()}),
+	}
+
+	pid, err := syscall.ForkExec(os.Args[0], os.Args, execSpec)
+	if err != nil {
+		logger.Println(err.Error())
+		return
+	}
+	logger.Printf(&quot;old process %d new process %d\n&quot;, os.Getpid(), pid)
+	_ = serverListener.Close()
+
+	connWait.Wait()
+	os.Exit(0)
+}
+</code></pre><pre><code>// client.go
+package main
+
+import (
+	&quot;fmt&quot;
+	&quot;net&quot;
+	&quot;time&quot;
+)
+
+var (
+	writeTimeout = time.Second * 5
+	readTimeout  = time.Second * 5
+)
+
+func main() {
+	conn, err := net.Dial(&quot;tcp&quot;, &quot;127.0.0.1:7000&quot;)
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		conn.Close()
+	}()
+	for {
+		time.Sleep(time.Second)
+		err := conn.SetWriteDeadline(time.Now().Add(writeTimeout))
+		if err != nil {
+			fmt.Println(err.Error())
+			break
+		}
+		fmt.Println(&quot;send ping&quot;)
+		_, err = conn.Write([]byte(`ping`))
+		if err != nil {
+			fmt.Println(err.Error())
+			break
+		}
+		err = conn.SetReadDeadline(time.Now().Add(readTimeout))
+		if err != nil {
+			fmt.Println(err.Error())
+			break
+		}
+		rBuf := make([]byte, 4)
+		_, err = conn.Read(rBuf)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		fmt.Println(&quot;recv &quot; + string(rBuf))
+	}
+}
+</code></pre>
+    </div>
+  </article>
+
+  
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <p>Copyright @ 2020-<script>document.write(new Date().getFullYear())</script> <a class="footer-links-kudos" href="https://github.com/journey-c">Journey-C</a>.
+    </p>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+
+    
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+	ga('create', 'xxxxx', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+
+
+    <script type=text/javascript async src="https://cdn.staticfile.org/mathjax/2.7.7/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$']],
+            processEscapes: true,
+            processEnvironments: true,
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+            TeX: {
+                equationNumbers: {
+                    autoNumber: "AMS"
+                },
+                extensions: ["AMSmath.js", "AMSsymbols.js"]
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(),
+            i;
+        for (i = 0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+    MathJax.Hub.Config({
+        TeX: {
+            equationNumbers: {
+                autoNumber: "AMS"
+            }
+        }
+    });
+    </script>
+
+    
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+	var gitalk = new Gitalk({
+    		clientID: 'a60f22cd3c5d7e6aafa8',
+    		clientSecret: 'db8f7c66f2e8e20275173155975b749870291c5b',
+    		repo: 'journey-c.github.io',
+    		owner: 'journey-c',
+    		admin: ['journey-c'],
+    		id: '<%=page.title%>',
+    		distractionFreeMode: true
+  	});
+  	gitalk.render('gitalk-container');
+</script>
+
+    
+  </body>
+</html>
+

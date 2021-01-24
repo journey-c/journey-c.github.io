@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>源码 on Journey-C</title>
+    <link>https://journey-c.github.com/tags/%E6%BA%90%E7%A0%81/</link>
+    <description>Recent content in 源码 on Journey-C</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 29 Oct 2020 20:58:31 +0800</lastBuildDate>
+    
+	<atom:link href="https://journey-c.github.com/tags/%E6%BA%90%E7%A0%81/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>channel 源码阅读</title>
+      <link>https://journey-c.github.com/channel-read/</link>
+      <pubDate>Thu, 29 Oct 2020 20:58:31 +0800</pubDate>
+      
+      <guid>https://journey-c.github.com/channel-read/</guid>
+      <description>(年初的时候go语言的学习提上了日程，前一篇sync.pool阅读之后，阅读代码进度本该更快些，奈何身体被掏空，所以这篇文章断断续续一个月终于攒起来了。)
+[toc]
+1. 简介 channel是golang中用于goroutine之间通讯的数据结构，有以下特点：
+ 线程安全 创建channel时返回的是指针，不需要考虑拷贝的问题 顺序通讯，写入和读出的顺序一致  2. 数据部分 源码位置go/src/runtime/chan.go
+2.1 hchan channel对应的数据结构
+type hchan struct { qcount uint dataqsiz uint buf unsafe.Pointer elemsize uint16 closed uint32 elemtype *_type sendx uint recvx uint recvq waitq sendq waitq // lock protects all fields in hchan, as well as several 	// fields in sudogs blocked on this channel. 	// 	// Do not change another G&amp;#39;s status while holding this lock 	// (in particular, do not ready a G), as this can deadlock 	// with stack shrinking.</description>
+    </item>
+    
+    <item>
+      <title>goroutine 源码阅读</title>
+      <link>https://journey-c.github.com/goroutine-read/</link>
+      <pubDate>Thu, 29 Oct 2020 20:58:31 +0800</pubDate>
+      
+      <guid>https://journey-c.github.com/goroutine-read/</guid>
+      <description>1.数据结构 调度相关的数据结构有三个，M(线程)，P(调度器)，G(goroutine) M表示线程，P作为调度器用来帮助每个线程管理自己的goroutine，G就是golang的协程。我们可以通过runtime.GOMAXPROCS(n int)函数设置P的个数，注意P的个数并不代表M的个数，例如程序启动时runtime代码会出实话procs个P，但开始的时候只会启动一个M，就是M0和一个栈为64K(其他goroutine默认初始栈大小2K)来执行runtime代码。
+那其他线程是什么时候创建的呐? 当goroutine被唤醒时，要在M上运行(恢复goroutine的上下文)，P是帮助M管理goroutine的，恢复上下文的操作也由P来完成。如果被唤醒时发现还有空闲的P，并且没有其他M在窃取goroutine(M发现本地goroutine队列和全局goroutine队列都没有goroutine的时候，会去其他线程窃取goroutine)，说明其他M都在忙，就会创建一个M让这个空闲的P帮他来管理goroutine。 总之一句话，开始的时候创建一个M，当发现调度不过来且还有空闲P没有工作就在创建新的，直到创建procs个M(procs通过runtime.GOMAXPROCS设置)
+1.1 G golang 用结构体g表示goroutine
+ g  type g struct { stack stack // 当前栈的范围[stack.lo, stack.hi) 	stackguard0 uintptr // 用于抢占的，一般情况值为stack.lo + StackGuard 	stackguard1 uintptr // 用于C语言的抢占 	_panic *_panic // 最内侧的panic函数 	_defer *_defer // 最外侧的defer函数 	m *m // 当前goroutine属于哪个m 	sched gobuf // 调度相关信息 	... schedlink guintptr // sched是全局的goroutine链表，schedlink表示这个goroutine在链表中的下一个goroutine的指针 	... preempt bool // 抢占标志，如果需要抢占就将preempt设置为true 	... }  gobuf gobuf保存goroutine的调度信息，当一个goroutine被调度的时，本质上就是把这个goroutine放到cpu，恢复各个寄存器的值，然后运行  type gobuf struct { sp uintptr // 栈指针 	pc uintptr // 程序计数器 	g guintptr // 当前被哪个goroutine持有 	ctxt unsafe.</description>
+    </item>
+    
+    <item>
+      <title>sync.pool 源码阅读</title>
+      <link>https://journey-c.github.com/sync-pool-read/</link>
+      <pubDate>Tue, 27 Oct 2020 20:58:31 +0800</pubDate>
+      
+      <guid>https://journey-c.github.com/sync-pool-read/</guid>
+      <description>阅读项目代码的时候发现很多地方用到了golang的sync.pool，所以好奇golang的sync.pool底层实现是什么样的，有哪些优化。 本文是基于go1.13.8，做讲解。
+1. 介绍 Pool翻译过来就是池子，主要功能就是: 需要使用某个Object的时候可以从Pool获取，使用完毕再归还，从而减少创建和销毁Object的开销。而本文讲的就是golang中的Pool源码实现。
+2. 用法 千万不要想当然的认为put进去的Object和get出来的Object有什么关系，Pool存的Object在GC时会都清理掉
+package main import ( &amp;#34;fmt&amp;#34; &amp;#34;sync&amp;#34; ) type Book struct { Name string Info map[string]string } func NewBook() interface{} { return &amp;amp;Book{ Name: &amp;#34;&amp;#34;, Info: make(map[string]string), } } func main() { // 创建pool并定义创建object的函数 	bookPool := sync.Pool{New:NewBook} // 从pool获取object 	a := bookPool.Get().(*Book) a.Name = &amp;#34;go&amp;#34; a.Info[&amp;#34;a&amp;#34;] = &amp;#34;b&amp;#34; fmt.Println(a) // 放回pool 	bookPool.Put(a) } 3. 结构图 4. 实现细节  Pool实现源码是这两个文件go/src/sync/pool.go, go/src/sync/poolqueue.</description>
+    </item>
+    
+  </channel>
+</rss>

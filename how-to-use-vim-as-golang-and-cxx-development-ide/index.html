@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.74.3" />
+
+
+<title>如何使用vim作为golang和cxx开发IDE - Journey-C</title>
+<meta property="og:title" content="如何使用vim作为golang和cxx开发IDE - Journey-C">
+
+
+  <link href='https://journey-c.github.com/favicon.png' rel='icon' type='image/x-icon'/>
+
+
+
+  
+
+
+
+
+<link rel="icon" href="https://journey-c.github.comimages/" type="image/x-icon"/>
+<link rel="stylesheet" href="https://journey-c.github.comcss/main.css" media="all">
+<link rel="stylesheet" href="https://journey-c.github.comcss/fonts.css" media="all">
+<link rel="stylesheet" href="https://journey-c.github.comcss/prism.css" media="all">
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Merriweather:400|Lato:400,400italic,700">
+<script type="text/javascript" src="https://journey-c.github.comjs/main.js"></script>
+<script type="text/javascript" src="https://journey-c.github.comjs/prism.js"></script>
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="https://journey-c.github.com" class="nav-logo">
+    <img src="https://journey-c.github.comimages/yangguo.png" 
+         width="50" 
+         height="50" 
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/archives/"></a></li>
+    
+    <li><a href="/tags/"></a></li>
+    
+    <li><a href="/about/">About</a></li>
+    
+    <li><a href="https://github.com/journey-c">Github</a></li>
+    
+    <li><a href="https://www.cnblogs.com/wuwangchuxin0924/">博客园</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+  <article class="article">
+    
+    
+<section class="toc-section" id="toc-section">
+
+
+
+
+
+
+
+
+
+<div class="article-toc" id="article-toc">
+
+    <div class="article-toc-header"><strong>CONTENTS</strong></div>
+
+    <div id="page-scrollspy" class="article-toc-nav">
+
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#1-%e6%9c%80%e7%bb%88%e6%88%90%e5%93%81">
+                            1. 最终成品
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#2-%e6%89%80%e8%a7%81%e5%8d%b3%e6%89%80%e5%be%97">
+                            2. 所见即所得
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#21-%e5%87%86%e5%a4%87">
+                            2.1 准备
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#22-%e6%8f%92%e4%bb%b6%e7%ae%a1%e7%90%86">
+                            2.2 插件管理
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#23-%e5%bc%80%e5%8f%91">
+                            2.3 开发
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#231-%e6%8f%92%e4%bb%b6%e5%ae%89%e8%a3%85">
+                            2.3.1 插件安装
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#232-%e6%8f%92%e4%bb%b6%e9%85%8d%e7%bd%ae">
+                            2.3.2 插件配置
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#233-lsp%e5%ae%89%e8%a3%85">
+                            2.3.3 LSP安装
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#234-%e5%bf%ab%e6%8d%b7%e9%94%ae">
+                            2.3.4 快捷键
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#235-%e6%95%88%e6%9e%9c">
+                            2.3.5 效果
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#24-%e8%be%85%e5%8a%a9">
+                            2.4 辅助
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#241-%e7%9b%ae%e5%bd%95%e6%a0%91%e5%92%8c%e6%b3%a8%e9%87%8a">
+                            2.4.1 目录树和注释
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#242-%e8%a1%a5%e5%85%a8%e6%8b%ac%e5%8f%b7">
+                            2.4.2 补全括号
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#243-%e5%85%a8%e5%b1%80%e6%90%9c%e7%b4%a2">
+                            2.4.3 全局搜索
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#25-%e7%be%8e%e5%8c%96">
+                            2.5 美化
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#251-%e4%b8%bb%e9%a2%98">
+                            2.5.1 主题
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#252-%e7%8a%b6%e6%80%81%e6%a0%8f">
+                            2.5.2 状态栏
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#253-git%e4%bf%a1%e6%81%af%e5%92%8c%e5%90%af%e5%8a%a8%e9%a1%b5">
+                            2.5.3 GIT信息和启动页
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e9%99%84%e5%bd%95">
+                            附录
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#%e5%ae%8c%e6%95%b4%e9%85%8d%e7%bd%ae">
+                            完整配置
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                    </ul>
+                    
+                
+            
+        
+
+    </div>
+    
+</div>
+
+
+
+</section>
+
+    
+
+    
+    <span class="article-duration">9 min read</span>
+    
+
+    <h1 class="article-title">如何使用vim作为golang和cxx开发IDE</h1>
+
+    
+    <span class="article-date">2020-11-19</span>
+    
+
+    
+        
+            
+            <a class="article-tag" href="https://journey-c.github.com/tags/vim">Vim</a>
+            
+            <a class="article-tag" href="https://journey-c.github.com/tags/golang">Golang</a>
+            
+            <a class="article-tag" href="https://journey-c.github.com/tags/cxx">Cxx</a>
+            
+        
+    
+
+    <div class="article-content">
+      <blockquote>
+<p>作为一个初学者，很多同学的路子都是这样的：费劲心思装好windows和Linux双系统，看着Linux界面难看，开始找美化软件的工具；美化好了，安装好了g++，因为gedit不好用，sublimetext、atom好用但是不太方便编译，然后陷入vim还是emacs的抉择；最终决定用vim，打印了一张vim键盘图开始学习，略为抱怨门槛高；入门之后发现写代码确实快了很多，为了更快，更美观，开始折腾vim的插件，学习怎么打tag等等等等…感觉万事具备，只欠好好学c++了，发现需要学习g++的编译连接，库文件，多个源文件，大工程，然后开始学习makefile的写法…从此越跑越偏，后来突然发现python看起来简单，要不学python吧。后来又觉得python似乎找工作不占很大优势，转而学java。后来又觉得javascript更简单，所以搞前端吧。然后发现还需要学html、css、数据库、日新月异的新框架…一本书，《c++从入门到放弃》。</p>
+</blockquote>
+<h1 id="1-最终成品">1. 最终成品</h1>
+<p>先给大家看看成品的样子
+<img src="/images/vim_0.jpeg" alt="vim_0.jpg"></p>
+<h1 id="2-所见即所得">2. 所见即所得</h1>
+<p>折腾vim大概有四五年的时间了，下面总结了想要将vim作为主开发工具需要的条件。</p>
+<table>
+<thead>
+<tr>
+<th>类别</th>
+<th>功能</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>开发</td>
+<td>代码跳转</td>
+<td>✔</td>
+</tr>
+<tr>
+<td></td>
+<td>查看引用</td>
+<td>✔</td>
+</tr>
+<tr>
+<td></td>
+<td>代码补全</td>
+<td>✔</td>
+</tr>
+<tr>
+<td></td>
+<td>查找替换</td>
+<td>✔</td>
+</tr>
+<tr>
+<td></td>
+<td>变量、函数更名</td>
+<td>✔</td>
+</tr>
+<tr>
+<td>辅助</td>
+<td>文件目录</td>
+<td>✔</td>
+</tr>
+<tr>
+<td></td>
+<td>函数目录</td>
+<td>✔</td>
+</tr>
+<tr>
+<td></td>
+<td>注释</td>
+<td>✔</td>
+</tr>
+<tr>
+<td></td>
+<td>全局搜索文件</td>
+<td>✔</td>
+</tr>
+<tr>
+<td></td>
+<td>全局搜索关键词</td>
+<td>✔</td>
+</tr>
+<tr>
+<td></td>
+<td>补全括号</td>
+<td>✔</td>
+</tr>
+<tr>
+<td>美化</td>
+<td>主题</td>
+<td>✔</td>
+</tr>
+<tr>
+<td></td>
+<td>状态栏</td>
+<td>✔</td>
+</tr>
+<tr>
+<td></td>
+<td>Git信息</td>
+<td>✔</td>
+</tr>
+<tr>
+<td></td>
+<td>启动页美化</td>
+<td>✔</td>
+</tr>
+</tbody>
+</table>
+<h2 id="21-准备">2.1 准备</h2>
+<p>很多插件在neo-vim下支持更好，但是寡人是个念旧的人，所以一直用【<em>VIM - Vi IMproved 8.2</em>】
+所以在开始配置之前，需要准备vim 8.0以上版本并且支持python3</p>
+<pre><code>git clone https://github.com/vim/vim.git
+cd vim
+./configure --with-features=huge \
+	--enable-multibyte \
+	--enable-python3interp=yes \
+	--with-python3-config-dir=[你机器上python3的路径] \
+	--enable-gui=gtk2 \
+	--enable-cscope \
+	--prefix=/usr/local/vim
+make
+sudo make install
+</code></pre><p>如果不知道python3的路径，可以用whereis python3找一下。
+最终下面的效果就可以了。</p>
+<pre><code>➜  ~ vim --version
+VIM - Vi IMproved 8.2 (2019 Dec 12, compiled May 26 2020 06:16:44)
+macOS version
+...
++comments          +linebreak         +python3           +visualextra
+...
+</code></pre><h2 id="22-插件管理">2.2 插件管理</h2>
+<p>现在最通用的插件管理插件就是<a href="https://github.com/junegunn/vim-plug">vim-plug</a>了，支持异步安装更新。</p>
+<ul>
+<li>安装</li>
+</ul>
+<pre><code>curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
+    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+</code></pre><ul>
+<li>使用
+想安装某个插件只需要在.vimrc里配置</li>
+</ul>
+<pre><code>call plug#begin('~/.vim/plugged')
+    Plug 'scrooloose/nerdtree'                          &quot; 目录树
+    Plug 'scrooloose/nerdcommenter'                     &quot; 注释
+    Plug 'vim-airline/vim-airline'                      &quot; Vim状态栏插件，包括显示行号，列号，文件类型，文件名，以及Git状态
+    Plug 'tpope/vim-fugitive'                           &quot; 显示git分支
+    Plug 'Yggdroot/LeaderF', { 'tag': 'v1.22', 'do': './install.sh' }   &quot; 全局搜索
+    Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }  &quot; vim-go
+    Plug 'yianwillis/vimcdoc'                           &quot; 中文文档
+    Plug 'neoclide/coc.nvim', {'branch': 'release'}     &quot; 补全
+    Plug 'octol/vim-cpp-enhanced-highlight'             &quot; C++高亮
+    Plug 'mhinz/vim-startify'                           &quot; 启动界面
+call plug#end()
+</code></pre><p>然后在vim的NORMAL状态(按ESC)下执行<code>:PlugInstall</code>即可完成插件的安装。
+<img src="/images/vim_1.jpeg" alt="vim_1"></p>
+<p>插件更新的命令为<code>:PlugUpdate</code>
+vim-plug更新的命令为<code>:PlugUpgrade</code></p>
+<h2 id="23-开发">2.3 开发</h2>
+<h3 id="231-插件安装">2.3.1 插件安装</h3>
+<p>vim代码跳转、查看引用、代码补全、变量更名功能现在流行的解决方案都是基于微软提出的<a href="https://microsoft.github.io/language-server-protocol/">LSP协议</a>进行开发，我使用的插件是<a href="https://github.com/neoclide/coc.nvim">coc-nvim</a>是目前比较好的LSP客户端插件。</p>
+<p>coc-nvim基于nodejs开发，所以首先安装nodejs</p>
+<pre><code>curl -sL install-node.now.sh/lts | bash
+</code></pre><p>使用vim-plug安装coc-nvim</p>
+<pre><code>call plug#begin('~/.vim/plugged')
+    Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }  &quot; vim-go
+    Plug 'neoclide/coc.nvim', {'branch': 'release'}     &quot; 补全
+call plug#end()
+</code></pre><p>因为<a href="https://github.com/fatih/vim-go">vim-go</a>针对go开发定制了特别多功能，所以通常会连着vim-go一起安装。</p>
+<ul>
+<li>
+<p>vim-go
+安装完之后需要到vim里执行<code>:GoInstallBinaries</code>安装vim-go需要的一些go工具(gopls，goimports等，可能需要科学上网)</p>
+</li>
+<li>
+<p>coc-nvim
+安装完需要到vim里用coc-nvim配置golang和cxx环境，<code>:CocInstall coc-go</code> <code>:CocInstall coc-clangd</code>
+<img src="/images/vim_3.jpeg" alt="vim_3"></p>
+</li>
+</ul>
+<h3 id="232-插件配置">2.3.2 插件配置</h3>
+<p>安装完需要配置一下，下面是vim-go的配置，coc-nvim配置太长了，附录里有完整配置可以参考。</p>
+<pre><code>&quot; vim-go {
+
+let g:go_fmt_command=&quot;goimports&quot; &quot; 格式化将默认的 gofmt 替换
+let g:go_info_mode='gopls'
+let g:go_def_mode='gopls'
+let g:go_rename_command='gopls'  &quot; 重命名变量
+let g:go_referrers_mode='gopls'
+
+&quot; 美化类
+let g:go_autodetect_gopath=1
+let g:go_list_type=&quot;quickfix&quot;
+let g:go_version_warning=1
+let g:go_highlight_types=1
+let g:go_highlight_fields=1
+let g:go_highlight_functions=1
+let g:go_highlight_function_calls=1
+let g:go_highlight_operators=1
+let g:go_highlight_extra_types=1
+let g:go_highlight_methods=1
+let g:go_highlight_generate_tags=1
+let g:go_highlight_function_parameters = 1
+let g:go_highlight_build_constraints = 1
+
+let g:godef_split=2
+
+&quot; push quickfix window always to the bottom
+autocmd FileType qf wincmd J
+
+&quot; }
+</code></pre><h3 id="233-lsp安装">2.3.3 LSP安装</h3>
+<p>coc-nvim是基于<a href="https://microsoft.github.io/language-server-protocol/">LSP协议</a>开发的，所以要安装go和cxx的LSP服务器</p>
+<ul>
+<li>go
+golang 有官方出的gopls，上面步骤里面vim-go已经给安装好了，只需要配置下环境变量即可</li>
+</ul>
+<pre><code>export PATH=$PATH:$GOPATH/bin:$HOME/.cargo/bin
+</code></pre><p>在终端直接输入gopls有反应即可</p>
+<ul>
+<li>clangd
+cpp和c的补全跳转等功能向来没有完美解决方案，小编用的是<a href="https://clangd.llvm.org/">clangd</a> + <a href="https://github.com/rizsotto/Bear">bear</a>
+clangd最为cxx的LSP，bear用于生成编译数据库compile_commands.json
+注意: mac用户使用bear需要关闭SIP</li>
+</ul>
+<pre><code>安装bear(centos下没装成功过)
+
+ubuntu:
+sudo apt-install bear
+
+mac:
+brew install bear
+</code></pre><p>clangd安装</p>
+<pre><code>mkdir -p ~/.vim/LSP/bin
+cd ~/.vim/LSP
+wget https://github.com/clangd/clangd/releases/download/11.0.0/clangd-linux-11.0.0.zip # ubuntu
+wget https://github.com/clangd/clangd/releases/download/11.0.0/clangd-mac-11.0.0.zip   # mac os
+
+解压完，将bin目录下的clangd放到~/.vim/LSP/bin下
+设置环境变量
+export PATH=$PATH:$GOPATH/bin:$HOME/.vim/LSP/bin
+</code></pre><p>在终端输入clangd有反应即可
+下面就可以愉快的开发golang和cxx了</p>
+<h3 id="234-快捷键">2.3.4 快捷键</h3>
+<table>
+<thead>
+<tr>
+<th>功能</th>
+<th>快捷键</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>查看引用</td>
+<td>leader键+gr或者:GoReferrers</td>
+</tr>
+<tr>
+<td>跳转</td>
+<td>gd</td>
+</tr>
+<tr>
+<td>变量重命名</td>
+<td>leader键+rn或者:GoRename</td>
+</tr>
+<tr>
+<td>查找替换</td>
+<td>%s/要查找的/要替换的/g</td>
+</tr>
+<tr>
+<td>代码补全</td>
+<td>自动的</td>
+</tr>
+<tr>
+<td>查看channel读写情况</td>
+<td>:GoChannelPeers</td>
+</tr>
+</tbody>
+</table>
+<h3 id="235-效果">2.3.5 效果</h3>
+<p><img src="/images/vim_5.jpeg" alt="vim_5"></p>
+<h2 id="24-辅助">2.4 辅助</h2>
+<h3 id="241-目录树和注释">2.4.1 目录树和注释</h3>
+<p>目录插件: <a href="https://github.com/preservim/nerdtree">nerdtree</a>
+注释插件: <a href="https://github.com/scrooloose/nerdcommenter">nerdcommenter</a></p>
+<ul>
+<li>安装</li>
+</ul>
+<pre><code>call plug#begin('~/.vim/plugged')
+    Plug 'scrooloose/nerdtree'                          &quot; 目录树
+    Plug 'scrooloose/nerdcommenter'                     &quot; 注释
+call plug#end()
+</code></pre><ul>
+<li>配置</li>
+</ul>
+<pre><code>&quot; NERDTree {
+
+nmap &lt;leader&gt;n :NERDTreeToggle&lt;CR&gt;
+&quot; map &lt;F4&gt; :NERDTreeToggle&lt;CR&gt;
+
+&quot;设置NERDTree的宽度
+let NERDTreeWinSize=30
+let g:NERDTreeWinPos='left'
+
+let g:NERDTreeShowIgnoredStatus=1
+
+let g:NERDTreeDirArrowExpandable = '+'
+let g:NERDTreeDirArrowCollapsible = '-'
+
+&quot; }
+
+&quot; nerdcommenter {
+
+let g:NERDSpaceDelims=1 &quot; 注释后加空格
+
+&quot; }
+
+</code></pre><ul>
+<li>快捷键</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>功能</th>
+<th>快捷键</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>打开关闭目录</td>
+<td>leader键+n</td>
+</tr>
+<tr>
+<td>注释</td>
+<td>leader键+c</td>
+</tr>
+</tbody>
+</table>
+<h3 id="242-补全括号">2.4.2 补全括号</h3>
+<p>在vim执行<code>:CocInstall coc-pairs</code></p>
+<h3 id="243-全局搜索">2.4.3 全局搜索</h3>
+<p>插件: <a href="https://github.com/Yggdroot/LeaderF">LeaderF</a></p>
+<ul>
+<li>安装</li>
+</ul>
+<pre><code>call plug#begin('~/.vim/plugged')
+    Plug 'Yggdroot/LeaderF', { 'tag': 'v1.22', 'do': './install.sh' }   &quot; 全局搜索
+call plug#end()
+</code></pre><ul>
+<li>配置</li>
+</ul>
+<pre><code>&quot; LeaderF {
+
+let g:Lf_ShortcutF='&lt;C-P&gt;'
+&quot; let g:Lf_ShowDevIcons=0
+
+&quot; }
+</code></pre><ul>
+<li>快捷键</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>功能</th>
+<th>快捷键</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>文件搜索</td>
+<td>leader键+p或者:LeaderfFile</td>
+</tr>
+<tr>
+<td>函数目录</td>
+<td>:LeaderfFunction</td>
+</tr>
+<tr>
+<td>已打开文件跳转</td>
+<td>:LeaderfBuffer</td>
+</tr>
+<tr>
+<td>变量搜索</td>
+<td>::LeaderfRgInteractive</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>成品图
+<img src="/images/vim_2.jpeg" alt="vim_2"></li>
+</ul>
+<h2 id="25-美化">2.5 美化</h2>
+<h3 id="251-主题">2.5.1 主题</h3>
+<p><a href="https://github.com/joshdick/onedark.vim">onedark</a></p>
+<ul>
+<li>安装</li>
+</ul>
+<pre><code>call plug#begin('~/.vim/plugged')
+    Plug 'joshdick/onedark.vim'
+call plug#end()
+</code></pre><ul>
+<li>配置</li>
+</ul>
+<pre><code>&quot; Colorscheme {
+
+&quot; 语法高亮
+syntax  on
+
+&quot; 文件类型带上颜色
+syntax  enable
+
+&quot; 文件类型探测 使用缩进文件
+filetype plugin indent on
+
+set background=light
+
+&quot; 设置主题
+colorscheme onedark
+
+&quot; Set the vertical split character to  a space (there is a single space after '\ ')
+set fillchars+=vert:\ 
+highlight VertSplit ctermbg=236 ctermfg=236
+
+&quot; }
+</code></pre><h3 id="252-状态栏">2.5.2 状态栏</h3>
+<p><a href="https://github.com/vim-airline/vim-airline">vim-airline</a></p>
+<ul>
+<li>安装</li>
+</ul>
+<pre><code>call plug#begin('~/.vim/plugged')
+    Plug 'vim-airline/vim-airline'
+call plug#end()
+</code></pre><ul>
+<li>配置</li>
+</ul>
+<pre><code>&quot; vim-airline {
+
+if !exists('g:airline_symbols')
+    let g:airline_symbols={}
+endif
+
+let airline#extensions#tabline#ignore_bufadd_pat =
+            \ '\c\vgundo|undotree|vimfiler|tagbar|nerd_tree'
+let g:airline#extensions#tabline#keymap_ignored_filetypes =
+            \ ['vimfiler', 'nerdtree']
+
+let g:airline#extensions#tabline#left_sep = ''
+let g:airline#extensions#tabline#left_alt_sep = ''
+let g:airline#extensions#tabline#right_sep = ''
+let g:airline#extensions#tabline#right_alt_sep = ''
+
+
+let g:airline_left_sep = ''
+let g:airline_left_alt_sep = ''
+let g:airline_right_sep = ''
+let g:airline_right_alt_sep = ''
+let g:airline_symbols.branch = ''
+let g:airline_symbols.readonly = ''
+let g:airline_symbols.linenr = '☰'
+let g:airline_symbols.maxlinenr = ''
+let g:airline_symbols.dirty='⚡'
+
+&quot; let g:airline_theme='jellybeans'
+let g:airline#extensions#tabline#formatter = 'unique_tail'
+&quot; }
+</code></pre><h3 id="253-git信息和启动页">2.5.3 GIT信息和启动页</h3>
+<p><a href="https://github.com/tpope/vim-fugitive">vim-fugitive</a>
+<a href="https://github.com/mhinz/vim-startify">vim-startify</a></p>
+<ul>
+<li>安装</li>
+</ul>
+<pre><code>call plug#begin('~/.vim/plugged')
+    Plug 'tpope/vim-fugitive'                           &quot; 显示git分支
+    Plug 'mhinz/vim-startify'                           &quot; 启动界面
+call plug#end()
+</code></pre><ul>
+<li>效果
+<img src="/images/vim_4.jpeg" alt="vim_4"></li>
+</ul>
+<h1 id="附录">附录</h1>
+<h2 id="完整配置">完整配置</h2>
+<pre><code>&quot; Common config {
+
+&quot; 设置行号
+set number
+
+&quot; 不生成备份文件
+set nobackup 
+
+&quot; 不创建临时交换文件
+set noswapfile     
+
+&quot; 右下角显示光标位置
+set ruler
+
+&quot; 查找不区分大小写
+set ignorecase
+
+&quot; 查找高亮
+set hlsearch
+
+&quot; 启用256色
+&quot; set t_Co=16
+
+&quot; 不兼容VI
+set nocompatible
+
+&quot; 设置保存历史(命令, 查找模式的历史
+set history=1024
+
+&quot; 右下角显示未完成的命令 
+set showcmd
+
+&quot; 再输入部分查找模式时显示相应的匹配点 
+set incsearch
+
+&quot; 使用UTF-8编码
+set encoding=utf-8
+
+&quot; 所在行高亮
+&quot; set cursorcolumn
+set cursorline
+
+&quot; 相对行号
+&quot; set relativenumber
+
+&quot; 使用鼠标
+&quot; set mouse=a
+
+&quot; 显示TAB键
+&quot; set list
+
+&quot; 自动保存
+&quot; set autowrite
+
+&quot; 设置n个字自动换行
+&quot; set textwidth=n
+
+set foldmethod=syntax
+
+set nofoldenable
+
+&quot; 设置leader键
+let mapleader=&quot;\&lt;space&gt;&quot;
+
+&quot; 恢复光标位置
+if has(&quot;autocmd&quot;)
+    au BufReadPost * if line(&quot;'\&quot;&quot;) &gt; 1 &amp;&amp; line(&quot;'\&quot;&quot;) &lt;= line(&quot;$&quot;) | exe &quot;normal! g'\&quot;&quot; | endif
+endif
+
+&quot; 右侧打开内置terminal
+nmap &lt;leader&gt;t :rightbelow vert term&lt;CR&gt;
+
+&quot; }
+
+&quot; Plugin Management {
+
+filetype off
+call plug#begin('~/.vim/plugged')
+    Plug 'scrooloose/nerdtree'                          &quot; 目录树
+    Plug 'scrooloose/nerdcommenter'                     &quot; 注释
+    Plug 'vim-airline/vim-airline'                      &quot; Vim状态栏插件，包括显示行号，列号，文件类型，文件名，以及Git状态
+    Plug 'tpope/vim-fugitive'                           &quot; 显示git分支
+    Plug 'Yggdroot/LeaderF', { 'tag': 'v1.22', 'do': './install.sh' }   &quot; 全局搜索
+    Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }  &quot; vim-go
+    Plug 'yianwillis/vimcdoc'                           &quot; 中文文档
+    Plug 'neoclide/coc.nvim', {'branch': 'release'}     &quot; 补全
+    Plug 'octol/vim-cpp-enhanced-highlight'             &quot; C++高亮
+    Plug 'mhinz/vim-startify'                           &quot; 启动界面
+call plug#end()
+
+&quot; coc-nvim {
+
+&quot; TextEdit might fail if hidden is not set.
+set hidden
+
+&quot; Some servers have issues with backup files, see #649.
+set nobackup
+set nowritebackup
+
+&quot; Give more space for displaying messages.
+set cmdheight=1
+
+&quot; Having longer updatetime (default is 4000 ms = 4 s) leads to noticeable
+&quot; delays and poor user experience.
+set updatetime=300
+
+&quot; Don't pass messages to |ins-completion-menu|.
+set shortmess+=c
+
+&quot; Always show the signcolumn, otherwise it would shift the text each time
+&quot; diagnostics appear/become resolved.
+if has(&quot;patch-8.1.1564&quot;)
+  &quot; Recently vim can merge signcolumn and number column into one
+  set signcolumn=number
+else
+  set signcolumn=yes
+endif
+
+&quot; Use tab for trigger completion with characters ahead and navigate.
+&quot; NOTE: Use command ':verbose imap &lt;tab&gt;' to make sure tab is not mapped by
+&quot; other plugin before putting this into your config.
+inoremap &lt;silent&gt;&lt;expr&gt; &lt;TAB&gt;
+      \ pumvisible() ? &quot;\&lt;C-n&gt;&quot; :
+      \ &lt;SID&gt;check_back_space() ? &quot;\&lt;TAB&gt;&quot; :
+      \ coc#refresh()
+inoremap &lt;expr&gt;&lt;S-TAB&gt; pumvisible() ? &quot;\&lt;C-p&gt;&quot; : &quot;\&lt;C-h&gt;&quot;
+
+function! s:check_back_space() abort
+  let col = col('.') - 1
+  return !col || getline('.')[col - 1]  =~# '\s'
+endfunction
+
+&quot; Use &lt;c-space&gt; to trigger completion.
+if has('nvim')
+  inoremap &lt;silent&gt;&lt;expr&gt; &lt;c-space&gt; coc#refresh()
+else
+  inoremap &lt;silent&gt;&lt;expr&gt; &lt;c-@&gt; coc#refresh()
+endif
+
+&quot; Use &lt;cr&gt; to confirm completion, `&lt;C-g&gt;u` means break undo chain at current
+&quot; position. Coc only does snippet and additional edit on confirm.
+&quot; &lt;cr&gt; could be remapped by other vim plugin, try `:verbose imap &lt;CR&gt;`.
+if exists('*complete_info')
+  inoremap &lt;expr&gt; &lt;cr&gt; complete_info()[&quot;selected&quot;] != &quot;-1&quot; ? &quot;\&lt;C-y&gt;&quot; : &quot;\&lt;C-g&gt;u\&lt;CR&gt;&quot;
+else
+  inoremap &lt;expr&gt; &lt;cr&gt; pumvisible() ? &quot;\&lt;C-y&gt;&quot; : &quot;\&lt;C-g&gt;u\&lt;CR&gt;&quot;
+endif
+
+&quot; Use `[g` and `]g` to navigate diagnostics
+&quot; Use `:CocDiagnostics` to get all diagnostics of current buffer in location list.
+nmap &lt;silent&gt; [g &lt;Plug&gt;(coc-diagnostic-prev)
+nmap &lt;silent&gt; ]g &lt;Plug&gt;(coc-diagnostic-next)
+
+&quot; GoTo code navigation.
+nmap &lt;silent&gt; gd &lt;Plug&gt;(coc-definition)
+nmap &lt;silent&gt; gy &lt;Plug&gt;(coc-type-definition)
+nmap &lt;silent&gt; gi &lt;Plug&gt;(coc-implementation)
+nmap &lt;silent&gt; gr &lt;Plug&gt;(coc-references)
+
+&quot; Use K to show documentation in preview window.
+nnoremap &lt;silent&gt; K :call &lt;SID&gt;show_documentation()&lt;CR&gt;
+
+function! s:show_documentation()
+  if (index(['vim','help'], &amp;filetype) &gt;= 0)
+    execute 'h '.expand('&lt;cword&gt;')
+  else
+    call CocActionAsync('doHover')
+  endif
+endfunction
+
+&quot; Highlight the symbol and its references when holding the cursor.
+autocmd CursorHold * silent call CocActionAsync('highlight')
+
+&quot; Symbol renaming.
+nmap &lt;leader&gt;rn &lt;Plug&gt;(coc-rename)
+
+&quot; Formatting selected code.
+xmap &lt;leader&gt;f  &lt;Plug&gt;(coc-format-selected)
+nmap &lt;leader&gt;f  &lt;Plug&gt;(coc-format-selected)
+
+augroup mygroup
+  autocmd!
+  &quot; Setup formatexpr specified filetype(s).
+  autocmd FileType typescript,json setl formatexpr=CocAction('formatSelected')
+  &quot; Update signature help on jump placeholder.
+  autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
+augroup end
+
+&quot; Applying codeAction to the selected region.
+&quot; Example: `&lt;leader&gt;aap` for current paragraph
+xmap &lt;leader&gt;a  &lt;Plug&gt;(coc-codeaction-selected)
+nmap &lt;leader&gt;a  &lt;Plug&gt;(coc-codeaction-selected)
+
+&quot; Remap keys for applying codeAction to the current buffer.
+nmap &lt;leader&gt;ac  &lt;Plug&gt;(coc-codeaction)
+&quot; Apply AutoFix to problem on the current line.
+nmap &lt;leader&gt;qf  &lt;Plug&gt;(coc-fix-current)
+
+&quot; Map function and class text objects
+&quot; NOTE: Requires 'textDocument.documentSymbol' support from the language server.
+xmap if &lt;Plug&gt;(coc-funcobj-i)
+omap if &lt;Plug&gt;(coc-funcobj-i)
+xmap af &lt;Plug&gt;(coc-funcobj-a)
+omap af &lt;Plug&gt;(coc-funcobj-a)
+xmap ic &lt;Plug&gt;(coc-classobj-i)
+omap ic &lt;Plug&gt;(coc-classobj-i)
+xmap ac &lt;Plug&gt;(coc-classobj-a)
+omap ac &lt;Plug&gt;(coc-classobj-a)
+
+&quot; Use CTRL-S for selections ranges.
+&quot; Requires 'textDocument/selectionRange' support of language server.
+nmap &lt;silent&gt; &lt;C-s&gt; &lt;Plug&gt;(coc-range-select)
+xmap &lt;silent&gt; &lt;C-s&gt; &lt;Plug&gt;(coc-range-select)
+
+&quot; Add `:Format` command to format current buffer.
+command! -nargs=0 Format :call CocAction('format')
+
+&quot; Add `:Fold` command to fold current buffer.
+command! -nargs=? Fold :call     CocAction('fold', &lt;f-args&gt;)
+
+&quot; Add `:OR` command for organize imports of the current buffer.
+command! -nargs=0 OR   :call     CocAction('runCommand', 'editor.action.organizeImport')
+
+&quot; Add (Neo)Vim's native statusline support.
+&quot; NOTE: Please see `:h coc-status` for integrations with external plugins that
+&quot; provide custom statusline: lightline.vim, vim-airline.
+&quot; set statusline^=%{coc#status()}%{get(b:,'coc_current_function','')}
+
+&quot; Mappings for CoCList
+&quot; Show all diagnostics.
+nnoremap &lt;silent&gt;&lt;nowait&gt; &lt;space&gt;a  :&lt;C-u&gt;CocList diagnostics&lt;cr&gt;
+&quot; Manage extensions.
+nnoremap &lt;silent&gt;&lt;nowait&gt; &lt;space&gt;e  :&lt;C-u&gt;CocList extensions&lt;cr&gt;
+&quot; Show commands.
+nnoremap &lt;silent&gt;&lt;nowait&gt; &lt;space&gt;c  :&lt;C-u&gt;CocList commands&lt;cr&gt;
+&quot; Find symbol of current document.
+nnoremap &lt;silent&gt;&lt;nowait&gt; &lt;space&gt;o  :&lt;C-u&gt;CocList outline&lt;cr&gt;
+&quot; Search workspace symbols.
+nnoremap &lt;silent&gt;&lt;nowait&gt; &lt;space&gt;s  :&lt;C-u&gt;CocList -I symbols&lt;cr&gt;
+&quot; Do default action for next item.
+nnoremap &lt;silent&gt;&lt;nowait&gt; &lt;space&gt;j  :&lt;C-u&gt;CocNext&lt;CR&gt;
+&quot; Do default action for previous item.
+nnoremap &lt;silent&gt;&lt;nowait&gt; &lt;space&gt;k  :&lt;C-u&gt;CocPrev&lt;CR&gt;
+&quot; Resume latest coc list.
+nnoremap &lt;silent&gt;&lt;nowait&gt; &lt;space&gt;p  :&lt;C-u&gt;CocListResume&lt;CR&gt;
+
+&quot; }
+
+&quot; Colorscheme {
+
+&quot; 语法高亮
+syntax  on
+
+&quot; 文件类型带上颜色
+syntax  enable
+
+&quot; 文件类型探测 使用缩进文件
+filetype plugin indent on
+
+set background=light
+
+&quot; 设置主题
+colorscheme onedark
+
+&quot; Set the vertical split character to  a space (there is a single space after '\ ')
+set fillchars+=vert:\ 
+highlight VertSplit ctermbg=236 ctermfg=236
+
+&quot; }
+
+&quot; vim-go {
+
+let g:go_fmt_command=&quot;goimports&quot; &quot; 格式化将默认的 gofmt 替换
+let g:go_info_mode='gopls'
+let g:go_def_mode='gopls'
+let g:go_rename_command='gopls'  &quot; 重命名变量
+let g:go_referrers_mode='gopls'
+
+let g:go_autodetect_gopath=1
+let g:go_list_type=&quot;quickfix&quot;
+let g:go_version_warning=1
+let g:go_highlight_types=1
+let g:go_highlight_fields=1
+let g:go_highlight_functions=1
+let g:go_highlight_function_calls=1
+let g:go_highlight_operators=1
+let g:go_highlight_extra_types=1
+let g:go_highlight_methods=1
+let g:go_highlight_generate_tags=1
+let g:go_highlight_function_parameters = 1
+let g:go_highlight_build_constraints = 1
+
+let g:godef_split=2
+
+&quot; push quickfix window always to the bottom
+autocmd FileType qf wincmd J
+
+&quot; }
+
+&quot; LeaderF {
+
+let g:Lf_ShortcutF='&lt;C-P&gt;'
+&quot; let g:Lf_ShowDevIcons=0
+
+&quot; }
+
+&quot; NERDTree {
+
+nmap &lt;leader&gt;n :NERDTreeToggle&lt;CR&gt;
+&quot; map &lt;F4&gt; :NERDTreeToggle&lt;CR&gt;
+
+&quot;设置NERDTree的宽度
+let NERDTreeWinSize=30
+let g:NERDTreeWinPos='left'
+
+let g:NERDTreeShowIgnoredStatus=1
+
+let g:NERDTreeDirArrowExpandable = '+'
+let g:NERDTreeDirArrowCollapsible = '-'
+&quot;  *        
+
+&quot; }
+
+&quot; vim-airline {
+
+if !exists('g:airline_symbols')
+    let g:airline_symbols={}
+endif
+
+let airline#extensions#tabline#ignore_bufadd_pat =
+            \ '\c\vgundo|undotree|vimfiler|tagbar|nerd_tree'
+let g:airline#extensions#tabline#keymap_ignored_filetypes =
+            \ ['vimfiler', 'nerdtree']
+
+let g:airline#extensions#tabline#left_sep = ''
+let g:airline#extensions#tabline#left_alt_sep = ''
+let g:airline#extensions#tabline#right_sep = ''
+let g:airline#extensions#tabline#right_alt_sep = ''
+
+
+let g:airline_left_sep = ''
+let g:airline_left_alt_sep = ''
+let g:airline_right_sep = ''
+let g:airline_right_alt_sep = ''
+let g:airline_symbols.branch = ''
+let g:airline_symbols.readonly = ''
+let g:airline_symbols.linenr = '☰'
+let g:airline_symbols.maxlinenr = ''
+let g:airline_symbols.dirty='⚡'
+
+&quot; let g:airline_theme='jellybeans'
+let g:airline#extensions#tabline#formatter = 'unique_tail'
+&quot; }
+
+&quot; nerdcommenter {
+
+let g:NERDSpaceDelims=1 &quot; 注释后加空格
+
+&quot; }
+
+&quot; Compile {
+
+command! -nargs=0 CodeForces :call RunCXXCodeForces()
+command! -nargs=0 CxxRun :call RunCPP()
+command! -nargs=0 ShellRun :call RunSH()
+
+&quot; shell
+func! RunSH()
+    exec &quot;w&quot;
+    exec &quot;!sh ./%&quot;
+endfunc
+
+&quot; CXX
+func! RunCPP()
+    exec &quot;w&quot;
+    exec &quot;!g++ % -std=c++17 -o %&lt;&quot;
+    exec &quot;! ./%&lt;&quot;
+endfunc
+
+&quot; codeforces
+func! RunCXXCodeForces()
+    exec &quot;w&quot;
+    exec &quot;!g++ % -std=c++17 -o %&lt;&quot;
+    exec &quot;! ./%&lt; &lt; in&quot;
+endfunc
+&quot; }
+
+&quot; Code Style {
+
+autocmd FileType cpp,c,yaml exec &quot;:call SetCppFileConfig()&quot; 
+autocmd FileType go,bash,python,java,html,javascipt,vim,sh,dot exec &quot;:call SetCommonFileConfig()&quot;
+
+func SetCppFileConfig()
+    &quot; 设置tab为2个空格
+    set tabstop=2
+
+    &quot; 设置缩进为2个空格
+    set shiftwidth=2
+
+    &quot; 用space替代tab的输入
+    set expandtab  
+endfunc
+
+func SetCommonFileConfig()
+    &quot; 设置tab为4个空格
+    set tabstop=4
+
+    &quot; 设置缩进为4个空格
+    set shiftwidth=4
+
+    &quot; 用space替代tab的输入
+    set expandtab  
+
+endfunc
+
+&quot; }
+
+
+nmap &lt;F8&gt; :!dot % -T png -Gsize=4,6\! -Gdpi=50 -o %&lt;.png &amp;&amp; open %&lt;.png &lt;CR&gt;
+</code></pre>
+    </div>
+  </article>
+
+  
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <p>Copyright @ 2020-<script>document.write(new Date().getFullYear())</script> <a class="footer-links-kudos" href="https://github.com/journey-c">Journey-C</a>.
+    </p>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+
+    
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+	ga('create', 'xxxxx', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+
+
+    <script type=text/javascript async src="https://cdn.staticfile.org/mathjax/2.7.7/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$']],
+            processEscapes: true,
+            processEnvironments: true,
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+            TeX: {
+                equationNumbers: {
+                    autoNumber: "AMS"
+                },
+                extensions: ["AMSmath.js", "AMSsymbols.js"]
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(),
+            i;
+        for (i = 0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+    MathJax.Hub.Config({
+        TeX: {
+            equationNumbers: {
+                autoNumber: "AMS"
+            }
+        }
+    });
+    </script>
+
+    
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+	var gitalk = new Gitalk({
+    		clientID: 'a60f22cd3c5d7e6aafa8',
+    		clientSecret: 'db8f7c66f2e8e20275173155975b749870291c5b',
+    		repo: 'journey-c.github.io',
+    		owner: 'journey-c',
+    		admin: ['journey-c'],
+    		id: '<%=page.title%>',
+    		distractionFreeMode: true
+  	});
+  	gitalk.render('gitalk-container');
+</script>
+
+    
+  </body>
+</html>
+

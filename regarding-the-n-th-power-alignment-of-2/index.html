@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.74.3" />
+
+
+<title>关于2的n次幂对齐 - Journey-C</title>
+<meta property="og:title" content="关于2的n次幂对齐 - Journey-C">
+
+
+  <link href='https://journey-c.github.com/favicon.png' rel='icon' type='image/x-icon'/>
+
+
+
+  
+
+
+
+
+<link rel="icon" href="https://journey-c.github.comimages/" type="image/x-icon"/>
+<link rel="stylesheet" href="https://journey-c.github.comcss/main.css" media="all">
+<link rel="stylesheet" href="https://journey-c.github.comcss/fonts.css" media="all">
+<link rel="stylesheet" href="https://journey-c.github.comcss/prism.css" media="all">
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Merriweather:400|Lato:400,400italic,700">
+<script type="text/javascript" src="https://journey-c.github.comjs/main.js"></script>
+<script type="text/javascript" src="https://journey-c.github.comjs/prism.js"></script>
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="https://journey-c.github.com" class="nav-logo">
+    <img src="https://journey-c.github.comimages/yangguo.png" 
+         width="50" 
+         height="50" 
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/archives/"></a></li>
+    
+    <li><a href="/tags/"></a></li>
+    
+    <li><a href="/about/">About</a></li>
+    
+    <li><a href="https://github.com/journey-c">Github</a></li>
+    
+    <li><a href="https://www.cnblogs.com/wuwangchuxin0924/">博客园</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+  <article class="article">
+    
+    
+<section class="toc-section" id="toc-section">
+
+
+
+
+
+
+
+
+
+<div class="article-toc" id="article-toc">
+
+    <div class="article-toc-header"><strong>CONTENTS</strong></div>
+
+    <div id="page-scrollspy" class="article-toc-nav">
+
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#1-%e5%ba%94%e7%94%a8%e5%9c%ba%e6%99%af">
+                            1. 应用场景
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+        
+            
+                
+                
+                    
+                    <ul class="nav" id="markdown-toc">
+                    
+                    
+                        <li class="nav-item">
+                            <a class="nav-link text-left" href="#2-%e8%ae%b2%e8%a7%a3">
+                            2. 讲解
+                            </a>
+                        </li>
+                    
+                    
+                    </ul>
+                    
+                
+            
+        
+
+    </div>
+    
+</div>
+
+
+
+</section>
+
+    
+
+    
+    <span class="article-duration">1 min read</span>
+    
+
+    <h1 class="article-title">关于2的n次幂对齐</h1>
+
+    
+    <span class="article-date">2020-10-28</span>
+    
+
+    
+        
+            
+            <a class="article-tag" href="https://journey-c.github.com/tags/%E9%BB%91%E7%A7%91%E6%8A%80">黑科技</a>
+            
+        
+    
+
+    <div class="article-content">
+      <h1 id="1-应用场景">1. 应用场景</h1>
+<p>内存对齐时基本都会求关于n位对齐的向上取整</p>
+<h1 id="2-讲解">2. 讲解</h1>
+<p>go1.13.8 中channel源码中有这样一个变量<a href="https://github.com/golang/go/blob/885099d1550dad8387013c8f35ad3d4ad9f17c66/src/runtime/chan.go#L28">hchansize</a>用来表示hchan(channel对应的实际结构体)所需大小(申请内存空间时，是根据hchansize给hchan申请对应大小的内存空间)，这个变量的值大概就是hchan的size关于maxAlign向上取整下一个较大倍数，看到源码实现时，就感觉真是怪物。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#a6e22e">hchanSize</span> = <span style="color:#a6e22e">unsafe</span>.<span style="color:#a6e22e">Sizeof</span>(<span style="color:#a6e22e">hchan</span>{}) <span style="color:#f92672">+</span> uintptr(<span style="color:#f92672">-</span>int(<span style="color:#a6e22e">unsafe</span>.<span style="color:#a6e22e">Sizeof</span>(<span style="color:#a6e22e">hchan</span>{}))<span style="color:#f92672">&amp;</span>(<span style="color:#a6e22e">maxAlign</span><span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>))
+</code></pre></div><p>为了方便将上述表达式简化为 n + ( (-n) &amp; (a - 1))，n是unsafe.Sizeof(hchan{})，a是maxAlign。等价于 n + (a - (n % a))</p>
+<p><strong>( (-n) &amp; (a - 1) ) 等价 a - (n % a) ?</strong></p>
+<p>向上取整的问题实际可以转化为求出n距离下一个a的倍数差多少，然后n加上这个数就可以。</p>
+<p>当a为2的n次幂时，n % a可以转化为 n &amp; (a - 1)，取模运算就变成了n与(a - 1) AND时能留下多少个1。</p>
+<p>计算机实际计算时是以<a href="https://www.cnblogs.com/wuwangchuxin0924/p/5851067.html">补码</a>进行运算的，-n转化为补码，符号位不变其他位取反转化为反码，然后最低位+1转化为补码，下面分两步讲。</p>
+<p>以n = 3, a = 8为例(实际计算时是8字节，下面用一字节举例):</p>
+<pre><code>原码: -n = 1000 0011
+反码: -n = 1111 1100
+此时(-n) &amp; (a - 1)实际为 (a - 1) - n % a，而咱们要求的是a - (n % a)
+补码：-n = 1111 1101
+因为-n的反码变补码时最低位要+1，所以刚好(a - 1) - n % a + 1 = a - (n % a)
+</code></pre><p>所以( (-n) &amp; (a - 1) ) 等价 a - (n % a)</p>
+
+    </div>
+  </article>
+
+  
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <p>Copyright @ 2020-<script>document.write(new Date().getFullYear())</script> <a class="footer-links-kudos" href="https://github.com/journey-c">Journey-C</a>.
+    </p>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+
+    
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+	ga('create', 'xxxxx', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+
+
+    <script type=text/javascript async src="https://cdn.staticfile.org/mathjax/2.7.7/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$']],
+            processEscapes: true,
+            processEnvironments: true,
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+            TeX: {
+                equationNumbers: {
+                    autoNumber: "AMS"
+                },
+                extensions: ["AMSmath.js", "AMSsymbols.js"]
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(),
+            i;
+        for (i = 0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+    MathJax.Hub.Config({
+        TeX: {
+            equationNumbers: {
+                autoNumber: "AMS"
+            }
+        }
+    });
+    </script>
+
+    
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+	var gitalk = new Gitalk({
+    		clientID: 'a60f22cd3c5d7e6aafa8',
+    		clientSecret: 'db8f7c66f2e8e20275173155975b749870291c5b',
+    		repo: 'journey-c.github.io',
+    		owner: 'journey-c',
+    		admin: ['journey-c'],
+    		id: '<%=page.title%>',
+    		distractionFreeMode: true
+  	});
+  	gitalk.render('gitalk-container');
+</script>
+
+    
+  </body>
+</html>
+
