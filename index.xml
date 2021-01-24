@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Journey-C</title>
-    <link>https://journey-c.github.com/</link>
+    <link>https://journey-c.github.io/</link>
     <description>Recent content on Journey-C</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Fri, 01 Jan 2021 20:58:31 +0800</lastBuildDate>
     
-	<atom:link href="https://journey-c.github.com/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://journey-c.github.io/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>为什么redis有多个数据库?</title>
-      <link>https://journey-c.github.com/why-redis-has-multiple-databases/</link>
+      <link>https://journey-c.github.io/why-redis-has-multiple-databases/</link>
       <pubDate>Fri, 01 Jan 2021 20:58:31 +0800</pubDate>
       
-      <guid>https://journey-c.github.com/why-redis-has-multiple-databases/</guid>
+      <guid>https://journey-c.github.io/why-redis-has-multiple-databases/</guid>
       <description>概述 Redis是一个开源内存数据库，在今天几乎每个服务端程序员都会或多或少的使用到。但是很少有人会注意到一个Redis实例并不是只有一个数据库。
 设计 Redis实例使用redisServer结构体表示，结构体成员变量中的redisDb *db;是redisServer用来存储用户存入的键值。(默认有16个，通过配置文件中databases配置。每个客户端可以通过SELECT index命令选择要访问的数据库)
 redisDb *db成员变量如下图最右边方框。
@@ -29,10 +29,10 @@ redisDb *db成员变量如下图最右边方框。
     
     <item>
       <title>Linux的I/O多路复用机制</title>
-      <link>https://journey-c.github.com/io-multiplexing/</link>
+      <link>https://journey-c.github.io/io-multiplexing/</link>
       <pubDate>Sun, 20 Dec 2020 21:58:31 +0800</pubDate>
       
-      <guid>https://journey-c.github.com/io-multiplexing/</guid>
+      <guid>https://journey-c.github.io/io-multiplexing/</guid>
       <description>1. 文件系统简介 Linux平台万物皆文件，这句话实际是在夸Linux出色的虚拟文件系统，Linux将所有设备抽象为文件，与设备的数据交互抽象为文件的I/O。
 Linux的虚拟文件系统大概分为四块：
  超级块   文件系统(ext3,ext4以及windows上的NTFS、FAT32、FAT16等) 内核结构对应super_block，对应操作对象super_operations。   索引节点   操作系统以块为单位对磁盘操作(块是扇区大小的整数倍)。索引节点记录了文件在磁盘上所有的物理块(文件内容)，以及其他信心(更新时间，操作时间等)。 内核结构对应inode，对应操作对象inode_operations。   目录项   可以理解为文件的路径(不是目录，Linux上目录也是文件)，进程操作文件时通过目录项找到实际文件。 内核结构对应dentry，对应操作对象dentry_operations。   文件   由进程打开的文件。 内核结构对应file，对应操作对象file_operations  通常服务里例如socket，pipe等对象的read，write实际就是file对应的file_operations的操作，而本文讲解I/O相关事情。
@@ -41,10 +41,10 @@ Linux的虚拟文件系统大概分为四块：
     
     <item>
       <title>系统调用</title>
-      <link>https://journey-c.github.com/what-is-system-call/</link>
+      <link>https://journey-c.github.io/what-is-system-call/</link>
       <pubDate>Fri, 27 Nov 2020 20:58:31 +0800</pubDate>
       
-      <guid>https://journey-c.github.com/what-is-system-call/</guid>
+      <guid>https://journey-c.github.io/what-is-system-call/</guid>
       <description>1 .简介 系统调用就是操作系统提供给用户态应用与硬件交互的一组接口。在用户空间和硬件之间添加一个中间层(系统调用)主要的作用有:
  为用户空间提供抽象接口，用户不需要关心硬件种类介质等。 保障系统的稳定和安全，避免用户错误的使用硬件危害系统或者窃取其他进程的资源。 由于Linux进程都是运行在虚拟系统中，如果操作系统对用户访问硬件一无所知，就几乎无法实现多任务和虚拟内存。  2. 三种使用系统调用方式 2.1 软件中断 没有外界打扰的情况下处理器会一直执行给定指令，中断就是打断处理器的执行并且告诉他先执行另一段指令，执行完毕再接着执行中断前的指令。从中断指令发出的对象可以分为硬件中断和软件中断。
  硬件中断就是硬件通过传输电信号到中断控制器的输入引脚，中断控制器收到电信号之后会给处理器发送一个电信号，处理器一经检测到电信号之后就中断当前工作转而处理中断。之后会通知操作系统已经产生中断，进而操作系统可以处理这个中断了。 软件中断就是处理器执行特定指令时触发的中断，之后也会通知操作系统。 除了系统调用，还有中断下半部tasklet也是用软件中断实现的。  在x86的机器上可以使用$INT$指令触发软件中断，Linux早期的时候就是使用软件中断来处理系统调用，中断号为128。 软件中断执行系统调用的流程为:
@@ -54,10 +54,10 @@ global _start section .text _start: mov eax,4 ; system call number mov ebx,1 ; a
     
     <item>
       <title>如何使用vim作为golang和cxx开发IDE</title>
-      <link>https://journey-c.github.com/how-to-use-vim-as-golang-and-cxx-development-ide/</link>
+      <link>https://journey-c.github.io/how-to-use-vim-as-golang-and-cxx-development-ide/</link>
       <pubDate>Thu, 19 Nov 2020 23:58:31 +0800</pubDate>
       
-      <guid>https://journey-c.github.com/how-to-use-vim-as-golang-and-cxx-development-ide/</guid>
+      <guid>https://journey-c.github.io/how-to-use-vim-as-golang-and-cxx-development-ide/</guid>
       <description>作为一个初学者，很多同学的路子都是这样的：费劲心思装好windows和Linux双系统，看着Linux界面难看，开始找美化软件的工具；美化好了，安装好了g++，因为gedit不好用，sublimetext、atom好用但是不太方便编译，然后陷入vim还是emacs的抉择；最终决定用vim，打印了一张vim键盘图开始学习，略为抱怨门槛高；入门之后发现写代码确实快了很多，为了更快，更美观，开始折腾vim的插件，学习怎么打tag等等等等…感觉万事具备，只欠好好学c++了，发现需要学习g++的编译连接，库文件，多个源文件，大工程，然后开始学习makefile的写法…从此越跑越偏，后来突然发现python看起来简单，要不学python吧。后来又觉得python似乎找工作不占很大优势，转而学java。后来又觉得javascript更简单，所以搞前端吧。然后发现还需要学html、css、数据库、日新月异的新框架…一本书，《c++从入门到放弃》。
  1. 最终成品 先给大家看看成品的样子 2. 所见即所得 折腾vim大概有四五年的时间了，下面总结了想要将vim作为主开发工具需要的条件。
    类别 功能 备注     开发 代码跳转 ✔    查看引用 ✔    代码补全 ✔    查找替换 ✔    变量、函数更名 ✔   辅助 文件目录 ✔    函数目录 ✔    注释 ✔    全局搜索文件 ✔    全局搜索关键词 ✔    补全括号 ✔   美化 主题 ✔    状态栏 ✔    Git信息 ✔    启动页美化 ✔    2.</description>
@@ -65,10 +65,10 @@ global _start section .text _start: mov eax,4 ; system call number mov ebx,1 ; a
     
     <item>
       <title>channel 源码阅读</title>
-      <link>https://journey-c.github.com/channel-read/</link>
+      <link>https://journey-c.github.io/channel-read/</link>
       <pubDate>Thu, 29 Oct 2020 20:58:31 +0800</pubDate>
       
-      <guid>https://journey-c.github.com/channel-read/</guid>
+      <guid>https://journey-c.github.io/channel-read/</guid>
       <description>(年初的时候go语言的学习提上了日程，前一篇sync.pool阅读之后，阅读代码进度本该更快些，奈何身体被掏空，所以这篇文章断断续续一个月终于攒起来了。)
 [toc]
 1. 简介 channel是golang中用于goroutine之间通讯的数据结构，有以下特点：
@@ -79,10 +79,10 @@ type hchan struct { qcount uint dataqsiz uint buf unsafe.Pointer elemsize uint16
     
     <item>
       <title>goroutine 源码阅读</title>
-      <link>https://journey-c.github.com/goroutine-read/</link>
+      <link>https://journey-c.github.io/goroutine-read/</link>
       <pubDate>Thu, 29 Oct 2020 20:58:31 +0800</pubDate>
       
-      <guid>https://journey-c.github.com/goroutine-read/</guid>
+      <guid>https://journey-c.github.io/goroutine-read/</guid>
       <description>1.数据结构 调度相关的数据结构有三个，M(线程)，P(调度器)，G(goroutine) M表示线程，P作为调度器用来帮助每个线程管理自己的goroutine，G就是golang的协程。我们可以通过runtime.GOMAXPROCS(n int)函数设置P的个数，注意P的个数并不代表M的个数，例如程序启动时runtime代码会出实话procs个P，但开始的时候只会启动一个M，就是M0和一个栈为64K(其他goroutine默认初始栈大小2K)来执行runtime代码。
 那其他线程是什么时候创建的呐? 当goroutine被唤醒时，要在M上运行(恢复goroutine的上下文)，P是帮助M管理goroutine的，恢复上下文的操作也由P来完成。如果被唤醒时发现还有空闲的P，并且没有其他M在窃取goroutine(M发现本地goroutine队列和全局goroutine队列都没有goroutine的时候，会去其他线程窃取goroutine)，说明其他M都在忙，就会创建一个M让这个空闲的P帮他来管理goroutine。 总之一句话，开始的时候创建一个M，当发现调度不过来且还有空闲P没有工作就在创建新的，直到创建procs个M(procs通过runtime.GOMAXPROCS设置)
 1.1 G golang 用结构体g表示goroutine
@@ -91,10 +91,10 @@ type hchan struct { qcount uint dataqsiz uint buf unsafe.Pointer elemsize uint16
     
     <item>
       <title>Timing wheel心跳机制</title>
-      <link>https://journey-c.github.com/timing-wheel/</link>
+      <link>https://journey-c.github.io/timing-wheel/</link>
       <pubDate>Thu, 29 Oct 2020 19:58:31 +0800</pubDate>
       
-      <guid>https://journey-c.github.com/timing-wheel/</guid>
+      <guid>https://journey-c.github.io/timing-wheel/</guid>
       <description>在web服务中，断开空闲连接是一种减少资源浪费的一种手段，由此就有了心跳机制来判断一个连接是否空闲。
 1. 一种简单粗暴的方式：   服务端每个连接保存一个最后一次操作的时间戳，每次这个连接对应fd可读时（客户端发来请求），就更新一下时间戳。
   服务端会起一个定时任务: close掉在时间戳(now – heart_beat)时刻之前的fd。
@@ -107,10 +107,10 @@ type hchan struct { qcount uint dataqsiz uint buf unsafe.Pointer elemsize uint16
     
     <item>
       <title>关于2的n次幂对齐</title>
-      <link>https://journey-c.github.com/regarding-the-n-th-power-alignment-of-2/</link>
+      <link>https://journey-c.github.io/regarding-the-n-th-power-alignment-of-2/</link>
       <pubDate>Wed, 28 Oct 2020 20:58:31 +0800</pubDate>
       
-      <guid>https://journey-c.github.com/regarding-the-n-th-power-alignment-of-2/</guid>
+      <guid>https://journey-c.github.io/regarding-the-n-th-power-alignment-of-2/</guid>
       <description>1. 应用场景 内存对齐时基本都会求关于n位对齐的向上取整
 2. 讲解 go1.13.8 中channel源码中有这样一个变量hchansize用来表示hchan(channel对应的实际结构体)所需大小(申请内存空间时，是根据hchansize给hchan申请对应大小的内存空间)，这个变量的值大概就是hchan的size关于maxAlign向上取整下一个较大倍数，看到源码实现时，就感觉真是怪物。
 hchanSize = unsafe.Sizeof(hchan{}) + uintptr(-int(unsafe.Sizeof(hchan{}))&amp;amp;(maxAlign-1)) 为了方便将上述表达式简化为 n + ( (-n) &amp;amp; (a - 1))，n是unsafe.Sizeof(hchan{})，a是maxAlign。等价于 n + (a - (n % a))
@@ -124,10 +124,10 @@ hchanSize = unsafe.Sizeof(hchan{}) + uintptr(-int(unsafe.Sizeof(hchan{}))&amp;am
     
     <item>
       <title>sync.pool 源码阅读</title>
-      <link>https://journey-c.github.com/sync-pool-read/</link>
+      <link>https://journey-c.github.io/sync-pool-read/</link>
       <pubDate>Tue, 27 Oct 2020 20:58:31 +0800</pubDate>
       
-      <guid>https://journey-c.github.com/sync-pool-read/</guid>
+      <guid>https://journey-c.github.io/sync-pool-read/</guid>
       <description>阅读项目代码的时候发现很多地方用到了golang的sync.pool，所以好奇golang的sync.pool底层实现是什么样的，有哪些优化。 本文是基于go1.13.8，做讲解。
 1. 介绍 Pool翻译过来就是池子，主要功能就是: 需要使用某个Object的时候可以从Pool获取，使用完毕再归还，从而减少创建和销毁Object的开销。而本文讲的就是golang中的Pool源码实现。
 2. 用法 千万不要想当然的认为put进去的Object和get出来的Object有什么关系，Pool存的Object在GC时会都清理掉
@@ -136,10 +136,10 @@ package main import ( &amp;#34;fmt&amp;#34; &amp;#34;sync&amp;#34; ) type Book s
     
     <item>
       <title>红黑树</title>
-      <link>https://journey-c.github.com/red-black-tree/</link>
+      <link>https://journey-c.github.io/red-black-tree/</link>
       <pubDate>Thu, 22 Oct 2020 21:58:31 +0800</pubDate>
       
-      <guid>https://journey-c.github.com/red-black-tree/</guid>
+      <guid>https://journey-c.github.io/red-black-tree/</guid>
       <description>红黑树是一种自平衡二叉搜索树。二叉搜索树就是插入的时候，比当前节点小的放到左子树，大的放到右子树。这样查找的时候可以沿着树的一条路径找到想要的值，所以时间复杂度是树的深度，最坏$O(N)$，平均$O(lg^N)$。
 正因为二叉搜索树由于数据的不确定性可能造成树建的不平衡，导致树过深，时间复杂度过高。所以出现了自平衡二叉搜索树像红黑树。
 红黑树所有的性质和特点都是想让树尽可能的平衡。
@@ -163,10 +163,10 @@ n为树的节点个数，这个公式上边证明过了。将1放到左边，然
     
     <item>
       <title>关于这个神秘美男子</title>
-      <link>https://journey-c.github.com/about/</link>
+      <link>https://journey-c.github.io/about/</link>
       <pubDate>Wed, 21 Oct 2020 21:28:08 +0000</pubDate>
       
-      <guid>https://journey-c.github.com/about/</guid>
+      <guid>https://journey-c.github.io/about/</guid>
       <description>Journey-C   来自齐鲁大地，从小对传统文化充满兴趣，发誓以后要做一个像杨过一样不羁的人(娶到小龙女)，长大后怀揣着对自然的敬畏投身于人造自然世界。是什么让我放弃理想(小龙女)？是01的魅力吗？NO！一颗不羁的心。
   目前: 快乐的码农，IOT长连接相关 坐标: 帝都 爱好: 不花钱逛遍帝都 标签: C, Golang 方式: QQ: 1441771176
  </description>
@@ -174,10 +174,10 @@ n为树的节点个数，这个公式上边证明过了。将1放到左边，然
     
     <item>
       <title>长连接平滑重启</title>
-      <link>https://journey-c.github.com/long-connection-smooth-restart-realization/</link>
+      <link>https://journey-c.github.io/long-connection-smooth-restart-realization/</link>
       <pubDate>Wed, 21 Oct 2020 22:48:31 +0800</pubDate>
       
-      <guid>https://journey-c.github.com/long-connection-smooth-restart-realization/</guid>
+      <guid>https://journey-c.github.io/long-connection-smooth-restart-realization/</guid>
       <description>最近小编一直在做长连接相关的事情，最大的感触就是发版太痛苦，一个个踢掉连接然后发版，导致发版时长过长，操作繁琐。所以在想能不能实现优雅重启, 发版时客户端无感知。
  1.难点   如何做到不中断接收连接
   如何做到已有连接不中断
@@ -187,10 +187,10 @@ n为树的节点个数，这个公式上边证明过了。将1放到左边，然
     
     <item>
       <title></title>
-      <link>https://journey-c.github.com/tags/</link>
+      <link>https://journey-c.github.io/tags/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://journey-c.github.com/tags/</guid>
+      <guid>https://journey-c.github.io/tags/</guid>
       <description></description>
     </item>
     

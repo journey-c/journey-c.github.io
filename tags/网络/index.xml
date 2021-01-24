@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>网络 on Journey-C</title>
-    <link>https://journey-c.github.com/tags/%E7%BD%91%E7%BB%9C/</link>
+    <link>https://journey-c.github.io/tags/%E7%BD%91%E7%BB%9C/</link>
     <description>Recent content in 网络 on Journey-C</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Wed, 21 Oct 2020 22:48:31 +0800</lastBuildDate>
     
-	<atom:link href="https://journey-c.github.com/tags/%E7%BD%91%E7%BB%9C/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://journey-c.github.io/tags/%E7%BD%91%E7%BB%9C/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>长连接平滑重启</title>
-      <link>https://journey-c.github.com/long-connection-smooth-restart-realization/</link>
+      <link>https://journey-c.github.io/long-connection-smooth-restart-realization/</link>
       <pubDate>Wed, 21 Oct 2020 22:48:31 +0800</pubDate>
       
-      <guid>https://journey-c.github.com/long-connection-smooth-restart-realization/</guid>
+      <guid>https://journey-c.github.io/long-connection-smooth-restart-realization/</guid>
       <description>最近小编一直在做长连接相关的事情，最大的感触就是发版太痛苦，一个个踢掉连接然后发版，导致发版时长过长，操作繁琐。所以在想能不能实现优雅重启, 发版时客户端无感知。
  1.难点   如何做到不中断接收连接
   如何做到已有连接不中断
