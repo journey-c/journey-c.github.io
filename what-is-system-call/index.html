@@ -83,7 +83,7 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -103,7 +103,7 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -123,9 +123,9 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -147,9 +147,9 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -171,9 +171,9 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -195,7 +195,7 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -276,7 +276,7 @@
 </ol>
 <p><img src="/images/interrupt_call.png" alt="interrupt_call">
 下面就是一个通过软件中断调用write系统调用的例子:</p>
-<pre><code>global _start
+<pre><code class="language-x86asm" data-lang="x86asm">global _start
 
 section .text
 _start:
@@ -292,9 +292,9 @@ _start:
 section .rodata
     msg: db &quot;Hello, World!&quot;, 10
     msglen: equ $ - msg 
-</code></pre><pre><code>nasm -g -f elf64 -o sys_call.o sys_call.s
+</code></pre><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">nasm -g -f elf64 -o sys_call.o sys_call.s
 ld -o sys_call sys_call.o
-</code></pre><h2 id="22-汇编指令">2.2 汇编指令</h2>
+</code></pre></div><h2 id="22-汇编指令">2.2 汇编指令</h2>
 <p>由于中断实现的系统调用在个别处理器上表现非常差，Linux在较新版本上使用了intel和amd上实现的快速系统调用指令syscall/sysret(64)和sysenter/sysexit(32)。这也是目前最常用的系统调用方式。
 <img src="/images/asm.png" alt="asm"></p>
 <p>具体流程为:</p>
@@ -311,11 +311,11 @@ ld -o sys_call sys_call.o
 <p>为了改善vsyscall的局限性，设计了<a href="https://en.wikipedia.org/wiki/VDSO">vDSO</a>。但为了兼容vsyscall现在还保留着。</p>
 <p>vDSO利用<a href="https://en.wikipedia.org/wiki/Address_space_layout_randomization">ASLR</a>增强里安全性，随机地址。</p>
 <p>可以看到Linux中的进程大多包含vDSO的动态库</p>
-<pre><code>➜  ~ ldd /bin/cat 
-	linux-vdso.so.1 =&gt;  (0x00007ffc03be0000)
-	libc.so.6 =&gt; /lib/x86_64-linux-gnu/libc.so.6 (0x00007f52236dd000)
-	/lib64/ld-linux-x86-64.so.2 (0x00007f5223aa7000)
-</code></pre><p>但是并不存在实际的.so文件，vsyscall以及vDOS将系统调用变为函数调用，并把他们映射到用户空间，明显的提高了系统调用的性能。
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">➜  ~ ldd /bin/cat 
+	linux-vdso.so.1 <span style="color:#f92672">=</span>&gt;  <span style="color:#f92672">(</span>0x00007ffc03be0000<span style="color:#f92672">)</span>
+	libc.so.6 <span style="color:#f92672">=</span>&gt; /lib/x86_64-linux-gnu/libc.so.6 <span style="color:#f92672">(</span>0x00007f52236dd000<span style="color:#f92672">)</span>
+	/lib64/ld-linux-x86-64.so.2 <span style="color:#f92672">(</span>0x00007f5223aa7000<span style="color:#f92672">)</span>
+</code></pre></div><p>但是并不存在实际的.so文件，vsyscall以及vDOS将系统调用变为函数调用，并把他们映射到用户空间，明显的提高了系统调用的性能。
 Linux 2.6时，vsyscall就支持了clock_gettime, gettimeofday, time。<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/arch/x86/entry/vdso/vdso.lds.S">vdso.lds.S</a></p>
 <p><img src="/images/vdso.jpeg" alt="vdso"></p>
 <p>看到这里的时候突然想到，刚参加工作的时候一位前辈和我说获取时间可以不使用系统调用，当时一脸懵逼，现在想想确实知道的太少。一些知识不是需要多高的智商才能学到，而是就摆在那，看了就不知道，不看就不知道。</p>

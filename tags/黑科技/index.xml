@@ -12,7 +12,7 @@
     
     
     <item>
-      <title>关于2的n次幂对齐</title>
+      <title>关于$2^n$对齐</title>
       <link>https://journey-c.github.io/regarding-the-n-th-power-alignment-of-2/</link>
       <pubDate>Wed, 28 Oct 2020 20:58:31 +0800</pubDate>
       
@@ -22,7 +22,7 @@
 hchanSize = unsafe.Sizeof(hchan{}) + uintptr(-int(unsafe.Sizeof(hchan{}))&amp;amp;(maxAlign-1)) 为了方便将上述表达式简化为 n + ( (-n) &amp;amp; (a - 1))，n是unsafe.Sizeof(hchan{})，a是maxAlign。等价于 n + (a - (n % a))
 ( (-n) &amp;amp; (a - 1) ) 等价 a - (n % a) ?
 向上取整的问题实际可以转化为求出n距离下一个a的倍数差多少，然后n加上这个数就可以。
-当a为2的n次幂时，n % a可以转化为 n &amp;amp; (a - 1)，取模运算就变成了n与(a - 1) AND时能留下多少个1。
+当a为$2^n$时，n % a可以转化为 n &amp;amp; (a - 1)，取模运算就变成了n与(a - 1) AND时能留下多少个1。
 计算机实际计算时是以补码进行运算的，-n转化为补码，符号位不变其他位取反转化为反码，然后最低位+1转化为补码，下面分两步讲。
 以n = 3, a = 8为例(实际计算时是8字节，下面用一字节举例):
 原码: -n = 1000 0011 反码: -n = 1111 1100 此时(-n) &amp;amp; (a - 1)实际为 (a - 1) - n % a，而咱们要求的是a - (n % a) 补码：-n = 1111 1101 因为-n的反码变补码时最低位要+1，所以刚好(a - 1) - n % a + 1 = a - (n % a) 所以( (-n) &amp;amp; (a - 1) ) 等价 a - (n % a)</description>

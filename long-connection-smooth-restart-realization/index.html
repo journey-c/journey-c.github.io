@@ -83,7 +83,7 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -103,7 +103,7 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -123,9 +123,9 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -147,9 +147,9 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -171,7 +171,7 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -233,58 +233,58 @@
 <h1 id="2解决">2.解决</h1>
 <h2 id="21-如何做到不中断接受连接">2.1 如何做到不中断接受连接</h2>
 <p>以下是linux源码中bind的实现(linux-1.0)</p>
-<pre><code>// linux-1.0/net/socket.c 536
-static int
-sock_bind(int fd, struct sockaddr *umyaddr, int addrlen)
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">// linux-1.0/net/socket.c 536
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">int</span>
+<span style="color:#a6e22e">sock_bind</span>(<span style="color:#66d9ef">int</span> fd, <span style="color:#66d9ef">struct</span> sockaddr <span style="color:#f92672">*</span>umyaddr, <span style="color:#66d9ef">int</span> addrlen)
 {
-  struct socket *sock;
-  int i;
+  <span style="color:#66d9ef">struct</span> socket <span style="color:#f92672">*</span>sock;
+  <span style="color:#66d9ef">int</span> i;
 
-  DPRINTF((net_debug, &quot;NET: sock_bind: fd = %d\n&quot;, fd));
-  if (fd &lt; 0 || fd &gt;= NR_OPEN || current-&gt;filp[fd] == NULL)
-								return(-EBADF);
-  //获取fd对应的socket结构
-  if (!(sock = sockfd_lookup(fd, NULL))) return(-ENOTSOCK);
-  // 转调用bind指向的函数，下层函数(inet_bind)
-  if ((i = sock-&gt;ops-&gt;bind(sock, umyaddr, addrlen)) &lt; 0) {
-	DPRINTF((net_debug, &quot;NET: sock_bind: bind failed\n&quot;));
-	return(i);
+  DPRINTF((net_debug, <span style="color:#e6db74">&#34;NET: sock_bind: fd = %d</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, fd));
+  <span style="color:#66d9ef">if</span> (fd <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">0</span> <span style="color:#f92672">||</span> fd <span style="color:#f92672">&gt;=</span> NR_OPEN <span style="color:#f92672">||</span> current<span style="color:#f92672">-&gt;</span>filp[fd] <span style="color:#f92672">==</span> NULL)
+								<span style="color:#66d9ef">return</span>(<span style="color:#f92672">-</span>EBADF);
+  <span style="color:#75715e">//获取fd对应的socket结构
+</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>(sock <span style="color:#f92672">=</span> sockfd_lookup(fd, NULL))) <span style="color:#66d9ef">return</span>(<span style="color:#f92672">-</span>ENOTSOCK);
+  <span style="color:#75715e">// 转调用bind指向的函数，下层函数(inet_bind)
+</span><span style="color:#75715e"></span>  <span style="color:#66d9ef">if</span> ((i <span style="color:#f92672">=</span> sock<span style="color:#f92672">-&gt;</span>ops<span style="color:#f92672">-&gt;</span>bind(sock, umyaddr, addrlen)) <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">0</span>) {
+	DPRINTF((net_debug, <span style="color:#e6db74">&#34;NET: sock_bind: bind failed</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>));
+	<span style="color:#66d9ef">return</span>(i);
   }
-  return(0);
+  <span style="color:#66d9ef">return</span>(<span style="color:#ae81ff">0</span>);
 }
 
-// linux-1.0/net/inet/sock.c 1012
-static int
-inet_bind(struct socket *sock, struct sockaddr *uaddr,
-	       int addr_len)
+<span style="color:#75715e">// linux-1.0/net/inet/sock.c 1012
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">int</span>
+<span style="color:#a6e22e">inet_bind</span>(<span style="color:#66d9ef">struct</span> socket <span style="color:#f92672">*</span>sock, <span style="color:#66d9ef">struct</span> sockaddr <span style="color:#f92672">*</span>uaddr,
+	       <span style="color:#66d9ef">int</span> addr_len)
 {
   ...
 outside_loop:
-  for(sk2 = sk-&gt;prot-&gt;sock_array[snum &amp; (SOCK_ARRAY_SIZE -1)];
-					sk2 != NULL; sk2 = sk2-&gt;next) {
-#if 	1	/* should be below! */
-	if (sk2-&gt;num != snum) continue;
-/*	if (sk2-&gt;saddr != sk-&gt;saddr) continue; */
-#endif
-	if (sk2-&gt;dead) {
+  <span style="color:#66d9ef">for</span>(sk2 <span style="color:#f92672">=</span> sk<span style="color:#f92672">-&gt;</span>prot<span style="color:#f92672">-&gt;</span>sock_array[snum <span style="color:#f92672">&amp;</span> (SOCK_ARRAY_SIZE <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>)];
+					sk2 <span style="color:#f92672">!=</span> NULL; sk2 <span style="color:#f92672">=</span> sk2<span style="color:#f92672">-&gt;</span>next) {
+<span style="color:#75715e">#if 	1	</span><span style="color:#75715e">/* should be below! */</span><span style="color:#75715e">
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> (sk2<span style="color:#f92672">-&gt;</span>num <span style="color:#f92672">!=</span> snum) <span style="color:#66d9ef">continue</span>;
+<span style="color:#75715e">/*	if (sk2-&gt;saddr != sk-&gt;saddr) continue; */</span>
+<span style="color:#75715e">#endif
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> (sk2<span style="color:#f92672">-&gt;</span>dead) {
 		destroy_sock(sk2);
-		goto outside_loop;
+		<span style="color:#66d9ef">goto</span> outside_loop;
 	}
-	if (!sk-&gt;reuse) {
+	<span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>sk<span style="color:#f92672">-&gt;</span>reuse) {
 		sti();
-		return(-EADDRINUSE);
+		<span style="color:#66d9ef">return</span>(<span style="color:#f92672">-</span>EADDRINUSE);
 	}
-	if (sk2-&gt;num != snum) continue;		/* more than one */
-	if (sk2-&gt;saddr != sk-&gt;saddr) continue;	/* socket per slot ! -FB */
-	if (!sk2-&gt;reuse) {
+	<span style="color:#66d9ef">if</span> (sk2<span style="color:#f92672">-&gt;</span>num <span style="color:#f92672">!=</span> snum) <span style="color:#66d9ef">continue</span>;		<span style="color:#75715e">/* more than one */</span>
+	<span style="color:#66d9ef">if</span> (sk2<span style="color:#f92672">-&gt;</span>saddr <span style="color:#f92672">!=</span> sk<span style="color:#f92672">-&gt;</span>saddr) <span style="color:#66d9ef">continue</span>;	<span style="color:#75715e">/* socket per slot ! -FB */</span>
+	<span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>sk2<span style="color:#f92672">-&gt;</span>reuse) {
 		sti();
-		return(-EADDRINUSE);
+		<span style="color:#66d9ef">return</span>(<span style="color:#f92672">-</span>EADDRINUSE);
 	}
   }
   ... 
 }
 
-</code></pre><ul>
+</code></pre></div><ul>
 <li>sock_array是一个链式哈希表，保存着各端口号的sock结构</li>
 <li>通过源码可以看到，bind的时候会检测要绑定的地址和端口是否合法以及已被绑定, 如果发版时另一个进程和旧进程没有关系，则bind会返回错误Address already in use</li>
 <li>若旧进程fork出新进程，新进程和旧进程为父子关系，新进程继承旧进程的文件表，本身&quot;本进程&quot;就已经监听这个端口了，则不会出现上面的问题</li>
@@ -296,12 +296,12 @@ outside_loop:
 <p>linux提供了unix域套接字可用于socket的传输, 新进程起来后通过unix socket通信继承旧进程所维护的连接</p>
 </li>
 </ul>
-<pre><code>#include &lt;sys/types.h&gt;
-#include &lt;sys/socket.h&gt;
-
-ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags);
-ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags);
-</code></pre><p>发送端调用sendmsg发送文件描述符，接收端调用revmsg接收文件描述符。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;sys/types.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;sys/socket.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e"></span>
+ssize_t <span style="color:#a6e22e">sendmsg</span>(<span style="color:#66d9ef">int</span> sockfd, <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">struct</span> msghdr <span style="color:#f92672">*</span>msg, <span style="color:#66d9ef">int</span> flags);
+ssize_t <span style="color:#a6e22e">recvmsg</span>(<span style="color:#66d9ef">int</span> sockfd, <span style="color:#66d9ef">struct</span> msghdr <span style="color:#f92672">*</span>msg, <span style="color:#66d9ef">int</span> flags);
+</code></pre></div><p>发送端调用sendmsg发送文件描述符，接收端调用revmsg接收文件描述符。</p>
 <p>两进程共享同一打开文件表，这与fork之后的父子进程共享打开文件表的情况完全相同。</p>
 <p><em><strong>由此解决了文章开头提出的两个问题</strong></em></p>
 <h1 id="3-demo实现">3. Demo实现</h1>
@@ -323,307 +323,307 @@ ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags);
 <p>以下是简单实现的demo, demo中实现较为简单，只实现了文件描述符的传递，没有实现各连接状态的传递。</p>
 </li>
 </ul>
-<pre><code>// server.go
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// server.go
+</span><span style="color:#75715e"></span>
+<span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
 
-package main
-
-import (
-	&quot;flag&quot;
-	&quot;fmt&quot;
-	&quot;golang.org/x/sys/unix&quot;
-	&quot;log&quot;
-	&quot;net&quot;
-	&quot;os&quot;
-	&quot;os/signal&quot;
-	&quot;path/filepath&quot;
-	&quot;sync&quot;
-	&quot;syscall&quot;
-	&quot;time&quot;
+<span style="color:#f92672">import</span> (
+	<span style="color:#e6db74">&#34;flag&#34;</span>
+	<span style="color:#e6db74">&#34;fmt&#34;</span>
+	<span style="color:#e6db74">&#34;golang.org/x/sys/unix&#34;</span>
+	<span style="color:#e6db74">&#34;log&#34;</span>
+	<span style="color:#e6db74">&#34;net&#34;</span>
+	<span style="color:#e6db74">&#34;os&#34;</span>
+	<span style="color:#e6db74">&#34;os/signal&#34;</span>
+	<span style="color:#e6db74">&#34;path/filepath&#34;</span>
+	<span style="color:#e6db74">&#34;sync&#34;</span>
+	<span style="color:#e6db74">&#34;syscall&#34;</span>
+	<span style="color:#e6db74">&#34;time&#34;</span>
 )
 
-var (
-	workSpace string
+<span style="color:#66d9ef">var</span> (
+	<span style="color:#a6e22e">workSpace</span> <span style="color:#66d9ef">string</span>
 
-	logger *log.Logger
+	<span style="color:#a6e22e">logger</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Logger</span>
 
-	writeTimeout = time.Second * 5
-	readTimeout  = time.Second * 5
+	<span style="color:#a6e22e">writeTimeout</span> = <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">5</span>
+	<span style="color:#a6e22e">readTimeout</span>  = <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">5</span>
 
-	signalChan = make(chan os.Signal)
+	<span style="color:#a6e22e">signalChan</span> = make(<span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Signal</span>)
 
-	connFiles sync.Map
+	<span style="color:#a6e22e">connFiles</span> <span style="color:#a6e22e">sync</span>.<span style="color:#a6e22e">Map</span>
 
-	serverListener net.Listener
+	<span style="color:#a6e22e">serverListener</span> <span style="color:#a6e22e">net</span>.<span style="color:#a6e22e">Listener</span>
 
-	isUpdate = false
+	<span style="color:#a6e22e">isUpdate</span> = <span style="color:#66d9ef">false</span>
 )
 
-func init() {
-	flag.StringVar(&amp;workSpace, &quot;w&quot;, &quot;.&quot;, &quot;Usage:\n ./server -w=workspace&quot;)
-	flag.Parse()
+<span style="color:#66d9ef">func</span> <span style="color:#a6e22e">init</span>() {
+	<span style="color:#a6e22e">flag</span>.<span style="color:#a6e22e">StringVar</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">workSpace</span>, <span style="color:#e6db74">&#34;w&#34;</span>, <span style="color:#e6db74">&#34;.&#34;</span>, <span style="color:#e6db74">&#34;Usage:\n ./server -w=workspace&#34;</span>)
+	<span style="color:#a6e22e">flag</span>.<span style="color:#a6e22e">Parse</span>()
 
-	file, err := os.OpenFile(filepath.Join(workSpace, &quot;server.log&quot;), os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0777)
-	if err != nil {
-		panic(err)
+	<span style="color:#a6e22e">file</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">OpenFile</span>(<span style="color:#a6e22e">filepath</span>.<span style="color:#a6e22e">Join</span>(<span style="color:#a6e22e">workSpace</span>, <span style="color:#e6db74">&#34;server.log&#34;</span>), <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">O_WRONLY</span>|<span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">O_APPEND</span>|<span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">O_CREATE</span>, <span style="color:#ae81ff">0777</span>)
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		panic(<span style="color:#a6e22e">err</span>)
 	}
-	logger = log.New(file, &quot;&quot;, 11)
-	go beforeStart()
-	go signalHandler()
+	<span style="color:#a6e22e">logger</span> = <span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">New</span>(<span style="color:#a6e22e">file</span>, <span style="color:#e6db74">&#34;&#34;</span>, <span style="color:#ae81ff">11</span>)
+	<span style="color:#66d9ef">go</span> <span style="color:#a6e22e">beforeStart</span>()
+	<span style="color:#66d9ef">go</span> <span style="color:#a6e22e">signalHandler</span>()
 }
 
-func main() {
-	var err error
-	serverListener, err = net.Listen(&quot;tcp&quot;, &quot;:7000&quot;)
-	if err != nil {
-		panic(err)
+<span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">err</span> <span style="color:#66d9ef">error</span>
+	<span style="color:#a6e22e">serverListener</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">net</span>.<span style="color:#a6e22e">Listen</span>(<span style="color:#e6db74">&#34;tcp&#34;</span>, <span style="color:#e6db74">&#34;:7000&#34;</span>)
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		panic(<span style="color:#a6e22e">err</span>)
 	}
-	for {
-		if isUpdate == true {
-			continue
+	<span style="color:#66d9ef">for</span> {
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">isUpdate</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">true</span> {
+			<span style="color:#66d9ef">continue</span>
 		}
-		conn, err := serverListener.Accept()
-		if err != nil {
-			logger.Println(&quot;conn error&quot;)
-			continue
+		<span style="color:#a6e22e">conn</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">serverListener</span>.<span style="color:#a6e22e">Accept</span>()
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;conn error&#34;</span>)
+			<span style="color:#66d9ef">continue</span>
 		}
-		c := conn.(*net.TCPConn)
-		go connectionHandler(c)
+		<span style="color:#a6e22e">c</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">conn</span>.(<span style="color:#f92672">*</span><span style="color:#a6e22e">net</span>.<span style="color:#a6e22e">TCPConn</span>)
+		<span style="color:#66d9ef">go</span> <span style="color:#a6e22e">connectionHandler</span>(<span style="color:#a6e22e">c</span>)
 	}
 }
 
-func connectionHandler(conn *net.TCPConn) {
-	file, _ := conn.File()
-	connFiles.Store(file, true)
-	logger.Printf(&quot;conn fd %d\n&quot;, file.Fd())
-	defer func() {
-		connFiles.Delete(file)
-		_ = conn.Close()
+<span style="color:#66d9ef">func</span> <span style="color:#a6e22e">connectionHandler</span>(<span style="color:#a6e22e">conn</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">net</span>.<span style="color:#a6e22e">TCPConn</span>) {
+	<span style="color:#a6e22e">file</span>, <span style="color:#a6e22e">_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">File</span>()
+	<span style="color:#a6e22e">connFiles</span>.<span style="color:#a6e22e">Store</span>(<span style="color:#a6e22e">file</span>, <span style="color:#66d9ef">true</span>)
+	<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;conn fd %d\n&#34;</span>, <span style="color:#a6e22e">file</span>.<span style="color:#a6e22e">Fd</span>())
+	<span style="color:#66d9ef">defer</span> <span style="color:#66d9ef">func</span>() {
+		<span style="color:#a6e22e">connFiles</span>.<span style="color:#a6e22e">Delete</span>(<span style="color:#a6e22e">file</span>)
+		<span style="color:#a6e22e">_</span> = <span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">Close</span>()
 	}()
-	for {
-		if isUpdate == true {
-			continue
+	<span style="color:#66d9ef">for</span> {
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">isUpdate</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">true</span> {
+			<span style="color:#66d9ef">continue</span>
 		}
-		err := conn.SetReadDeadline(time.Now().Add(readTimeout))
-		if err != nil {
-			logger.Println(err.Error())
-			return
+		<span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">SetReadDeadline</span>(<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Now</span>().<span style="color:#a6e22e">Add</span>(<span style="color:#a6e22e">readTimeout</span>))
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>())
+			<span style="color:#66d9ef">return</span>
 		}
-		rBuf := make([]byte, 4)
-		_, err = conn.Read(rBuf)
-		if err != nil {
-			logger.Println(err.Error())
-			return
+		<span style="color:#a6e22e">rBuf</span> <span style="color:#f92672">:=</span> make([]<span style="color:#66d9ef">byte</span>, <span style="color:#ae81ff">4</span>)
+		<span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">Read</span>(<span style="color:#a6e22e">rBuf</span>)
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>())
+			<span style="color:#66d9ef">return</span>
 		}
-		if string(rBuf) != &quot;ping&quot; {
-			logger.Println(&quot;failed to parse the message &quot; + string(rBuf))
-			return
+		<span style="color:#66d9ef">if</span> string(<span style="color:#a6e22e">rBuf</span>) <span style="color:#f92672">!=</span> <span style="color:#e6db74">&#34;ping&#34;</span> {
+			<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;failed to parse the message &#34;</span> <span style="color:#f92672">+</span> string(<span style="color:#a6e22e">rBuf</span>))
+			<span style="color:#66d9ef">return</span>
 		}
-		err = conn.SetWriteDeadline(time.Now().Add(writeTimeout))
-		if err != nil {
-			logger.Println(err.Error())
-			return
+		<span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">SetWriteDeadline</span>(<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Now</span>().<span style="color:#a6e22e">Add</span>(<span style="color:#a6e22e">writeTimeout</span>))
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>())
+			<span style="color:#66d9ef">return</span>
 		}
-		_, err = conn.Write([]byte(`pong`))
-		if err != nil {
-			logger.Println(err.Error())
-			return
+		<span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">Write</span>([]byte(<span style="color:#e6db74">`pong`</span>))
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>())
+			<span style="color:#66d9ef">return</span>
 		}
 	}
 }
 
-func beforeStart() {
-	connInterface, err := net.Dial(&quot;unix&quot;, filepath.Join(workSpace, &quot;conn.sock&quot;))
-	if err != nil {
-		logger.Println(err.Error())
-		return
+<span style="color:#66d9ef">func</span> <span style="color:#a6e22e">beforeStart</span>() {
+	<span style="color:#a6e22e">connInterface</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">net</span>.<span style="color:#a6e22e">Dial</span>(<span style="color:#e6db74">&#34;unix&#34;</span>, <span style="color:#a6e22e">filepath</span>.<span style="color:#a6e22e">Join</span>(<span style="color:#a6e22e">workSpace</span>, <span style="color:#e6db74">&#34;conn.sock&#34;</span>))
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>())
+		<span style="color:#66d9ef">return</span>
 	}
-	defer func() {
-		_ = connInterface.Close()
+	<span style="color:#66d9ef">defer</span> <span style="color:#66d9ef">func</span>() {
+		<span style="color:#a6e22e">_</span> = <span style="color:#a6e22e">connInterface</span>.<span style="color:#a6e22e">Close</span>()
 	}()
 
-	unixConn := connInterface.(*net.UnixConn)
+	<span style="color:#a6e22e">unixConn</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">connInterface</span>.(<span style="color:#f92672">*</span><span style="color:#a6e22e">net</span>.<span style="color:#a6e22e">UnixConn</span>)
 
-	b := make([]byte, 1)
-	oob := make([]byte, 32)
-	for {
-		err = unixConn.SetWriteDeadline(time.Now().Add(time.Minute * 3))
-		if err != nil {
-			fmt.Println(err.Error())
-			return
+	<span style="color:#a6e22e">b</span> <span style="color:#f92672">:=</span> make([]<span style="color:#66d9ef">byte</span>, <span style="color:#ae81ff">1</span>)
+	<span style="color:#a6e22e">oob</span> <span style="color:#f92672">:=</span> make([]<span style="color:#66d9ef">byte</span>, <span style="color:#ae81ff">32</span>)
+	<span style="color:#66d9ef">for</span> {
+		<span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">unixConn</span>.<span style="color:#a6e22e">SetWriteDeadline</span>(<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Now</span>().<span style="color:#a6e22e">Add</span>(<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Minute</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">3</span>))
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>())
+			<span style="color:#66d9ef">return</span>
 		}
-		n, oobn, _, _, err := unixConn.ReadMsgUnix(b, oob)
-		if err != nil {
-			logger.Println(err.Error())
-			return
+		<span style="color:#a6e22e">n</span>, <span style="color:#a6e22e">oobn</span>, <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">unixConn</span>.<span style="color:#a6e22e">ReadMsgUnix</span>(<span style="color:#a6e22e">b</span>, <span style="color:#a6e22e">oob</span>)
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>())
+			<span style="color:#66d9ef">return</span>
 		}
-		if n != 1 || b[0] != 0 {
-			if n != 1 {
-				logger.Printf(&quot;recv fd type error: %d\n&quot;, n)
-			} else {
-				logger.Println(&quot;init finish&quot;)
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">n</span> <span style="color:#f92672">!=</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">||</span> <span style="color:#a6e22e">b</span>[<span style="color:#ae81ff">0</span>] <span style="color:#f92672">!=</span> <span style="color:#ae81ff">0</span> {
+			<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">n</span> <span style="color:#f92672">!=</span> <span style="color:#ae81ff">1</span> {
+				<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;recv fd type error: %d\n&#34;</span>, <span style="color:#a6e22e">n</span>)
+			} <span style="color:#66d9ef">else</span> {
+				<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;init finish&#34;</span>)
 			}
-			return
+			<span style="color:#66d9ef">return</span>
 		}
-		scms, err := unix.ParseSocketControlMessage(oob[0:oobn])
-		if err != nil {
-			logger.Println(err.Error())
-			return
+		<span style="color:#a6e22e">scms</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">unix</span>.<span style="color:#a6e22e">ParseSocketControlMessage</span>(<span style="color:#a6e22e">oob</span>[<span style="color:#ae81ff">0</span>:<span style="color:#a6e22e">oobn</span>])
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>())
+			<span style="color:#66d9ef">return</span>
 		}
-		if len(scms) != 1 {
-			logger.Printf(&quot;recv fd num != 1 : %d\n&quot;, len(scms))
-			return
+		<span style="color:#66d9ef">if</span> len(<span style="color:#a6e22e">scms</span>) <span style="color:#f92672">!=</span> <span style="color:#ae81ff">1</span> {
+			<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;recv fd num != 1 : %d\n&#34;</span>, len(<span style="color:#a6e22e">scms</span>))
+			<span style="color:#66d9ef">return</span>
 		}
-		fds, err := unix.ParseUnixRights(&amp;scms[0])
-		if err != nil {
-			logger.Println(err.Error())
-			return
+		<span style="color:#a6e22e">fds</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">unix</span>.<span style="color:#a6e22e">ParseUnixRights</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">scms</span>[<span style="color:#ae81ff">0</span>])
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>())
+			<span style="color:#66d9ef">return</span>
 		}
-		if len(fds) != 1 {
-			logger.Printf(&quot;recv fd num != 1 : %d\n&quot;, len(fds))
-			return
+		<span style="color:#66d9ef">if</span> len(<span style="color:#a6e22e">fds</span>) <span style="color:#f92672">!=</span> <span style="color:#ae81ff">1</span> {
+			<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;recv fd num != 1 : %d\n&#34;</span>, len(<span style="color:#a6e22e">fds</span>))
+			<span style="color:#66d9ef">return</span>
 		}
-		logger.Printf(&quot;recv fd %d\n&quot;, fds[0])
-		file := os.NewFile(uintptr(fds[0]), &quot;fd-from-old&quot;)
-		conn, err := net.FileConn(file)
-		if err != nil {
-			logger.Println(err.Error())
-			return
+		<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;recv fd %d\n&#34;</span>, <span style="color:#a6e22e">fds</span>[<span style="color:#ae81ff">0</span>])
+		<span style="color:#a6e22e">file</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">NewFile</span>(uintptr(<span style="color:#a6e22e">fds</span>[<span style="color:#ae81ff">0</span>]), <span style="color:#e6db74">&#34;fd-from-old&#34;</span>)
+		<span style="color:#a6e22e">conn</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">net</span>.<span style="color:#a6e22e">FileConn</span>(<span style="color:#a6e22e">file</span>)
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>())
+			<span style="color:#66d9ef">return</span>
 		}
-		go connectionHandler(conn.(*net.TCPConn))
+		<span style="color:#66d9ef">go</span> <span style="color:#a6e22e">connectionHandler</span>(<span style="color:#a6e22e">conn</span>.(<span style="color:#f92672">*</span><span style="color:#a6e22e">net</span>.<span style="color:#a6e22e">TCPConn</span>))
 	}
 }
 
-func signalHandler() {
-	signal.Notify(
-		signalChan,
-		syscall.SIGUSR2,
+<span style="color:#66d9ef">func</span> <span style="color:#a6e22e">signalHandler</span>() {
+	<span style="color:#a6e22e">signal</span>.<span style="color:#a6e22e">Notify</span>(
+		<span style="color:#a6e22e">signalChan</span>,
+		<span style="color:#a6e22e">syscall</span>.<span style="color:#a6e22e">SIGUSR2</span>,
 	)
-	for {
-		sc := &lt;-signalChan
-		switch sc {
-		case syscall.SIGUSR2:
-			gracefulExit()
-		default:
-			continue
+	<span style="color:#66d9ef">for</span> {
+		<span style="color:#a6e22e">sc</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">signalChan</span>
+		<span style="color:#66d9ef">switch</span> <span style="color:#a6e22e">sc</span> {
+		<span style="color:#66d9ef">case</span> <span style="color:#a6e22e">syscall</span>.<span style="color:#a6e22e">SIGUSR2</span>:
+			<span style="color:#a6e22e">gracefulExit</span>()
+		<span style="color:#66d9ef">default</span>:
+			<span style="color:#66d9ef">continue</span>
 		}
 	}
 }
 
-func gracefulExit() {
-	var connWait sync.WaitGroup
-	_ = syscall.Unlink(filepath.Join(workSpace, &quot;conn.sock&quot;))
-	listenerInterface, err := net.Listen(&quot;unix&quot;, filepath.Join(workSpace, &quot;conn.sock&quot;))
-	if err != nil {
-		logger.Println(err.Error())
-		return
+<span style="color:#66d9ef">func</span> <span style="color:#a6e22e">gracefulExit</span>() {
+	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">connWait</span> <span style="color:#a6e22e">sync</span>.<span style="color:#a6e22e">WaitGroup</span>
+	<span style="color:#a6e22e">_</span> = <span style="color:#a6e22e">syscall</span>.<span style="color:#a6e22e">Unlink</span>(<span style="color:#a6e22e">filepath</span>.<span style="color:#a6e22e">Join</span>(<span style="color:#a6e22e">workSpace</span>, <span style="color:#e6db74">&#34;conn.sock&#34;</span>))
+	<span style="color:#a6e22e">listenerInterface</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">net</span>.<span style="color:#a6e22e">Listen</span>(<span style="color:#e6db74">&#34;unix&#34;</span>, <span style="color:#a6e22e">filepath</span>.<span style="color:#a6e22e">Join</span>(<span style="color:#a6e22e">workSpace</span>, <span style="color:#e6db74">&#34;conn.sock&#34;</span>))
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>())
+		<span style="color:#66d9ef">return</span>
 	}
-	defer func() {
-		_ = listenerInterface.Close()
+	<span style="color:#66d9ef">defer</span> <span style="color:#66d9ef">func</span>() {
+		<span style="color:#a6e22e">_</span> = <span style="color:#a6e22e">listenerInterface</span>.<span style="color:#a6e22e">Close</span>()
 	}()
-	unixListener := listenerInterface.(*net.UnixListener)
-	connWait.Add(1)
-	go func() {
-		defer connWait.Done()
-		unixConn, err := unixListener.AcceptUnix()
-		if err != nil {
-			logger.Println(err.Error())
-			return
+	<span style="color:#a6e22e">unixListener</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">listenerInterface</span>.(<span style="color:#f92672">*</span><span style="color:#a6e22e">net</span>.<span style="color:#a6e22e">UnixListener</span>)
+	<span style="color:#a6e22e">connWait</span>.<span style="color:#a6e22e">Add</span>(<span style="color:#ae81ff">1</span>)
+	<span style="color:#66d9ef">go</span> <span style="color:#66d9ef">func</span>() {
+		<span style="color:#66d9ef">defer</span> <span style="color:#a6e22e">connWait</span>.<span style="color:#a6e22e">Done</span>()
+		<span style="color:#a6e22e">unixConn</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">unixListener</span>.<span style="color:#a6e22e">AcceptUnix</span>()
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>())
+			<span style="color:#66d9ef">return</span>
 		}
-		defer func() {
-			_ = unixConn.Close()
+		<span style="color:#66d9ef">defer</span> <span style="color:#66d9ef">func</span>() {
+			<span style="color:#a6e22e">_</span> = <span style="color:#a6e22e">unixConn</span>.<span style="color:#a6e22e">Close</span>()
 		}()
-		connFiles.Range(func(key, value interface{}) bool {
-			if key == nil || value == nil {
-				return false
+		<span style="color:#a6e22e">connFiles</span>.<span style="color:#a6e22e">Range</span>(<span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">key</span>, <span style="color:#a6e22e">value</span> <span style="color:#66d9ef">interface</span>{}) <span style="color:#66d9ef">bool</span> {
+			<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">key</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span> <span style="color:#f92672">||</span> <span style="color:#a6e22e">value</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span> {
+				<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">false</span>
 			}
-			file := key.(*os.File)
-			defer func() {
-				_ = file.Close()
+			<span style="color:#a6e22e">file</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">key</span>.(<span style="color:#f92672">*</span><span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">File</span>)
+			<span style="color:#66d9ef">defer</span> <span style="color:#66d9ef">func</span>() {
+				<span style="color:#a6e22e">_</span> = <span style="color:#a6e22e">file</span>.<span style="color:#a6e22e">Close</span>()
 			}()
-			buf := make([]byte, 1)
-			buf[0] = 0
-			rights := syscall.UnixRights(int(file.Fd()))
-			_, _, err := unixConn.WriteMsgUnix(buf, rights, nil)
-			if err != nil {
-				logger.Println(err.Error())
+			<span style="color:#a6e22e">buf</span> <span style="color:#f92672">:=</span> make([]<span style="color:#66d9ef">byte</span>, <span style="color:#ae81ff">1</span>)
+			<span style="color:#a6e22e">buf</span>[<span style="color:#ae81ff">0</span>] = <span style="color:#ae81ff">0</span>
+			<span style="color:#a6e22e">rights</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">syscall</span>.<span style="color:#a6e22e">UnixRights</span>(int(<span style="color:#a6e22e">file</span>.<span style="color:#a6e22e">Fd</span>()))
+			<span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">unixConn</span>.<span style="color:#a6e22e">WriteMsgUnix</span>(<span style="color:#a6e22e">buf</span>, <span style="color:#a6e22e">rights</span>, <span style="color:#66d9ef">nil</span>)
+			<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+				<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>())
 			}
-			logger.Printf(&quot;send fd %d\n&quot;, file.Fd())
-			return true
+			<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;send fd %d\n&#34;</span>, <span style="color:#a6e22e">file</span>.<span style="color:#a6e22e">Fd</span>())
+			<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">true</span>
 		})
-		finish := make([]byte, 1)
-		finish[0] = 1
-		_, _, err = unixConn.WriteMsgUnix(finish, nil, nil)
-		if err != nil {
-			logger.Println(err.Error())
+		<span style="color:#a6e22e">finish</span> <span style="color:#f92672">:=</span> make([]<span style="color:#66d9ef">byte</span>, <span style="color:#ae81ff">1</span>)
+		<span style="color:#a6e22e">finish</span>[<span style="color:#ae81ff">0</span>] = <span style="color:#ae81ff">1</span>
+		<span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">unixConn</span>.<span style="color:#a6e22e">WriteMsgUnix</span>(<span style="color:#a6e22e">finish</span>, <span style="color:#66d9ef">nil</span>, <span style="color:#66d9ef">nil</span>)
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>())
 		}
 	}()
 
-	isUpdate = true
-	execSpec := &amp;syscall.ProcAttr{
-		Env:   os.Environ(),
-		Files: append([]uintptr{os.Stdin.Fd(), os.Stdout.Fd(), os.Stderr.Fd()}),
+	<span style="color:#a6e22e">isUpdate</span> = <span style="color:#66d9ef">true</span>
+	<span style="color:#a6e22e">execSpec</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">syscall</span>.<span style="color:#a6e22e">ProcAttr</span>{
+		<span style="color:#a6e22e">Env</span>:   <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Environ</span>(),
+		<span style="color:#a6e22e">Files</span>: append([]<span style="color:#66d9ef">uintptr</span>{<span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Stdin</span>.<span style="color:#a6e22e">Fd</span>(), <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Stdout</span>.<span style="color:#a6e22e">Fd</span>(), <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Stderr</span>.<span style="color:#a6e22e">Fd</span>()}),
 	}
 
-	pid, err := syscall.ForkExec(os.Args[0], os.Args, execSpec)
-	if err != nil {
-		logger.Println(err.Error())
-		return
+	<span style="color:#a6e22e">pid</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">syscall</span>.<span style="color:#a6e22e">ForkExec</span>(<span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Args</span>[<span style="color:#ae81ff">0</span>], <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Args</span>, <span style="color:#a6e22e">execSpec</span>)
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>())
+		<span style="color:#66d9ef">return</span>
 	}
-	logger.Printf(&quot;old process %d new process %d\n&quot;, os.Getpid(), pid)
-	_ = serverListener.Close()
+	<span style="color:#a6e22e">logger</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;old process %d new process %d\n&#34;</span>, <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Getpid</span>(), <span style="color:#a6e22e">pid</span>)
+	<span style="color:#a6e22e">_</span> = <span style="color:#a6e22e">serverListener</span>.<span style="color:#a6e22e">Close</span>()
 
-	connWait.Wait()
-	os.Exit(0)
+	<span style="color:#a6e22e">connWait</span>.<span style="color:#a6e22e">Wait</span>()
+	<span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Exit</span>(<span style="color:#ae81ff">0</span>)
 }
-</code></pre><pre><code>// client.go
-package main
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// client.go
+</span><span style="color:#75715e"></span><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
 
-import (
-	&quot;fmt&quot;
-	&quot;net&quot;
-	&quot;time&quot;
+<span style="color:#f92672">import</span> (
+	<span style="color:#e6db74">&#34;fmt&#34;</span>
+	<span style="color:#e6db74">&#34;net&#34;</span>
+	<span style="color:#e6db74">&#34;time&#34;</span>
 )
 
-var (
-	writeTimeout = time.Second * 5
-	readTimeout  = time.Second * 5
+<span style="color:#66d9ef">var</span> (
+	<span style="color:#a6e22e">writeTimeout</span> = <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">5</span>
+	<span style="color:#a6e22e">readTimeout</span>  = <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">5</span>
 )
 
-func main() {
-	conn, err := net.Dial(&quot;tcp&quot;, &quot;127.0.0.1:7000&quot;)
-	if err != nil {
-		panic(err)
+<span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+	<span style="color:#a6e22e">conn</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">net</span>.<span style="color:#a6e22e">Dial</span>(<span style="color:#e6db74">&#34;tcp&#34;</span>, <span style="color:#e6db74">&#34;127.0.0.1:7000&#34;</span>)
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		panic(<span style="color:#a6e22e">err</span>)
 	}
-	defer func() {
-		conn.Close()
+	<span style="color:#66d9ef">defer</span> <span style="color:#66d9ef">func</span>() {
+		<span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">Close</span>()
 	}()
-	for {
-		time.Sleep(time.Second)
-		err := conn.SetWriteDeadline(time.Now().Add(writeTimeout))
-		if err != nil {
-			fmt.Println(err.Error())
-			break
+	<span style="color:#66d9ef">for</span> {
+		<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Sleep</span>(<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Second</span>)
+		<span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">SetWriteDeadline</span>(<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Now</span>().<span style="color:#a6e22e">Add</span>(<span style="color:#a6e22e">writeTimeout</span>))
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>())
+			<span style="color:#66d9ef">break</span>
 		}
-		fmt.Println(&quot;send ping&quot;)
-		_, err = conn.Write([]byte(`ping`))
-		if err != nil {
-			fmt.Println(err.Error())
-			break
+		<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;send ping&#34;</span>)
+		<span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">Write</span>([]byte(<span style="color:#e6db74">`ping`</span>))
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>())
+			<span style="color:#66d9ef">break</span>
 		}
-		err = conn.SetReadDeadline(time.Now().Add(readTimeout))
-		if err != nil {
-			fmt.Println(err.Error())
-			break
+		<span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">SetReadDeadline</span>(<span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Now</span>().<span style="color:#a6e22e">Add</span>(<span style="color:#a6e22e">readTimeout</span>))
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>())
+			<span style="color:#66d9ef">break</span>
 		}
-		rBuf := make([]byte, 4)
-		_, err = conn.Read(rBuf)
-		if err != nil {
-			fmt.Println(err.Error())
+		<span style="color:#a6e22e">rBuf</span> <span style="color:#f92672">:=</span> make([]<span style="color:#66d9ef">byte</span>, <span style="color:#ae81ff">4</span>)
+		<span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">err</span> = <span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">Read</span>(<span style="color:#a6e22e">rBuf</span>)
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">err</span>.<span style="color:#a6e22e">Error</span>())
 		}
-		fmt.Println(&quot;recv &quot; + string(rBuf))
+		<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;recv &#34;</span> <span style="color:#f92672">+</span> string(<span style="color:#a6e22e">rBuf</span>))
 	}
 }
-</code></pre>
+</code></pre></div>
     </div>
   </article>
   

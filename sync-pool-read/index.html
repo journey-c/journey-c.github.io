@@ -83,7 +83,7 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -103,7 +103,7 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -123,7 +123,7 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -143,7 +143,7 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -163,9 +163,9 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -187,11 +187,11 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -215,11 +215,11 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -243,11 +243,11 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -271,11 +271,11 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -299,11 +299,11 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -327,9 +327,9 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -351,11 +351,11 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -379,11 +379,11 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -407,7 +407,7 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -427,9 +427,9 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -478,9 +478,10 @@
     
 
     <div class="article-content">
-      <p>阅读项目代码的时候发现很多地方用到了golang的sync.pool，所以好奇golang的sync.pool底层实现是什么样的，有哪些优化。
+      <blockquote>
+<p>阅读项目代码的时候发现很多地方用到了golang的sync.pool，所以好奇golang的sync.pool底层实现是什么样的，有哪些优化。
 本文是基于go1.13.8，做讲解。</p>
-<!-- raw HTML omitted -->
+</blockquote>
 <h1 id="1-介绍">1. 介绍</h1>
 <p>Pool翻译过来就是池子，主要功能就是: 需要使用某个Object的时候可以从Pool获取，使用完毕再归还，从而减少创建和销毁Object的开销。而本文讲的就是golang中的Pool源码实现。</p>
 <h1 id="2-用法">2. 用法</h1>
@@ -580,49 +581,49 @@ b) head和tail都是32位，最大是1 &laquo; 31，如果都用的话，head和
 <span style="color:#a6e22e">PopTail</span>    <span style="color:#a6e22e">获取并删除队尾元素</span>
 </code></pre></div><h3 id="413-poolchainelt">4.1.3 poolChainElt</h3>
 <p>链表的一个节点 Node</p>
-<pre><code>type poolChainElt struct {
-	poolDequeue
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">poolChainElt</span> <span style="color:#66d9ef">struct</span> {
+	<span style="color:#a6e22e">poolDequeue</span>
 
-	// next and prev link to the adjacent poolChainElts in this
-	// poolChain.
-	//
-	// next is written atomically by the producer and read
-	// atomically by the consumer. It only transitions from nil to
-	// non-nil.
-	//
-	// prev is written atomically by the consumer and read
-	// atomically by the producer. It only transitions from
-	// non-nil to nil.
-	next, prev *poolChainElt
+	<span style="color:#75715e">// next and prev link to the adjacent poolChainElts in this
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// poolChain.
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">//
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// next is written atomically by the producer and read
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// atomically by the consumer. It only transitions from nil to
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// non-nil.
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">//
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// prev is written atomically by the consumer and read
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// atomically by the producer. It only transitions from
+</span><span style="color:#75715e"></span>	<span style="color:#75715e">// non-nil to nil.
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">next</span>, <span style="color:#a6e22e">prev</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">poolChainElt</span>
 }
-</code></pre><h3 id="414-poolchain">4.1.4 poolChain</h3>
+</code></pre></div><h3 id="414-poolchain">4.1.4 poolChain</h3>
 <p>poolChain 是动态版的poolDequeue
 head(poolDequeue)[prev] &ndash;&gt; &lt;&mdash; <a href="...">next</a>[prev] &mdash;&gt; &lt;&mdash;[next]tail(poolDequeue)
 动态的队列，队列每个节点又是一个环形队列(poolDequeue)</p>
-<pre><code>type poolChain struct {
-	// 头指针，只能单一producer操作(push, pop)
-	head *poolChainElt
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">poolChain</span> <span style="color:#66d9ef">struct</span> {
+	<span style="color:#75715e">// 头指针，只能单一producer操作(push, pop)
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">head</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">poolChainElt</span>
 
-	// 尾指针，可以被多个consumer pop，必须是原子操作
-	tail *poolChainElt
+	<span style="color:#75715e">// 尾指针，可以被多个consumer pop，必须是原子操作
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">tail</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">poolChainElt</span>
 }
 
-// poolChain成员函数
-func (c *poolChain) pushHead(val interface{})
-	1. 如果head为nil，说明队列现在是空的，那么新建一个节点，将head和tail都指向这个节点
-	2. 将val push到head的环形队列中，如果push成功了，可以返回了
-	3. 如果没push成功，则说明head的环形队列满了，就再创建一个两倍head大小的节点[最大(1 &lt;&lt; 32) / 4]，
-		将新节点作为head，并且处理好新head和旧head的next，prev关系
-	4. 将val push到head的环形队列中
+<span style="color:#75715e">// poolChain成员函数
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">c</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">poolChain</span>) <span style="color:#a6e22e">pushHead</span>(<span style="color:#a6e22e">val</span> <span style="color:#66d9ef">interface</span>{})
+	<span style="color:#ae81ff">1.</span> <span style="color:#a6e22e">如果head为nil</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">说明队列现在是空的</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">那么新建一个节点</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">将head和tail都指向这个节点</span>
+	<span style="color:#ae81ff">2.</span> <span style="color:#a6e22e">将val</span> <span style="color:#a6e22e">push到head的环形队列中</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">如果push成功了</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">可以返回了</span>
+	<span style="color:#ae81ff">3.</span> <span style="color:#a6e22e">如果没push成功</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">则说明head的环形队列满了</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">就再创建一个两倍head大小的节点</span>[<span style="color:#a6e22e">最大</span>(<span style="color:#ae81ff">1</span> <span style="color:#f92672">&lt;&lt;</span> <span style="color:#ae81ff">32</span>) <span style="color:#f92672">/</span> <span style="color:#ae81ff">4</span>]<span style="color:#960050;background-color:#1e0010">，</span>
+		<span style="color:#a6e22e">将新节点作为head</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">并且处理好新head和旧head的next</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">prev关系</span>
+	<span style="color:#ae81ff">4.</span> <span style="color:#a6e22e">将val</span> <span style="color:#a6e22e">push到head的环形队列中</span>
 
-func (c *poolChain) popHead()
-	1. 先在head环形队列中popHead试试，如果空了，当前节点就没用了，就删掉当前节点，去prev节点并且把prev节点作为新head再取一值递归下去，
-		能取到就返回，取不到说明队列空了
-func (c *poolChain) popTail()
-	1. 如果tail为nil，说明队列是空的，直接返回
-	2. 如果tail非nil，就取取试试，有东西就返回
-	3. 如果没取出来东西，那么说明tail节点没存东西了，递归去prev节点环形队列中popTail，并且把prev节点作为tail，能取到就返回，取不到就是空了
-</code></pre><h3 id="415-poollocal">4.1.5 poolLocal</h3>
+<span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">c</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">poolChain</span>) <span style="color:#a6e22e">popHead</span>()
+	<span style="color:#ae81ff">1.</span> <span style="color:#a6e22e">先在head环形队列中popHead试试</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">如果空了</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">当前节点就没用了</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">就删掉当前节点</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">去prev节点并且把prev节点作为新head再取一值递归下去</span><span style="color:#960050;background-color:#1e0010">，</span>
+		<span style="color:#a6e22e">能取到就返回</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">取不到说明队列空了</span>
+<span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">c</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">poolChain</span>) <span style="color:#a6e22e">popTail</span>()
+	<span style="color:#ae81ff">1.</span> <span style="color:#a6e22e">如果tail为nil</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">说明队列是空的</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">直接返回</span>
+	<span style="color:#ae81ff">2.</span> <span style="color:#a6e22e">如果tail非nil</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">就取取试试</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">有东西就返回</span>
+	<span style="color:#ae81ff">3.</span> <span style="color:#a6e22e">如果没取出来东西</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">那么说明tail节点没存东西了</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">递归去prev节点环形队列中popTail</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">并且把prev节点作为tail</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">能取到就返回</span><span style="color:#960050;background-color:#1e0010">，</span><span style="color:#a6e22e">取不到就是空了</span>
+</code></pre></div><h3 id="415-poollocal">4.1.5 poolLocal</h3>
 <ol>
 <li>poolLocal是每个调度器(P)存Object的结构体</li>
 <li>private是每个调度器私有的，shared是所有调度器公有的，每个调度器pop时的逻辑是: 先看private，没有在看自己的shared，再没有就去其他调度器的shared偷，再没有才是空</li>
@@ -814,7 +815,7 @@ pop一下看有没有</li>
 }
 </code></pre></div><h1 id="附录">附录</h1>
 <h2 id="pooldot">pool.dot</h2>
-<pre><code>digraph {
+<pre><code class="language-dot" data-lang="dot">digraph {
     bgcolor=&quot;#C6CFD532&quot;;
 
     node [shape=record, fontsize=&quot;8&quot;, margin=&quot;0.04&quot;, height=0.2, color=gray]

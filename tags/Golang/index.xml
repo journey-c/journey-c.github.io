@@ -28,9 +28,8 @@
       <pubDate>Thu, 29 Oct 2020 20:58:31 +0800</pubDate>
       
       <guid>https://journey-c.github.io/channel-read/</guid>
-      <description>(年初的时候go语言的学习提上了日程，前一篇sync.pool阅读之后，阅读代码进度本该更快些，奈何身体被掏空，所以这篇文章断断续续一个月终于攒起来了。)
-[toc]
-1. 简介 channel是golang中用于goroutine之间通讯的数据结构，有以下特点：
+      <description>年初的时候go语言的学习提上了日程，前一篇sync.pool阅读之后，阅读代码进度本该更快些，奈何身体被掏空，所以这篇文章断断续续一个月终于攒起来了。
+ 1. 简介 channel是golang中用于goroutine之间通讯的数据结构，有以下特点：
  线程安全 创建channel时返回的是指针，不需要考虑拷贝的问题 顺序通讯，写入和读出的顺序一致  2. 数据部分 源码位置go/src/runtime/chan.go
 2.1 hchan channel对应的数据结构
 type hchan struct { qcount uint dataqsiz uint buf unsafe.Pointer elemsize uint16 closed uint32 elemtype *_type sendx uint recvx uint recvq waitq sendq waitq // lock protects all fields in hchan, as well as several 	// fields in sudogs blocked on this channel. 	// 	// Do not change another G&amp;#39;s status while holding this lock 	// (in particular, do not ready a G), as this can deadlock 	// with stack shrinking.</description>
@@ -55,9 +54,9 @@ type hchan struct { qcount uint dataqsiz uint buf unsafe.Pointer elemsize uint16
       
       <guid>https://journey-c.github.io/sync-pool-read/</guid>
       <description>阅读项目代码的时候发现很多地方用到了golang的sync.pool，所以好奇golang的sync.pool底层实现是什么样的，有哪些优化。 本文是基于go1.13.8，做讲解。
-1. 介绍 Pool翻译过来就是池子，主要功能就是: 需要使用某个Object的时候可以从Pool获取，使用完毕再归还，从而减少创建和销毁Object的开销。而本文讲的就是golang中的Pool源码实现。
+ 1. 介绍 Pool翻译过来就是池子，主要功能就是: 需要使用某个Object的时候可以从Pool获取，使用完毕再归还，从而减少创建和销毁Object的开销。而本文讲的就是golang中的Pool源码实现。
 2. 用法 千万不要想当然的认为put进去的Object和get出来的Object有什么关系，Pool存的Object在GC时会都清理掉
-package main import ( &amp;#34;fmt&amp;#34; &amp;#34;sync&amp;#34; ) type Book struct { Name string Info map[string]string } func NewBook() interface{} { return &amp;amp;Book{ Name: &amp;#34;&amp;#34;, Info: make(map[string]string), } } func main() { // 创建pool并定义创建object的函数 	bookPool := sync.Pool{New:NewBook} // 从pool获取object 	a := bookPool.Get().(*Book) a.Name = &amp;#34;go&amp;#34; a.Info[&amp;#34;a&amp;#34;] = &amp;#34;b&amp;#34; fmt.Println(a) // 放回pool 	bookPool.Put(a) } 3. 结构图 4. 实现细节  Pool实现源码是这两个文件go/src/sync/pool.go, go/src/sync/poolqueue.</description>
+package main import ( &amp;#34;fmt&amp;#34; &amp;#34;sync&amp;#34; ) type Book struct { Name string Info map[string]string } func NewBook() interface{} { return &amp;amp;Book{ Name: &amp;#34;&amp;#34;, Info: make(map[string]string), } } func main() { // 创建pool并定义创建object的函数 	bookPool := sync.Pool{New:NewBook} // 从pool获取object 	a := bookPool.Get().(*Book) a.Name = &amp;#34;go&amp;#34; a.Info[&amp;#34;a&amp;#34;] = &amp;#34;b&amp;#34; fmt.Println(a) // 放回pool 	bookPool.Put(a) } 3. 结构图 4. 实现细节  Pool实现源码是这两个文件go/src/sync/pool.</description>
     </item>
     
     <item>
@@ -70,7 +69,7 @@ package main import ( &amp;#34;fmt&amp;#34; &amp;#34;sync&amp;#34; ) type Book s
  1.难点   如何做到不中断接收连接
   如何做到已有连接不中断
   2.解决 2.1 如何做到不中断接受连接 以下是linux源码中bind的实现(linux-1.0)
-// linux-1.0/net/socket.c 536 static int sock_bind(int fd, struct sockaddr *umyaddr, int addrlen) { struct socket *sock; int i; DPRINTF((net_debug, &amp;quot;NET: sock_bind: fd = %d\n&amp;quot;, fd)); if (fd &amp;lt; 0 || fd &amp;gt;= NR_OPEN || current-&amp;gt;filp[fd] == NULL) return(-EBADF); //获取fd对应的socket结构 if (!(sock = sockfd_lookup(fd, NULL))) return(-ENOTSOCK); // 转调用bind指向的函数，下层函数(inet_bind) if ((i = sock-&amp;gt;ops-&amp;gt;bind(sock, umyaddr, addrlen)) &amp;lt; 0) { DPRINTF((net_debug, &amp;quot;NET: sock_bind: bind failed\n&amp;quot;)); return(i); } return(0); } // linux-1.</description>
+// linux-1.0/net/socket.c 536 static int sock_bind(int fd, struct sockaddr *umyaddr, int addrlen) { struct socket *sock; int i; DPRINTF((net_debug, &amp;#34;NET: sock_bind: fd = %d\n&amp;#34;, fd)); if (fd &amp;lt; 0 || fd &amp;gt;= NR_OPEN || current-&amp;gt;filp[fd] == NULL) return(-EBADF); //获取fd对应的socket结构  if (!(sock = sockfd_lookup(fd, NULL))) return(-ENOTSOCK); // 转调用bind指向的函数，下层函数(inet_bind)  if ((i = sock-&amp;gt;ops-&amp;gt;bind(sock, umyaddr, addrlen)) &amp;lt; 0) { DPRINTF((net_debug, &amp;#34;NET: sock_bind: bind failed\n&amp;#34;)); return(i); } return(0); } // linux-1.</description>
     </item>
     
   </channel>

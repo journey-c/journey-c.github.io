@@ -69,9 +69,8 @@ global _start section .text _start: mov eax,4 ; system call number mov ebx,1 ; a
       <pubDate>Thu, 29 Oct 2020 20:58:31 +0800</pubDate>
       
       <guid>https://journey-c.github.io/channel-read/</guid>
-      <description>(年初的时候go语言的学习提上了日程，前一篇sync.pool阅读之后，阅读代码进度本该更快些，奈何身体被掏空，所以这篇文章断断续续一个月终于攒起来了。)
-[toc]
-1. 简介 channel是golang中用于goroutine之间通讯的数据结构，有以下特点：
+      <description>年初的时候go语言的学习提上了日程，前一篇sync.pool阅读之后，阅读代码进度本该更快些，奈何身体被掏空，所以这篇文章断断续续一个月终于攒起来了。
+ 1. 简介 channel是golang中用于goroutine之间通讯的数据结构，有以下特点：
  线程安全 创建channel时返回的是指针，不需要考虑拷贝的问题 顺序通讯，写入和读出的顺序一致  2. 数据部分 源码位置go/src/runtime/chan.go
 2.1 hchan channel对应的数据结构
 type hchan struct { qcount uint dataqsiz uint buf unsafe.Pointer elemsize uint16 closed uint32 elemtype *_type sendx uint recvx uint recvq waitq sendq waitq // lock protects all fields in hchan, as well as several 	// fields in sudogs blocked on this channel. 	// 	// Do not change another G&amp;#39;s status while holding this lock 	// (in particular, do not ready a G), as this can deadlock 	// with stack shrinking.</description>
@@ -106,7 +105,7 @@ type hchan struct { qcount uint dataqsiz uint buf unsafe.Pointer elemsize uint16
     </item>
     
     <item>
-      <title>关于2的n次幂对齐</title>
+      <title>关于$2^n$对齐</title>
       <link>https://journey-c.github.io/regarding-the-n-th-power-alignment-of-2/</link>
       <pubDate>Wed, 28 Oct 2020 20:58:31 +0800</pubDate>
       
@@ -116,7 +115,7 @@ type hchan struct { qcount uint dataqsiz uint buf unsafe.Pointer elemsize uint16
 hchanSize = unsafe.Sizeof(hchan{}) + uintptr(-int(unsafe.Sizeof(hchan{}))&amp;amp;(maxAlign-1)) 为了方便将上述表达式简化为 n + ( (-n) &amp;amp; (a - 1))，n是unsafe.Sizeof(hchan{})，a是maxAlign。等价于 n + (a - (n % a))
 ( (-n) &amp;amp; (a - 1) ) 等价 a - (n % a) ?
 向上取整的问题实际可以转化为求出n距离下一个a的倍数差多少，然后n加上这个数就可以。
-当a为2的n次幂时，n % a可以转化为 n &amp;amp; (a - 1)，取模运算就变成了n与(a - 1) AND时能留下多少个1。
+当a为$2^n$时，n % a可以转化为 n &amp;amp; (a - 1)，取模运算就变成了n与(a - 1) AND时能留下多少个1。
 计算机实际计算时是以补码进行运算的，-n转化为补码，符号位不变其他位取反转化为反码，然后最低位+1转化为补码，下面分两步讲。
 以n = 3, a = 8为例(实际计算时是8字节，下面用一字节举例):
 原码: -n = 1000 0011 反码: -n = 1111 1100 此时(-n) &amp;amp; (a - 1)实际为 (a - 1) - n % a，而咱们要求的是a - (n % a) 补码：-n = 1111 1101 因为-n的反码变补码时最低位要+1，所以刚好(a - 1) - n % a + 1 = a - (n % a) 所以( (-n) &amp;amp; (a - 1) ) 等价 a - (n % a)</description>
@@ -129,9 +128,9 @@ hchanSize = unsafe.Sizeof(hchan{}) + uintptr(-int(unsafe.Sizeof(hchan{}))&amp;am
       
       <guid>https://journey-c.github.io/sync-pool-read/</guid>
       <description>阅读项目代码的时候发现很多地方用到了golang的sync.pool，所以好奇golang的sync.pool底层实现是什么样的，有哪些优化。 本文是基于go1.13.8，做讲解。
-1. 介绍 Pool翻译过来就是池子，主要功能就是: 需要使用某个Object的时候可以从Pool获取，使用完毕再归还，从而减少创建和销毁Object的开销。而本文讲的就是golang中的Pool源码实现。
+ 1. 介绍 Pool翻译过来就是池子，主要功能就是: 需要使用某个Object的时候可以从Pool获取，使用完毕再归还，从而减少创建和销毁Object的开销。而本文讲的就是golang中的Pool源码实现。
 2. 用法 千万不要想当然的认为put进去的Object和get出来的Object有什么关系，Pool存的Object在GC时会都清理掉
-package main import ( &amp;#34;fmt&amp;#34; &amp;#34;sync&amp;#34; ) type Book struct { Name string Info map[string]string } func NewBook() interface{} { return &amp;amp;Book{ Name: &amp;#34;&amp;#34;, Info: make(map[string]string), } } func main() { // 创建pool并定义创建object的函数 	bookPool := sync.Pool{New:NewBook} // 从pool获取object 	a := bookPool.Get().(*Book) a.Name = &amp;#34;go&amp;#34; a.Info[&amp;#34;a&amp;#34;] = &amp;#34;b&amp;#34; fmt.Println(a) // 放回pool 	bookPool.Put(a) } 3. 结构图 4. 实现细节  Pool实现源码是这两个文件go/src/sync/pool.go, go/src/sync/poolqueue.</description>
+package main import ( &amp;#34;fmt&amp;#34; &amp;#34;sync&amp;#34; ) type Book struct { Name string Info map[string]string } func NewBook() interface{} { return &amp;amp;Book{ Name: &amp;#34;&amp;#34;, Info: make(map[string]string), } } func main() { // 创建pool并定义创建object的函数 	bookPool := sync.Pool{New:NewBook} // 从pool获取object 	a := bookPool.Get().(*Book) a.Name = &amp;#34;go&amp;#34; a.Info[&amp;#34;a&amp;#34;] = &amp;#34;b&amp;#34; fmt.Println(a) // 放回pool 	bookPool.Put(a) } 3. 结构图 4. 实现细节  Pool实现源码是这两个文件go/src/sync/pool.</description>
     </item>
     
     <item>
@@ -167,9 +166,8 @@ n为树的节点个数，这个公式上边证明过了。将1放到左边，然
       <pubDate>Wed, 21 Oct 2020 21:28:08 +0000</pubDate>
       
       <guid>https://journey-c.github.io/about/</guid>
-      <description>Journey-C   来自齐鲁大地，从小对传统文化充满兴趣，发誓以后要做一个像杨过一样不羁的人(娶到小龙女)，长大后怀揣着对自然的敬畏投身于人造自然世界。是什么让我放弃理想(小龙女)？是01的魅力吗？NO！一颗不羁的心。
-  目前: 快乐的码农，IOT长连接相关 坐标: 帝都 爱好: 不花钱逛遍帝都 标签: C, Golang 方式: QQ: 1441771176
- </description>
+      <description>Journey-C    来自齐鲁大地，从小对传统文化充满兴趣，发誓以后要做一个像杨过一样不羁的人(娶到小龙女)，长大后怀揣着对自然的敬畏投身于人造自然世界。是什么让我放弃理想(小龙女)？是01的魅力吗？NO！一颗不羁的心。
+   目前: 快乐的码农，IOT长连接相关 坐标: 帝都 爱好: 不花钱逛遍帝都 标签: C, Golang 联系: QQ: 1441771176  </description>
     </item>
     
     <item>
@@ -182,7 +180,7 @@ n为树的节点个数，这个公式上边证明过了。将1放到左边，然
  1.难点   如何做到不中断接收连接
   如何做到已有连接不中断
   2.解决 2.1 如何做到不中断接受连接 以下是linux源码中bind的实现(linux-1.0)
-// linux-1.0/net/socket.c 536 static int sock_bind(int fd, struct sockaddr *umyaddr, int addrlen) { struct socket *sock; int i; DPRINTF((net_debug, &amp;quot;NET: sock_bind: fd = %d\n&amp;quot;, fd)); if (fd &amp;lt; 0 || fd &amp;gt;= NR_OPEN || current-&amp;gt;filp[fd] == NULL) return(-EBADF); //获取fd对应的socket结构 if (!(sock = sockfd_lookup(fd, NULL))) return(-ENOTSOCK); // 转调用bind指向的函数，下层函数(inet_bind) if ((i = sock-&amp;gt;ops-&amp;gt;bind(sock, umyaddr, addrlen)) &amp;lt; 0) { DPRINTF((net_debug, &amp;quot;NET: sock_bind: bind failed\n&amp;quot;)); return(i); } return(0); } // linux-1.</description>
+// linux-1.0/net/socket.c 536 static int sock_bind(int fd, struct sockaddr *umyaddr, int addrlen) { struct socket *sock; int i; DPRINTF((net_debug, &amp;#34;NET: sock_bind: fd = %d\n&amp;#34;, fd)); if (fd &amp;lt; 0 || fd &amp;gt;= NR_OPEN || current-&amp;gt;filp[fd] == NULL) return(-EBADF); //获取fd对应的socket结构  if (!(sock = sockfd_lookup(fd, NULL))) return(-ENOTSOCK); // 转调用bind指向的函数，下层函数(inet_bind)  if ((i = sock-&amp;gt;ops-&amp;gt;bind(sock, umyaddr, addrlen)) &amp;lt; 0) { DPRINTF((net_debug, &amp;#34;NET: sock_bind: bind failed\n&amp;#34;)); return(i); } return(0); } // linux-1.</description>
     </item>
     
     <item>

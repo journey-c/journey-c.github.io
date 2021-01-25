@@ -83,7 +83,7 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -103,9 +103,9 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -127,9 +127,9 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -151,9 +151,9 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -175,9 +175,9 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -199,9 +199,9 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -223,7 +223,7 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -243,9 +243,9 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -267,9 +267,9 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -291,9 +291,9 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -315,9 +315,9 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -339,9 +339,9 @@
                 
                 
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
-                    <ul class="nav" id="markdown-toc">
+                    <ul class="nav">
                     
                     
                         <li class="nav-item">
@@ -757,103 +757,103 @@ Breakpoint <span style="color:#ae81ff">3</span> at 0x1049360: file /usr/local/go
 <li>将空闲的p加入空闲链表
 到目前为止，创建了m0，g0，和nprocs个P，但是还是没有让调度真正的跑起来</li>
 </ol>
-<pre><code>func procresize(nprocs int32) *p {
-	old := gomaxprocs
-	if old &lt; 0 || nprocs &lt;= 0 {
-		throw(&quot;procresize: invalid arg&quot;)
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">procresize</span>(<span style="color:#a6e22e">nprocs</span> <span style="color:#66d9ef">int32</span>) <span style="color:#f92672">*</span><span style="color:#a6e22e">p</span> {
+	<span style="color:#a6e22e">old</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">gomaxprocs</span>
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">old</span> &lt; <span style="color:#ae81ff">0</span> <span style="color:#f92672">||</span> <span style="color:#a6e22e">nprocs</span> <span style="color:#f92672">&lt;=</span> <span style="color:#ae81ff">0</span> {
+		<span style="color:#a6e22e">throw</span>(<span style="color:#e6db74">&#34;procresize: invalid arg&#34;</span>)
 	}
-	if trace.enabled {
-		traceGomaxprocs(nprocs)
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">trace</span>.<span style="color:#a6e22e">enabled</span> {
+		<span style="color:#a6e22e">traceGomaxprocs</span>(<span style="color:#a6e22e">nprocs</span>)
 	}
 
-	// update statistics
-	now := nanotime()
-	if sched.procresizetime != 0 {
-		sched.totaltime += int64(old) * (now - sched.procresizetime)
+	<span style="color:#75715e">// update statistics
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">now</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">nanotime</span>()
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">sched</span>.<span style="color:#a6e22e">procresizetime</span> <span style="color:#f92672">!=</span> <span style="color:#ae81ff">0</span> {
+		<span style="color:#a6e22e">sched</span>.<span style="color:#a6e22e">totaltime</span> <span style="color:#f92672">+=</span> int64(<span style="color:#a6e22e">old</span>) <span style="color:#f92672">*</span> (<span style="color:#a6e22e">now</span> <span style="color:#f92672">-</span> <span style="color:#a6e22e">sched</span>.<span style="color:#a6e22e">procresizetime</span>)
 	}
-	sched.procresizetime = now
+	<span style="color:#a6e22e">sched</span>.<span style="color:#a6e22e">procresizetime</span> = <span style="color:#a6e22e">now</span>
 
-	if nprocs &gt; int32(len(allp)) { // 初始化的len(allp) == 0
-		lock(&amp;allpLock)
-		if nprocs &lt;= int32(cap(allp)) { // 需要缩容
-			allp = allp[:nprocs]
-		} else { // 扩容
-			nallp := make([]*p, nprocs)
-			// Copy everything up to allp's cap so we
-			// never lose old allocated Ps.
-			copy(nallp, allp[:cap(allp)])
-			allp = nallp
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">nprocs</span> &gt; int32(len(<span style="color:#a6e22e">allp</span>)) { <span style="color:#75715e">// 初始化的len(allp) == 0
+</span><span style="color:#75715e"></span>		<span style="color:#a6e22e">lock</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">allpLock</span>)
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">nprocs</span> <span style="color:#f92672">&lt;=</span> int32(cap(<span style="color:#a6e22e">allp</span>)) { <span style="color:#75715e">// 需要缩容
+</span><span style="color:#75715e"></span>			<span style="color:#a6e22e">allp</span> = <span style="color:#a6e22e">allp</span>[:<span style="color:#a6e22e">nprocs</span>]
+		} <span style="color:#66d9ef">else</span> { <span style="color:#75715e">// 扩容
+</span><span style="color:#75715e"></span>			<span style="color:#a6e22e">nallp</span> <span style="color:#f92672">:=</span> make([]<span style="color:#f92672">*</span><span style="color:#a6e22e">p</span>, <span style="color:#a6e22e">nprocs</span>)
+			<span style="color:#75715e">// Copy everything up to allp&#39;s cap so we
+</span><span style="color:#75715e"></span>			<span style="color:#75715e">// never lose old allocated Ps.
+</span><span style="color:#75715e"></span>			copy(<span style="color:#a6e22e">nallp</span>, <span style="color:#a6e22e">allp</span>[:cap(<span style="color:#a6e22e">allp</span>)])
+			<span style="color:#a6e22e">allp</span> = <span style="color:#a6e22e">nallp</span>
 		}
-		unlock(&amp;allpLock)
+		<span style="color:#a6e22e">unlock</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">allpLock</span>)
 	}
 
-	for i := old; i &lt; nprocs; i++ {
-		pp := allp[i]
-		if pp == nil {
-			pp = new(p)
+	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">old</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">nprocs</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+		<span style="color:#a6e22e">pp</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">allp</span>[<span style="color:#a6e22e">i</span>]
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">pp</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span> {
+			<span style="color:#a6e22e">pp</span> = new(<span style="color:#a6e22e">p</span>)
 		}
-		pp.init(i)
-		atomicstorep(unsafe.Pointer(&amp;allp[i]), unsafe.Pointer(pp))
+		<span style="color:#a6e22e">pp</span>.<span style="color:#a6e22e">init</span>(<span style="color:#a6e22e">i</span>)
+		<span style="color:#a6e22e">atomicstorep</span>(<span style="color:#a6e22e">unsafe</span>.<span style="color:#a6e22e">Pointer</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">allp</span>[<span style="color:#a6e22e">i</span>]), <span style="color:#a6e22e">unsafe</span>.<span style="color:#a6e22e">Pointer</span>(<span style="color:#a6e22e">pp</span>))
 	}
 
-	_g_ := getg() // 获取g0
-	if _g_.m.p != 0 &amp;&amp; _g_.m.p.ptr().id &lt; nprocs { // 进程初始化时g0.m与p没有绑定，所以g0.m.p == 0
-		_g_.m.p.ptr().status = _Prunning
-		_g_.m.p.ptr().mcache.prepareForSweep()
-	} else {
-		if _g_.m.p != 0 {
-			if trace.enabled {
-				traceGoSched()
-				traceProcStop(_g_.m.p.ptr())
+	<span style="color:#a6e22e">_g_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">getg</span>() <span style="color:#75715e">// 获取g0
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">p</span> <span style="color:#f92672">!=</span> <span style="color:#ae81ff">0</span> <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">ptr</span>().<span style="color:#a6e22e">id</span> &lt; <span style="color:#a6e22e">nprocs</span> { <span style="color:#75715e">// 进程初始化时g0.m与p没有绑定，所以g0.m.p == 0
+</span><span style="color:#75715e"></span>		<span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">ptr</span>().<span style="color:#a6e22e">status</span> = <span style="color:#a6e22e">_Prunning</span>
+		<span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">ptr</span>().<span style="color:#a6e22e">mcache</span>.<span style="color:#a6e22e">prepareForSweep</span>()
+	} <span style="color:#66d9ef">else</span> {
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">p</span> <span style="color:#f92672">!=</span> <span style="color:#ae81ff">0</span> {
+			<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">trace</span>.<span style="color:#a6e22e">enabled</span> {
+				<span style="color:#a6e22e">traceGoSched</span>()
+				<span style="color:#a6e22e">traceProcStop</span>(<span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">ptr</span>())
 			}
-			_g_.m.p.ptr().m = 0
+			<span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">ptr</span>().<span style="color:#a6e22e">m</span> = <span style="color:#ae81ff">0</span>
 		}
-		_g_.m.p = 0
-		_g_.m.mcache = nil
-		p := allp[0]
-		p.m = 0
-		p.status = _Pidle
-		acquirep(p) // 把allp[0]和m0关联起来
-		if trace.enabled {
-			traceGoStart()
+		<span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">p</span> = <span style="color:#ae81ff">0</span>
+		<span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">mcache</span> = <span style="color:#66d9ef">nil</span>
+		<span style="color:#a6e22e">p</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">allp</span>[<span style="color:#ae81ff">0</span>]
+		<span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">m</span> = <span style="color:#ae81ff">0</span>
+		<span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">status</span> = <span style="color:#a6e22e">_Pidle</span>
+		<span style="color:#a6e22e">acquirep</span>(<span style="color:#a6e22e">p</span>) <span style="color:#75715e">// 把allp[0]和m0关联起来
+</span><span style="color:#75715e"></span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">trace</span>.<span style="color:#a6e22e">enabled</span> {
+			<span style="color:#a6e22e">traceGoStart</span>()
 		}
 	}
 
-	// 如果有需要销毁的p，就是销毁
-	for i := nprocs; i &lt; old; i++ {
-		p := allp[i]
-		p.destroy()
-		// can't free P itself because it can be referenced by an M in syscall
+	<span style="color:#75715e">// 如果有需要销毁的p，就是销毁
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">nprocs</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">old</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+		<span style="color:#a6e22e">p</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">allp</span>[<span style="color:#a6e22e">i</span>]
+		<span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">destroy</span>()
+		<span style="color:#75715e">// can&#39;t free P itself because it can be referenced by an M in syscall
+</span><span style="color:#75715e"></span>	}
+
+	<span style="color:#66d9ef">if</span> int32(len(<span style="color:#a6e22e">allp</span>)) <span style="color:#f92672">!=</span> <span style="color:#a6e22e">nprocs</span> {
+		<span style="color:#a6e22e">lock</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">allpLock</span>)
+		<span style="color:#a6e22e">allp</span> = <span style="color:#a6e22e">allp</span>[:<span style="color:#a6e22e">nprocs</span>]
+		<span style="color:#a6e22e">unlock</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">allpLock</span>)
 	}
 
-	if int32(len(allp)) != nprocs {
-		lock(&amp;allpLock)
-		allp = allp[:nprocs]
-		unlock(&amp;allpLock)
-	}
-
-	// 将空闲p放入空闲链表
-	var runnablePs *p
-	for i := nprocs - 1; i &gt;= 0; i-- {
-		p := allp[i]
-		if _g_.m.p.ptr() == p { // allp[0]已经和m0关联了，所以不用放入空闲链表
-			continue
+	<span style="color:#75715e">// 将空闲p放入空闲链表
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">runnablePs</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">p</span>
+	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">nprocs</span> <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>; <span style="color:#a6e22e">i</span> <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">--</span> {
+		<span style="color:#a6e22e">p</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">allp</span>[<span style="color:#a6e22e">i</span>]
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">ptr</span>() <span style="color:#f92672">==</span> <span style="color:#a6e22e">p</span> { <span style="color:#75715e">// allp[0]已经和m0关联了，所以不用放入空闲链表
+</span><span style="color:#75715e"></span>			<span style="color:#66d9ef">continue</span>
 		}
-		p.status = _Pidle
-		if runqempty(p) {
-			pidleput(p)
-		} else {
-			p.m.set(mget())
-			p.link.set(runnablePs)
-			runnablePs = p
+		<span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">status</span> = <span style="color:#a6e22e">_Pidle</span>
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">runqempty</span>(<span style="color:#a6e22e">p</span>) {
+			<span style="color:#a6e22e">pidleput</span>(<span style="color:#a6e22e">p</span>)
+		} <span style="color:#66d9ef">else</span> {
+			<span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">set</span>(<span style="color:#a6e22e">mget</span>())
+			<span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">link</span>.<span style="color:#a6e22e">set</span>(<span style="color:#a6e22e">runnablePs</span>)
+			<span style="color:#a6e22e">runnablePs</span> = <span style="color:#a6e22e">p</span>
 		}
 	}
-	stealOrder.reset(uint32(nprocs))
-	var int32p *int32 = &amp;gomaxprocs // make compiler check that gomaxprocs is an int32
-	atomic.Store((*uint32)(unsafe.Pointer(int32p)), uint32(nprocs))
-	return runnablePs
+	<span style="color:#a6e22e">stealOrder</span>.<span style="color:#a6e22e">reset</span>(uint32(<span style="color:#a6e22e">nprocs</span>))
+	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">int32p</span> <span style="color:#f92672">*</span><span style="color:#66d9ef">int32</span> = <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">gomaxprocs</span> <span style="color:#75715e">// make compiler check that gomaxprocs is an int32
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">atomic</span>.<span style="color:#a6e22e">Store</span>((<span style="color:#f92672">*</span><span style="color:#66d9ef">uint32</span>)(<span style="color:#a6e22e">unsafe</span>.<span style="color:#a6e22e">Pointer</span>(<span style="color:#a6e22e">int32p</span>)), uint32(<span style="color:#a6e22e">nprocs</span>))
+	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">runnablePs</span>
 }
-</code></pre><p>2.4 创建&quot;第一个&quot;goroutine</p>
+</code></pre></div><p>2.4 创建&quot;第一个&quot;goroutine</p>
 <p>我们返回runtime·rt0_go接着看</p>
 <ol>
 <li>将runtime.main地址放入AX</li>
@@ -1066,31 +1066,31 @@ Breakpoint <span style="color:#ae81ff">3</span> at 0x1049360: file /usr/local/go
 <li>调用mstart1
 go/src/runtime/proc.go, line 1146</li>
 </ol>
-<pre><code>func mstart() {
-	_g_ := getg() // 获取g0
-
-	osStack := _g_.stack.lo == 0 // g0.stack.lo在前边已经初始化过了，所以osStack = false
-	if osStack {
-		size := _g_.stack.hi
-		if size == 0 {
-			size = 8192 * sys.StackGuardMultiplier
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">mstart</span>() {
+	<span style="color:#a6e22e">_g_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">getg</span>() <span style="color:#75715e">// 获取g0
+</span><span style="color:#75715e"></span>
+	<span style="color:#a6e22e">osStack</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">stack</span>.<span style="color:#a6e22e">lo</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span> <span style="color:#75715e">// g0.stack.lo在前边已经初始化过了，所以osStack = false
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">osStack</span> {
+		<span style="color:#a6e22e">size</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">stack</span>.<span style="color:#a6e22e">hi</span>
+		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">size</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span> {
+			<span style="color:#a6e22e">size</span> = <span style="color:#ae81ff">8192</span> <span style="color:#f92672">*</span> <span style="color:#a6e22e">sys</span>.<span style="color:#a6e22e">StackGuardMultiplier</span>
 		}
-		_g_.stack.hi = uintptr(noescape(unsafe.Pointer(&amp;size)))
-		_g_.stack.lo = _g_.stack.hi - size + 1024
+		<span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">stack</span>.<span style="color:#a6e22e">hi</span> = uintptr(<span style="color:#a6e22e">noescape</span>(<span style="color:#a6e22e">unsafe</span>.<span style="color:#a6e22e">Pointer</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">size</span>)))
+		<span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">stack</span>.<span style="color:#a6e22e">lo</span> = <span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">stack</span>.<span style="color:#a6e22e">hi</span> <span style="color:#f92672">-</span> <span style="color:#a6e22e">size</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">1024</span>
 	}
-	// 初始化栈保护
-	_g_.stackguard0 = _g_.stack.lo + _StackGuard
-	_g_.stackguard1 = _g_.stackguard0
-	// 开始m0开始运行
-	mstart1()
+	<span style="color:#75715e">// 初始化栈保护
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">stackguard0</span> = <span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">stack</span>.<span style="color:#a6e22e">lo</span> <span style="color:#f92672">+</span> <span style="color:#a6e22e">_StackGuard</span>
+	<span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">stackguard1</span> = <span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">stackguard0</span>
+	<span style="color:#75715e">// 开始m0开始运行
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">mstart1</span>()
 
-	// Exit this thread.
-	if GOOS == &quot;windows&quot; || GOOS == &quot;solaris&quot; || GOOS == &quot;illumos&quot; || GOOS == &quot;plan9&quot; || GOOS == &quot;darwin&quot; || GOOS == &quot;aix&quot; {
-		osStack = true
+	<span style="color:#75715e">// Exit this thread.
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">GOOS</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;windows&#34;</span> <span style="color:#f92672">||</span> <span style="color:#a6e22e">GOOS</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;solaris&#34;</span> <span style="color:#f92672">||</span> <span style="color:#a6e22e">GOOS</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;illumos&#34;</span> <span style="color:#f92672">||</span> <span style="color:#a6e22e">GOOS</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;plan9&#34;</span> <span style="color:#f92672">||</span> <span style="color:#a6e22e">GOOS</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;darwin&#34;</span> <span style="color:#f92672">||</span> <span style="color:#a6e22e">GOOS</span> <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;aix&#34;</span> {
+		<span style="color:#a6e22e">osStack</span> = <span style="color:#66d9ef">true</span>
 	}
-	mexit(osStack)
+	<span style="color:#a6e22e">mexit</span>(<span style="color:#a6e22e">osStack</span>)
 }
-</code></pre><ul>
+</code></pre></div><ul>
 <li>runtime.mstart1</li>
 </ul>
 <ol>
@@ -1098,39 +1098,39 @@ go/src/runtime/proc.go, line 1146</li>
 <li>做一些初始化工作</li>
 <li>调用schedule开始调度</li>
 </ol>
-<pre><code>func mstart1() {
-	// 获取当前goroutine g0
-	_g_ := getg()
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">mstart1</span>() {
+	<span style="color:#75715e">// 获取当前goroutine g0
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">_g_</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">getg</span>()
 
-	if _g_ != _g_.m.g0 {
-		throw(&quot;bad runtime·mstart&quot;)
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">_g_</span> <span style="color:#f92672">!=</span> <span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">g0</span> {
+		<span style="color:#a6e22e">throw</span>(<span style="color:#e6db74">&#34;bad runtime·mstart&#34;</span>)
 	}
 
-	// save函数保存了g0再次运行时(循环调度下一次回头)调度相关信息
-	save(getcallerpc(), getcallersp())
-	// asminit
-	asminit()
-	// 信号相关初始化
-	minit()
+	<span style="color:#75715e">// save函数保存了g0再次运行时(循环调度下一次回头)调度相关信息
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">save</span>(<span style="color:#a6e22e">getcallerpc</span>(), <span style="color:#a6e22e">getcallersp</span>())
+	<span style="color:#75715e">// asminit
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">asminit</span>()
+	<span style="color:#75715e">// 信号相关初始化
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">minit</span>()
 
-	// 初始化时m == m0，mstartm0也是信号相关的初始化
-	if _g_.m == &amp;m0 {
-		mstartm0()
+	<span style="color:#75715e">// 初始化时m == m0，mstartm0也是信号相关的初始化
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">m</span> <span style="color:#f92672">==</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">m0</span> {
+		<span style="color:#a6e22e">mstartm0</span>()
 	}
 
-	// 初始化时fn == ni
-	if fn := _g_.m.mstartfn; fn != nil {
-		fn()
+	<span style="color:#75715e">// 初始化时fn == ni
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">fn</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">mstartfn</span>; <span style="color:#a6e22e">fn</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+		<span style="color:#a6e22e">fn</span>()
 	}
 
-	if _g_.m != &amp;m0 {
-		acquirep(_g_.m.nextp.ptr())
-		_g_.m.nextp = 0
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">m</span> <span style="color:#f92672">!=</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">m0</span> {
+		<span style="color:#a6e22e">acquirep</span>(<span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">nextp</span>.<span style="color:#a6e22e">ptr</span>())
+		<span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">nextp</span> = <span style="color:#ae81ff">0</span>
 	}
-	// 开始调度
-	schedule()
+	<span style="color:#75715e">// 开始调度
+</span><span style="color:#75715e"></span>	<span style="color:#a6e22e">schedule</span>()
 }
-</code></pre><ul>
+</code></pre></div><ul>
 <li>runtime.schedule</li>
 </ul>
 <p>调度开始了，m要找gorutine放到cpu上执行了</p>
@@ -1319,14 +1319,14 @@ go/src/runtime/proc.go, line 1146</li>
 <li>主动让出cpu，这个情况不会挂起goroutine，而是放回队列，等待下次调度，这个函数(GoSched)被暴露出去，可以调用，例如，线上有这种情况，写log是异步的，但由于机器磁盘老旧性能不佳，所以当log goroutine运行时还是会过多的占用cpu，这时候可以调用GoSched适当降低当前goroutine优先级</li>
 </ol>
 <p>runtime.Gosched -&gt; runtime.gosched_m -&gt; runtime.goschedImpl runtime.schedule</p>
-<pre><code>// Gosched continuation on g0.
-func gosched_m(gp *g) {
-	if trace.enabled {
-		traceGoSched()
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// Gosched continuation on g0.
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">gosched_m</span>(<span style="color:#a6e22e">gp</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">g</span>) {
+	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">trace</span>.<span style="color:#a6e22e">enabled</span> {
+		<span style="color:#a6e22e">traceGoSched</span>()
 	}
-	goschedImpl(gp)
+	<span style="color:#a6e22e">goschedImpl</span>(<span style="color:#a6e22e">gp</span>)
 }
-</code></pre><ol start="2">
+</code></pre></div><ol start="2">
 <li>调度保护，当调度器发现goroutine处于禁止的状态时就会主动调度让出cpu</li>
 </ol>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// goschedguarded is a forbidden-states-avoided version of gosched_m

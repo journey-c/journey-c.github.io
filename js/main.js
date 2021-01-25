@@ -23,6 +23,9 @@
 
 function menuFixed(id) {
     var obj = document.getElementById(id);
+    if (obj == null) {
+        return;
+    }
     var _getHeight = obj.offsetTop;
 
     window.onscroll = function () {
