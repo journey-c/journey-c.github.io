@@ -53,10 +53,12 @@ type hchan struct { qcount uint dataqsiz uint buf unsafe.Pointer elemsize uint16
       <pubDate>Tue, 27 Oct 2020 20:58:31 +0800</pubDate>
       
       <guid>https://journey-c.github.io/sync-pool-read/</guid>
-      <description>阅读项目代码的时候发现很多地方用到了golang的sync.pool，所以好奇golang的sync.pool底层实现是什么样的，有哪些优化。 本文是基于go1.13.8，做讲解。
- 1. 介绍 Pool翻译过来就是池子，主要功能就是: 需要使用某个Object的时候可以从Pool获取，使用完毕再归还，从而减少创建和销毁Object的开销。而本文讲的就是golang中的Pool源码实现。
-2. 用法 千万不要想当然的认为put进去的Object和get出来的Object有什么关系，Pool存的Object在GC时会都清理掉
-package main import ( &amp;#34;fmt&amp;#34; &amp;#34;sync&amp;#34; ) type Book struct { Name string Info map[string]string } func NewBook() interface{} { return &amp;amp;Book{ Name: &amp;#34;&amp;#34;, Info: make(map[string]string), } } func main() { // 创建pool并定义创建object的函数 	bookPool := sync.Pool{New:NewBook} // 从pool获取object 	a := bookPool.Get().(*Book) a.Name = &amp;#34;go&amp;#34; a.Info[&amp;#34;a&amp;#34;] = &amp;#34;b&amp;#34; fmt.Println(a) // 放回pool 	bookPool.Put(a) } 3. 结构图 4. 实现细节  Pool实现源码是这两个文件go/src/sync/pool.</description>
+      <description>阅读项目代码的时候发现很多地方用到了golang的sync.pool，所以好奇golang的sync.pool底层实现是什么样的，有哪些优化。 本文是基于go1.13.10做讲解。
+ 在golang开发中sync.pool是最常用的缓存池，当一个对象被频繁创建和释放时会用到，但一般不作为连接池使用因为sync.pool中的对象随时会被释放掉，对象生命周期一般为两个GC间隔，且释放时机用户无感知。
+1. 设计原理 sync.pool的操纵都是线程安全的，每个P都有自己私有的存储空间和共享的存储空间。
+ GET 获取对象时，一般先在当前P的私有空间获取，如果没有，再到当前P的共享空间获取，如果还没有就窃取其他P的共享空间，如果还没有就访问上次GC遗留的对象。上述操作完成后还没有获取到，则调用New函数创建对象。 PUT 对象放回池子时，先判断当前P的私有空间是否为空，为空就放入，不为空就放入共享空间。  当GET/PUT非常频繁的时候，一般都只访问当前P的空间就可以完成操作。 GET/PUT不频繁时，即使访问到其他P的空间(有锁)，由于操作不频繁所以锁是可以接受的。
+2. 数据结构 Pool是sync.Pool的核心数据结构。先了解一下该结构体的内部字段。
+type Pool struct { noCopy noCopy local unsafe.Pointer // local fixed-size per-P pool, actual type is [P]poolLocal 	localSize uintptr // size of the local array  victim unsafe.Pointer // local from previous cycle 	victimSize uintptr // size of victims array  // New optionally specifies a function to generate 	// a value when Get would otherwise return nil.</description>
     </item>
     
     <item>

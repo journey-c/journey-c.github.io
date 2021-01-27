@@ -100,7 +100,7 @@ code {
 }
 
 .content img {
-  max-width: 100%;
+  width: 100%;
 }
 
 .article-title {
@@ -174,7 +174,7 @@ code {
 .article-toc {
     position: absolute;
     flex:1;
-    margin-left: 725px;
+    margin-left: 740px;
     padding: 10px;
     font-size: 13px;
     border-radius:5px;
