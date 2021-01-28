@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>redis on Journey-C</title>
-    <link>https://journey-c.github.io/tags/redis/</link>
+    <link>/tags/redis/</link>
     <description>Recent content in redis on Journey-C</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Fri, 01 Jan 2021 20:58:31 +0800</lastBuildDate>
     
-	<atom:link href="https://journey-c.github.io/tags/redis/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="/tags/redis/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>为什么redis有多个数据库?</title>
-      <link>https://journey-c.github.io/why-redis-has-multiple-databases/</link>
+      <link>/why-redis-has-multiple-databases/</link>
       <pubDate>Fri, 01 Jan 2021 20:58:31 +0800</pubDate>
       
-      <guid>https://journey-c.github.io/why-redis-has-multiple-databases/</guid>
+      <guid>/why-redis-has-multiple-databases/</guid>
       <description>概述 Redis是一个开源内存数据库，在今天几乎每个服务端程序员都会或多或少的使用到。但是很少有人会注意到一个Redis实例并不是只有一个数据库。
 设计 Redis实例使用redisServer结构体表示，结构体成员变量中的redisDb *db;是redisServer用来存储用户存入的键值。(默认有16个，通过配置文件中databases配置。每个客户端可以通过SELECT index命令选择要访问的数据库)
 redisDb *db成员变量如下图最右边方框。

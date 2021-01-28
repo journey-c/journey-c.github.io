@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>多路复用 on Journey-C</title>
-    <link>https://journey-c.github.io/tags/%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/</link>
+    <link>/tags/%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/</link>
     <description>Recent content in 多路复用 on Journey-C</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Sun, 20 Dec 2020 21:58:31 +0800</lastBuildDate>
     
-	<atom:link href="https://journey-c.github.io/tags/%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="/tags/%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Linux的I/O多路复用机制</title>
-      <link>https://journey-c.github.io/io-multiplexing/</link>
+      <link>/io-multiplexing/</link>
       <pubDate>Sun, 20 Dec 2020 21:58:31 +0800</pubDate>
       
-      <guid>https://journey-c.github.io/io-multiplexing/</guid>
+      <guid>/io-multiplexing/</guid>
       <description>1. 文件系统简介 Linux平台万物皆文件，这句话实际是在夸Linux出色的虚拟文件系统，Linux将所有设备抽象为文件，与设备的数据交互抽象为文件的I/O。
 Linux的虚拟文件系统大概分为四块：
  超级块   文件系统(ext3,ext4以及windows上的NTFS、FAT32、FAT16等) 内核结构对应super_block，对应操作对象super_operations。   索引节点   操作系统以块为单位对磁盘操作(块是扇区大小的整数倍)。索引节点记录了文件在磁盘上所有的物理块(文件内容)，以及其他信心(更新时间，操作时间等)。 内核结构对应inode，对应操作对象inode_operations。   目录项   可以理解为文件的路径(不是目录，Linux上目录也是文件)，进程操作文件时通过目录项找到实际文件。 内核结构对应dentry，对应操作对象dentry_operations。   文件   由进程打开的文件。 内核结构对应file，对应操作对象file_operations  通常服务里例如socket，pipe等对象的read，write实际就是file对应的file_operations的操作，而本文讲解I/O相关事情。

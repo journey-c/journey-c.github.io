@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>工程 on Journey-C</title>
-    <link>https://journey-c.github.io/tags/%E5%B7%A5%E7%A8%8B/</link>
+    <link>/tags/%E5%B7%A5%E7%A8%8B/</link>
     <description>Recent content in 工程 on Journey-C</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Thu, 29 Oct 2020 19:58:31 +0800</lastBuildDate>
     
-	<atom:link href="https://journey-c.github.io/tags/%E5%B7%A5%E7%A8%8B/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="/tags/%E5%B7%A5%E7%A8%8B/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Timing wheel心跳机制</title>
-      <link>https://journey-c.github.io/timing-wheel/</link>
+      <link>/timing-wheel/</link>
       <pubDate>Thu, 29 Oct 2020 19:58:31 +0800</pubDate>
       
-      <guid>https://journey-c.github.io/timing-wheel/</guid>
+      <guid>/timing-wheel/</guid>
       <description>在web服务中，断开空闲连接是一种减少资源浪费的一种手段，由此就有了心跳机制来判断一个连接是否空闲。
 1. 一种简单粗暴的方式：   服务端每个连接保存一个最后一次操作的时间戳，每次这个连接对应fd可读时（客户端发来请求），就更新一下时间戳。
   服务端会起一个定时任务: close掉在时间戳(now – heart_beat)时刻之前的fd。

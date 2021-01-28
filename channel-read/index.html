@@ -11,7 +11,7 @@
 <meta property="og:title" content="channel 源码阅读 - Journey-C">
 
 
-<link href='https://journey-c.github.io/favicon.png' rel='icon' type='image/x-icon' />
+<link href='favicon.png' rel='icon' type='image/x-icon' />
 
 
 
@@ -20,13 +20,13 @@
 
 
 
-<link rel="icon" href="https://journey-c.github.io/images/" type="image/x-icon" />
-<link rel="stylesheet" href="https://journey-c.github.io/css/main.css" media="all">
-<link rel="stylesheet" href="https://journey-c.github.io/css/fonts.css" media="all">
-<link rel="stylesheet" href="https://journey-c.github.io/css/prism.css" media="all">
+<link rel="icon" href="images/" type="image/x-icon" />
+<link rel="stylesheet" href="css/main.css" media="all">
+<link rel="stylesheet" href="css/fonts.css" media="all">
+<link rel="stylesheet" href="css/prism.css" media="all">
 <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Merriweather:400|Lato:400,400italic,700">
-<script type="text/javascript" src="https://journey-c.github.io/js/main.js"></script>
-<script type="text/javascript" src="https://journey-c.github.io/js/prism.js"></script>
+<script type="text/javascript" src="js/main.js"></script>
+<script type="text/javascript" src="js/prism.js"></script>
 
 
 
@@ -60,16 +60,14 @@ if (!doNotTrack) {
     <div class="wrapper">
         <header class="header">
             <nav class="nav">
-  <a href="https://journey-c.github.io/" class="nav-logo">
-    <img src="https://journey-c.github.io/images/yangguo.png" 
+  <a href="" class="nav-logo">
+    <img src="images/yangguo.png" 
          width="50" 
          height="50" 
          alt="Logo">
   </a>
 
   <ul class="nav-links">
-    
-    <li><a href="/archives/"></a></li>
     
     <li><a href="/tags/"></a></li>
     
@@ -782,9 +780,9 @@ if (!doNotTrack) {
     
         
             
-            <a class="article-tag" href="https://journey-c.github.io/tags/%E6%BA%90%E7%A0%81">源码</a>
+            <a class="article-tag" href="tags/%E6%BA%90%E7%A0%81">源码</a>
             
-            <a class="article-tag" href="https://journey-c.github.io/tags/golang">Golang</a>
+            <a class="article-tag" href="tags/golang">Golang</a>
             
         
     
@@ -1088,7 +1086,7 @@ OMAKECHAN类型的节点最终会在SSA中间代码生成之前被转化成runti
 </code></pre></div><h3 id="312-makechan">3.1.2 makechan</h3>
 <ol>
 <li>安全检查: channel能存的元素类型大小是否超过2^16</li>
-<li>判断<a href="https://www.cnblogs.com/wuwangchuxin0924/p/12735129.html">hchanSize</a>是否关于maxAlign对齐，判断元素对齐是否maxAlign小，如果大maxAlign就没用了，这里hchanSize设计十分巧妙，位运算神操作优化，可以看另一篇文章<a href="https://www.cnblogs.com/wuwangchuxin0924/p/12735129.html">关于2的n次幂对齐</a></li>
+<li>判断hchanSize是否关于maxAlign对齐，判断元素对齐是否maxAlign小，如果大maxAlign就没用了，这里hchanSize设计十分巧妙，位运算神操作优化，可以看另一篇文章<a href="/regarding-the-n-th-power-alignment-of-2">关于2的n次幂对齐</a></li>
 <li>判断申请的空间大小是否uint64大，判断所需空间是否超过最大可申请空间，判断size是否小于0(非法)</li>
 <li>然后就是给hchan申请内存空间了
 <ol>
