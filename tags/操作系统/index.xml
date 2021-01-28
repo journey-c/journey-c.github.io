@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>操作系统 on Journey-C</title>
-    <link>/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/</link>
+    <link>https://journey-c.github.io/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/</link>
     <description>Recent content in 操作系统 on Journey-C</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Fri, 27 Nov 2020 20:58:31 +0800</lastBuildDate>
     
-	<atom:link href="/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://journey-c.github.io/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>系统调用</title>
-      <link>/what-is-system-call/</link>
+      <link>https://journey-c.github.io/what-is-system-call/</link>
       <pubDate>Fri, 27 Nov 2020 20:58:31 +0800</pubDate>
       
-      <guid>/what-is-system-call/</guid>
+      <guid>https://journey-c.github.io/what-is-system-call/</guid>
       <description>1 .简介 系统调用就是操作系统提供给用户态应用与硬件交互的一组接口。在用户空间和硬件之间添加一个中间层(系统调用)主要的作用有:
  为用户空间提供抽象接口，用户不需要关心硬件种类介质等。 保障系统的稳定和安全，避免用户错误的使用硬件危害系统或者窃取其他进程的资源。 由于Linux进程都是运行在虚拟系统中，如果操作系统对用户访问硬件一无所知，就几乎无法实现多任务和虚拟内存。  2. 三种使用系统调用方式 2.1 软件中断 没有外界打扰的情况下处理器会一直执行给定指令，中断就是打断处理器的执行并且告诉他先执行另一段指令，执行完毕再接着执行中断前的指令。从中断指令发出的对象可以分为硬件中断和软件中断。
  硬件中断就是硬件通过传输电信号到中断控制器的输入引脚，中断控制器收到电信号之后会给处理器发送一个电信号，处理器一经检测到电信号之后就中断当前工作转而处理中断。之后会通知操作系统已经产生中断，进而操作系统可以处理这个中断了。 软件中断就是处理器执行特定指令时触发的中断，之后也会通知操作系统。 除了系统调用，还有中断下半部tasklet也是用软件中断实现的。  在x86的机器上可以使用$INT$指令触发软件中断，Linux早期的时候就是使用软件中断来处理系统调用，中断号为128。 软件中断执行系统调用的流程为:

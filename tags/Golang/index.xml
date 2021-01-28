@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Golang on Journey-C</title>
-    <link>/tags/golang/</link>
+    <link>https://journey-c.github.io/tags/golang/</link>
     <description>Recent content in Golang on Journey-C</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Thu, 19 Nov 2020 23:58:31 +0800</lastBuildDate>
     
-	<atom:link href="/tags/golang/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://journey-c.github.io/tags/golang/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>如何使用vim作为golang和cxx开发IDE</title>
-      <link>/how-to-use-vim-as-golang-and-cxx-development-ide/</link>
+      <link>https://journey-c.github.io/how-to-use-vim-as-golang-and-cxx-development-ide/</link>
       <pubDate>Thu, 19 Nov 2020 23:58:31 +0800</pubDate>
       
-      <guid>/how-to-use-vim-as-golang-and-cxx-development-ide/</guid>
+      <guid>https://journey-c.github.io/how-to-use-vim-as-golang-and-cxx-development-ide/</guid>
       <description>作为一个初学者，很多同学的路子都是这样的：费劲心思装好windows和Linux双系统，看着Linux界面难看，开始找美化软件的工具；美化好了，安装好了g++，因为gedit不好用，sublimetext、atom好用但是不太方便编译，然后陷入vim还是emacs的抉择；最终决定用vim，打印了一张vim键盘图开始学习，略为抱怨门槛高；入门之后发现写代码确实快了很多，为了更快，更美观，开始折腾vim的插件，学习怎么打tag等等等等…感觉万事具备，只欠好好学c++了，发现需要学习g++的编译连接，库文件，多个源文件，大工程，然后开始学习makefile的写法…从此越跑越偏，后来突然发现python看起来简单，要不学python吧。后来又觉得python似乎找工作不占很大优势，转而学java。后来又觉得javascript更简单，所以搞前端吧。然后发现还需要学html、css、数据库、日新月异的新框架…一本书，《c++从入门到放弃》。
  1. 最终成品 先给大家看看成品的样子 2. 所见即所得 折腾vim大概有四五年的时间了，下面总结了想要将vim作为主开发工具需要的条件。
    类别 功能 备注     开发 代码跳转 ✔    查看引用 ✔    代码补全 ✔    查找替换 ✔    变量、函数更名 ✔   辅助 文件目录 ✔    函数目录 ✔    注释 ✔    全局搜索文件 ✔    全局搜索关键词 ✔    补全括号 ✔   美化 主题 ✔    状态栏 ✔    Git信息 ✔    启动页美化 ✔    2.</description>
@@ -24,10 +24,10 @@
     
     <item>
       <title>channel 源码阅读</title>
-      <link>/channel-read/</link>
+      <link>https://journey-c.github.io/channel-read/</link>
       <pubDate>Thu, 29 Oct 2020 20:58:31 +0800</pubDate>
       
-      <guid>/channel-read/</guid>
+      <guid>https://journey-c.github.io/channel-read/</guid>
       <description>年初的时候go语言的学习提上了日程，前一篇sync.pool阅读之后，阅读代码进度本该更快些，奈何身体被掏空，所以这篇文章断断续续一个月终于攒起来了。
  1. 简介 channel是golang中用于goroutine之间通讯的数据结构，有以下特点：
  线程安全 创建channel时返回的是指针，不需要考虑拷贝的问题 顺序通讯，写入和读出的顺序一致  2. 数据部分 源码位置go/src/runtime/chan.go
@@ -37,10 +37,10 @@ type hchan struct { qcount uint dataqsiz uint buf unsafe.Pointer elemsize uint16
     
     <item>
       <title>goroutine 源码阅读</title>
-      <link>/goroutine-read/</link>
+      <link>https://journey-c.github.io/goroutine-read/</link>
       <pubDate>Thu, 29 Oct 2020 20:58:31 +0800</pubDate>
       
-      <guid>/goroutine-read/</guid>
+      <guid>https://journey-c.github.io/goroutine-read/</guid>
       <description>1.数据结构 调度相关的数据结构有三个，M(线程)，P(调度器)，G(goroutine) M表示线程，P作为调度器用来帮助每个线程管理自己的goroutine，G就是golang的协程。我们可以通过runtime.GOMAXPROCS(n int)函数设置P的个数，注意P的个数并不代表M的个数，例如程序启动时runtime代码会出实话procs个P，但开始的时候只会启动一个M，就是M0和一个栈为64K(其他goroutine默认初始栈大小2K)来执行runtime代码。
 那其他线程是什么时候创建的呐? 当goroutine被唤醒时，要在M上运行(恢复goroutine的上下文)，P是帮助M管理goroutine的，恢复上下文的操作也由P来完成。如果被唤醒时发现还有空闲的P，并且没有其他M在窃取goroutine(M发现本地goroutine队列和全局goroutine队列都没有goroutine的时候，会去其他线程窃取goroutine)，说明其他M都在忙，就会创建一个M让这个空闲的P帮他来管理goroutine。 总之一句话，开始的时候创建一个M，当发现调度不过来且还有空闲P没有工作就在创建新的，直到创建procs个M(procs通过runtime.GOMAXPROCS设置)
 1.1 G golang 用结构体g表示goroutine
@@ -49,10 +49,10 @@ type hchan struct { qcount uint dataqsiz uint buf unsafe.Pointer elemsize uint16
     
     <item>
       <title>sync.pool 源码阅读</title>
-      <link>/sync-pool-read/</link>
+      <link>https://journey-c.github.io/sync-pool-read/</link>
       <pubDate>Tue, 27 Oct 2020 20:58:31 +0800</pubDate>
       
-      <guid>/sync-pool-read/</guid>
+      <guid>https://journey-c.github.io/sync-pool-read/</guid>
       <description>阅读项目代码的时候发现很多地方用到了golang的sync.pool，所以好奇golang的sync.pool底层实现是什么样的，有哪些优化。 本文是基于go1.13.10做讲解。
  在golang开发中sync.pool是最常用的缓存池，当一个对象被频繁创建和释放时会用到，但一般不作为连接池使用因为sync.pool中的对象随时会被释放掉，对象生命周期一般为两个GC间隔，且释放时机用户无感知。
 1. 设计原理 sync.pool的操纵都是线程安全的，每个P都有自己私有的存储空间和共享的存储空间。
@@ -63,10 +63,10 @@ type Pool struct { noCopy noCopy local unsafe.Pointer // local fixed-size per-P 
     
     <item>
       <title>长连接平滑重启</title>
-      <link>/long-connection-smooth-restart-realization/</link>
+      <link>https://journey-c.github.io/long-connection-smooth-restart-realization/</link>
       <pubDate>Wed, 21 Oct 2020 22:48:31 +0800</pubDate>
       
-      <guid>/long-connection-smooth-restart-realization/</guid>
+      <guid>https://journey-c.github.io/long-connection-smooth-restart-realization/</guid>
       <description>最近小编一直在做长连接相关的事情，最大的感触就是发版太痛苦，一个个踢掉连接然后发版，导致发版时长过长，操作繁琐。所以在想能不能实现优雅重启, 发版时客户端无感知。
  1.难点   如何做到不中断接收连接
   如何做到已有连接不中断

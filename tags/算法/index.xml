@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>算法 on Journey-C</title>
-    <link>/tags/%E7%AE%97%E6%B3%95/</link>
+    <link>https://journey-c.github.io/tags/%E7%AE%97%E6%B3%95/</link>
     <description>Recent content in 算法 on Journey-C</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Thu, 22 Oct 2020 21:58:31 +0800</lastBuildDate>
     
-	<atom:link href="/tags/%E7%AE%97%E6%B3%95/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://journey-c.github.io/tags/%E7%AE%97%E6%B3%95/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>红黑树</title>
-      <link>/red-black-tree/</link>
+      <link>https://journey-c.github.io/red-black-tree/</link>
       <pubDate>Thu, 22 Oct 2020 21:58:31 +0800</pubDate>
       
-      <guid>/red-black-tree/</guid>
+      <guid>https://journey-c.github.io/red-black-tree/</guid>
       <description>红黑树是一种自平衡二叉搜索树。二叉搜索树就是插入的时候，比当前节点小的放到左子树，大的放到右子树。这样查找的时候可以沿着树的一条路径找到想要的值，所以时间复杂度是树的深度，最坏$O(N)$，平均$O(lg^N)$。
 正因为二叉搜索树由于数据的不确定性可能造成树建的不平衡，导致树过深，时间复杂度过高。所以出现了自平衡二叉搜索树像红黑树。
 红黑树所有的性质和特点都是想让树尽可能的平衡。

@@ -3,152 +3,152 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>/</loc>
+    <loc>https://journey-c.github.io/</loc>
     <lastmod>2021-01-01T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/post/</loc>
+    <loc>https://journey-c.github.io/post/</loc>
     <lastmod>2021-01-01T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/tags/redis/</loc>
+    <loc>https://journey-c.github.io/tags/redis/</loc>
     <lastmod>2021-01-01T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/tags/</loc>
+    <loc>https://journey-c.github.io/tags/</loc>
     <lastmod>2021-01-01T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/why-redis-has-multiple-databases/</loc>
+    <loc>https://journey-c.github.io/why-redis-has-multiple-databases/</loc>
     <lastmod>2021-01-01T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/tags/%E6%97%A0%E7%94%A8%E7%9A%84%E5%86%B7%E7%9F%A5%E8%AF%86/</loc>
+    <loc>https://journey-c.github.io/tags/%E6%97%A0%E7%94%A8%E7%9A%84%E5%86%B7%E7%9F%A5%E8%AF%86/</loc>
     <lastmod>2021-01-01T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/tags/linux/</loc>
+    <loc>https://journey-c.github.io/tags/linux/</loc>
     <lastmod>2020-12-20T21:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/io-multiplexing/</loc>
+    <loc>https://journey-c.github.io/io-multiplexing/</loc>
     <lastmod>2020-12-20T21:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/tags/%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/</loc>
+    <loc>https://journey-c.github.io/tags/%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8/</loc>
     <lastmod>2020-12-20T21:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/</loc>
+    <loc>https://journey-c.github.io/tags/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/</loc>
     <lastmod>2020-11-27T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/what-is-system-call/</loc>
+    <loc>https://journey-c.github.io/what-is-system-call/</loc>
     <lastmod>2020-11-27T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/tags/cxx/</loc>
+    <loc>https://journey-c.github.io/tags/cxx/</loc>
     <lastmod>2020-11-19T23:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/tags/golang/</loc>
+    <loc>https://journey-c.github.io/tags/golang/</loc>
     <lastmod>2020-11-19T23:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/tags/vim/</loc>
+    <loc>https://journey-c.github.io/tags/vim/</loc>
     <lastmod>2020-11-19T23:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/how-to-use-vim-as-golang-and-cxx-development-ide/</loc>
+    <loc>https://journey-c.github.io/how-to-use-vim-as-golang-and-cxx-development-ide/</loc>
     <lastmod>2020-11-19T23:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/channel-read/</loc>
+    <loc>https://journey-c.github.io/channel-read/</loc>
     <lastmod>2020-10-29T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/goroutine-read/</loc>
+    <loc>https://journey-c.github.io/goroutine-read/</loc>
     <lastmod>2020-10-29T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/tags/%E6%BA%90%E7%A0%81/</loc>
+    <loc>https://journey-c.github.io/tags/%E6%BA%90%E7%A0%81/</loc>
     <lastmod>2020-10-29T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/timing-wheel/</loc>
+    <loc>https://journey-c.github.io/timing-wheel/</loc>
     <lastmod>2020-10-29T19:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/tags/%E5%B7%A5%E7%A8%8B/</loc>
+    <loc>https://journey-c.github.io/tags/%E5%B7%A5%E7%A8%8B/</loc>
     <lastmod>2020-10-29T19:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/regarding-the-n-th-power-alignment-of-2/</loc>
+    <loc>https://journey-c.github.io/regarding-the-n-th-power-alignment-of-2/</loc>
     <lastmod>2020-10-28T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/tags/%E9%BB%91%E7%A7%91%E6%8A%80/</loc>
+    <loc>https://journey-c.github.io/tags/%E9%BB%91%E7%A7%91%E6%8A%80/</loc>
     <lastmod>2020-10-28T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/sync-pool-read/</loc>
+    <loc>https://journey-c.github.io/sync-pool-read/</loc>
     <lastmod>2020-10-27T20:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/</loc>
+    <loc>https://journey-c.github.io/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/</loc>
     <lastmod>2020-10-22T21:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/tags/%E7%AE%97%E6%B3%95/</loc>
+    <loc>https://journey-c.github.io/tags/%E7%AE%97%E6%B3%95/</loc>
     <lastmod>2020-10-22T21:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/red-black-tree/</loc>
+    <loc>https://journey-c.github.io/red-black-tree/</loc>
     <lastmod>2020-10-22T21:58:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/about/</loc>
+    <loc>https://journey-c.github.io/about/</loc>
     <lastmod>2020-10-21T21:28:08+00:00</lastmod>
   </url>
   
   <url>
-    <loc>/tags/%E7%BD%91%E7%BB%9C/</loc>
+    <loc>https://journey-c.github.io/tags/%E7%BD%91%E7%BB%9C/</loc>
     <lastmod>2020-10-21T22:48:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/long-connection-smooth-restart-realization/</loc>
+    <loc>https://journey-c.github.io/long-connection-smooth-restart-realization/</loc>
     <lastmod>2020-10-21T22:48:31+08:00</lastmod>
   </url>
   
   <url>
-    <loc>/tags/</loc>
+    <loc>https://journey-c.github.io/tags/</loc>
   </url>
   
 </urlset>

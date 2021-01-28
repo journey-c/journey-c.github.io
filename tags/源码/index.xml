@@ -2,21 +2,21 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>源码 on Journey-C</title>
-    <link>/tags/%E6%BA%90%E7%A0%81/</link>
+    <link>https://journey-c.github.io/tags/%E6%BA%90%E7%A0%81/</link>
     <description>Recent content in 源码 on Journey-C</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Thu, 29 Oct 2020 20:58:31 +0800</lastBuildDate>
     
-	<atom:link href="/tags/%E6%BA%90%E7%A0%81/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://journey-c.github.io/tags/%E6%BA%90%E7%A0%81/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>channel 源码阅读</title>
-      <link>/channel-read/</link>
+      <link>https://journey-c.github.io/channel-read/</link>
       <pubDate>Thu, 29 Oct 2020 20:58:31 +0800</pubDate>
       
-      <guid>/channel-read/</guid>
+      <guid>https://journey-c.github.io/channel-read/</guid>
       <description>年初的时候go语言的学习提上了日程，前一篇sync.pool阅读之后，阅读代码进度本该更快些，奈何身体被掏空，所以这篇文章断断续续一个月终于攒起来了。
  1. 简介 channel是golang中用于goroutine之间通讯的数据结构，有以下特点：
  线程安全 创建channel时返回的是指针，不需要考虑拷贝的问题 顺序通讯，写入和读出的顺序一致  2. 数据部分 源码位置go/src/runtime/chan.go
@@ -26,10 +26,10 @@ type hchan struct { qcount uint dataqsiz uint buf unsafe.Pointer elemsize uint16
     
     <item>
       <title>goroutine 源码阅读</title>
-      <link>/goroutine-read/</link>
+      <link>https://journey-c.github.io/goroutine-read/</link>
       <pubDate>Thu, 29 Oct 2020 20:58:31 +0800</pubDate>
       
-      <guid>/goroutine-read/</guid>
+      <guid>https://journey-c.github.io/goroutine-read/</guid>
       <description>1.数据结构 调度相关的数据结构有三个，M(线程)，P(调度器)，G(goroutine) M表示线程，P作为调度器用来帮助每个线程管理自己的goroutine，G就是golang的协程。我们可以通过runtime.GOMAXPROCS(n int)函数设置P的个数，注意P的个数并不代表M的个数，例如程序启动时runtime代码会出实话procs个P，但开始的时候只会启动一个M，就是M0和一个栈为64K(其他goroutine默认初始栈大小2K)来执行runtime代码。
 那其他线程是什么时候创建的呐? 当goroutine被唤醒时，要在M上运行(恢复goroutine的上下文)，P是帮助M管理goroutine的，恢复上下文的操作也由P来完成。如果被唤醒时发现还有空闲的P，并且没有其他M在窃取goroutine(M发现本地goroutine队列和全局goroutine队列都没有goroutine的时候，会去其他线程窃取goroutine)，说明其他M都在忙，就会创建一个M让这个空闲的P帮他来管理goroutine。 总之一句话，开始的时候创建一个M，当发现调度不过来且还有空闲P没有工作就在创建新的，直到创建procs个M(procs通过runtime.GOMAXPROCS设置)
 1.1 G golang 用结构体g表示goroutine
@@ -38,10 +38,10 @@ type hchan struct { qcount uint dataqsiz uint buf unsafe.Pointer elemsize uint16
     
     <item>
       <title>sync.pool 源码阅读</title>
-      <link>/sync-pool-read/</link>
+      <link>https://journey-c.github.io/sync-pool-read/</link>
       <pubDate>Tue, 27 Oct 2020 20:58:31 +0800</pubDate>
       
-      <guid>/sync-pool-read/</guid>
+      <guid>https://journey-c.github.io/sync-pool-read/</guid>
       <description>阅读项目代码的时候发现很多地方用到了golang的sync.pool，所以好奇golang的sync.pool底层实现是什么样的，有哪些优化。 本文是基于go1.13.10做讲解。
  在golang开发中sync.pool是最常用的缓存池，当一个对象被频繁创建和释放时会用到，但一般不作为连接池使用因为sync.pool中的对象随时会被释放掉，对象生命周期一般为两个GC间隔，且释放时机用户无感知。
 1. 设计原理 sync.pool的操纵都是线程安全的，每个P都有自己私有的存储空间和共享的存储空间。
