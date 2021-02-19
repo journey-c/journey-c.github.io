@@ -6,10 +6,30 @@
     <description>Recent content in Posts on Journey-C</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 31 Jan 2021 03:35:33 +0800</lastBuildDate>
+    <lastBuildDate>Fri, 19 Feb 2021 23:25:19 +0800</lastBuildDate>
     
 	<atom:link href="https://journey-c.github.io/post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Linux内存管理</title>
+      <link>https://journey-c.github.io/linux-memory-management/</link>
+      <pubDate>Fri, 19 Feb 2021 23:25:19 +0800</pubDate>
+      
+      <guid>https://journey-c.github.io/linux-memory-management/</guid>
+      <description>计算机的计算，一方面说的是进程、线程对于CPU的使用，另一方面是对于内存的管理。本文就是介绍Linux的内存管理。
+ 在Linux中用户态是没有权限直接操作物理内存的，与硬件相关的交互都是通过系统调用由内核来完成操作的。Linux抽象出虚拟内存，用户态操作的只是虚拟内存，真正操作的物理内存由内核内存管理模块管理。本文通篇都在探索三个问题：
+ 虚拟地址空间是如何管理的 物理地址空间是如何管理的 虚拟地址空间和物理地址空间是如何映射的  上述三个问题得到解决之后，我们就可通过一个虚拟地址空间找到对应的物理地址空间。我们首先来看一下Linux虚拟地址空间的管理。
+1. 虚拟地址空间的管理 是不是用户态使用虚拟内存，内核态直接使用物理内存呢？
+ 不是的，内核态和用户态使用的都是虚拟内存。
+ 使用虚拟地址一个核心的问题，需要记录虚拟地址到物理地址的映射，最简单的方式是虚拟地址与物理地址一一对应，这样4G内存光是维护映射关系就需要4G（扯淡）。所以需要其他有效的内存管理方案。通常有两种：分段、分页。下面我们来一起分析一下这两种管理机制以及在Linux中是如何应用的。
+分段 8086升级到80386之后，段寄存器CS、DS、SS、ES从直接存放地址变成高位存放段选择子，低位做段描述符缓存器。由原来的直接使用内存地址变为现在的通过分段机制来使用内存地址。
+那我们先来看一下内存管理中分段机制的原理。
+分段机制下虚拟地址由两部分组成，段选择子和段内偏移量。段选择子中的段号作为段表的索引，通过段号可以在段表找到对应段表项，每一项记录了一段空间：段基址、段的界限、特权级等。用段基址+段内偏移量就可以计算出对应的物理地址。
+Linux中段表称为段描述符表，放在全局描述符表中，用GDT_ENTRY_INIT函数来初始化表项desc_struct。
+下面是Linux中段选择子和段表的定义，看一下所有段表项初始化传入的参数中，段基址base都是0，这没有分段。事实上Linux中没有用到全部的分段功能，对于内存管理更倾向于分页机制。
+#define GDT_ENTRY_KERNEL32_CS	1 #define GDT_ENTRY_KERNEL_CS	2 #define GDT_ENTRY_KERNEL_DS	3  #define GDT_ENTRY_DEFAULT_USER32_CS	4 #define GDT_ENTRY_DEFAULT_USER_DS	5 #define GDT_ENTRY_DEFAULT_USER_CS	6 DEFINE_PER_CPU_PAGE_ALIGNED(struct gdt_page, gdt_page) = { .gdt = { #ifdef CONFIG_X86_64 	[GDT_ENTRY_KERNEL32_CS]	= GDT_ENTRY_INIT(0xc09b, 0, 0xfffff), [GDT_ENTRY_KERNEL_CS]	= GDT_ENTRY_INIT(0xa09b, 0, 0xfffff), [GDT_ENTRY_KERNEL_DS]	= GDT_ENTRY_INIT(0xc093, 0, 0xfffff), [GDT_ENTRY_DEFAULT_USER32_CS]	= GDT_ENTRY_INIT(0xc0fb, 0, 0xfffff), [GDT_ENTRY_DEFAULT_USER_DS]	= GDT_ENTRY_INIT(0xc0f3, 0, 0xfffff), [GDT_ENTRY_DEFAULT_USER_CS]	= GDT_ENTRY_INIT(0xa0fb, 0, 0xfffff), #else 	[GDT_ENTRY_KERNEL_CS]	= GDT_ENTRY_INIT(0xc09a, 0, 0xfffff), [GDT_ENTRY_KERNEL_DS]	= GDT_ENTRY_INIT(0xc092, 0, 0xfffff), [GDT_ENTRY_DEFAULT_USER_CS]	= GDT_ENTRY_INIT(0xc0fa, 0, 0xfffff), [GDT_ENTRY_DEFAULT_USER_DS]	= GDT_ENTRY_INIT(0xc0f2, 0, 0xfffff), .</description>
+    </item>
     
     <item>
       <title>backlog参数指的是什么？</title>
