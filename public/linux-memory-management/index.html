@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.74.3" />
+
+
+<title>Linux内存管理 - Journey-C</title>
+<meta property="og:title" content="Linux内存管理 - Journey-C">
+
+
+<link href='https://journey-c.github.io/favicon.png' rel='icon' type='image/x-icon' />
+
+
+
+
+
+
+
+
+<link rel="icon" href="https://journey-c.github.io/images/" type="image/x-icon" />
+<link rel="stylesheet" href="https://journey-c.github.io/css/main.css" media="all">
+<link rel="stylesheet" href="https://journey-c.github.io/css/fonts.css" media="all">
+<link rel="stylesheet" href="https://journey-c.github.io/css/prism.css" media="all">
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Merriweather:400|Lato:400,400italic,700">
+<script type="text/javascript" src="https://journey-c.github.io/js/main.js"></script>
+<script type="text/javascript" src="https://journey-c.github.io/js/prism.js"></script>
+
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-181048644-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-181048644-1"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-181048644-1');
+</script>
+
+
+
+</head>
+
+<body>
+    <input type="checkbox" class="hidden toggle" id="toc-control" />
+    <main class="wrapper">
+        <div>
+            <header class="header">
+                <nav class="nav">
+    <a href="https://journey-c.github.io/" class="nav-logo">
+        <img src="https://journey-c.github.io/images/yangguo.png" width="50"
+            height="50" alt="Logo">
+    </a>
+
+    <ul class="nav-links">
+        
+        <li><a href="/tags/"></a></li>
+        
+        <li><a href="/about/">About</a></li>
+        
+        <li><a href="https://github.com/journey-c">Github</a></li>
+        
+        <li><a href="https://www.cnblogs.com/wuwangchuxin0924/">博客园</a></li>
+        
+        <li>
+    </ul>
+</nav>
+
+            </header>
+        </div>
+
+        <div>
+            <header class="mobile-header">
+                <a href="https://journey-c.github.io/" class="nav-logo">
+                    <img src="https://journey-c.github.io/images/yangguo.png"
+                        width="50" height="50"
+                        alt="Logo">
+                </a>
+
+                <div style="float:right">
+                    <label for="toc-control">
+                        <img src="/svg/toc.svg" class="article-icon" alt="Table of Contents" />
+                    </label>
+                </div>
+
+                <ul class="nav-links">
+                    
+                    <li><a href="/tags/"></a></li>
+                    
+                    <li><a href="/about/">About</a></li>
+                    
+                    <li><a href="https://github.com/journey-c">Github</a></li>
+                    
+                    <li><a href="https://www.cnblogs.com/wuwangchuxin0924/">博客园</a></li>
+                    
+                    <li>
+                </ul>
+
+                <aside class="hidden clearfix mobile-toc">
+                    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#1-虚拟地址空间的管理">1. 虚拟地址空间的管理</a>
+      <ul>
+        <li><a href="#分段">分段</a></li>
+        <li><a href="#分页">分页</a></li>
+      </ul>
+    </li>
+    <li><a href="#2-进程的虚拟地址空间">2. 进程的虚拟地址空间</a>
+      <ul>
+        <li><a href="#用户态">用户态</a></li>
+        <li><a href="#内核态">内核态</a></li>
+      </ul>
+    </li>
+    <li><a href="#3-物理地址空间的管理">3. 物理地址空间的管理</a>
+      <ul>
+        <li><a href="#节点">节点</a></li>
+        <li><a href="#区">区</a></li>
+        <li><a href="#页">页</a></li>
+        <li><a href="#页的分配">页的分配</a>
+          <ul>
+            <li><a href="#按页分配">按页分配</a></li>
+            <li><a href="#slab分配">Slab分配</a></li>
+          </ul>
+        </li>
+        <li><a href="#页换出">页换出</a></li>
+      </ul>
+    </li>
+    <li><a href="#4-内存映射">4. 内存映射</a>
+      <ul>
+        <li><a href="#用户态映射">用户态映射</a>
+          <ul>
+            <li><a href="#缺页">缺页</a></li>
+          </ul>
+        </li>
+        <li><a href="#内核态映射">内核态映射</a></li>
+        <li><a href="#缺页-1">缺页</a></li>
+      </ul>
+    </li>
+    <li><a href="#5-总结">5. 总结</a></li>
+  </ul>
+</nav>
+                </aside>
+            </header>
+        </div>
+
+
+<div class="content">
+    
+    <aside class="article-toc" id="article-toc">
+    <div class="article-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#1-虚拟地址空间的管理">1. 虚拟地址空间的管理</a>
+      <ul>
+        <li><a href="#分段">分段</a></li>
+        <li><a href="#分页">分页</a></li>
+      </ul>
+    </li>
+    <li><a href="#2-进程的虚拟地址空间">2. 进程的虚拟地址空间</a>
+      <ul>
+        <li><a href="#用户态">用户态</a></li>
+        <li><a href="#内核态">内核态</a></li>
+      </ul>
+    </li>
+    <li><a href="#3-物理地址空间的管理">3. 物理地址空间的管理</a>
+      <ul>
+        <li><a href="#节点">节点</a></li>
+        <li><a href="#区">区</a></li>
+        <li><a href="#页">页</a></li>
+        <li><a href="#页的分配">页的分配</a>
+          <ul>
+            <li><a href="#按页分配">按页分配</a></li>
+            <li><a href="#slab分配">Slab分配</a></li>
+          </ul>
+        </li>
+        <li><a href="#页换出">页换出</a></li>
+      </ul>
+    </li>
+    <li><a href="#4-内存映射">4. 内存映射</a>
+      <ul>
+        <li><a href="#用户态映射">用户态映射</a>
+          <ul>
+            <li><a href="#缺页">缺页</a></li>
+          </ul>
+        </li>
+        <li><a href="#内核态映射">内核态映射</a></li>
+        <li><a href="#缺页-1">缺页</a></li>
+      </ul>
+    </li>
+    <li><a href="#5-总结">5. 总结</a></li>
+  </ul>
+</nav>
+    </div>
+</aside>
+
+    
+
+    <article class="article">
+        
+        <span class="article-duration">5 min read</span>
+        
+
+        <h1 class="article-title">Linux内存管理</h1>
+
+        
+        <span class="article-date">2021-02-19</span>
+        
+
+        
+        
+        
+
+        <div class="article-content">
+            <blockquote>
+<p>计算机的计算，一方面说的是进程、线程对于CPU的使用，另一方面是对于内存的管理。本文就是介绍Linux的内存管理。</p>
+</blockquote>
+<p>在Linux中用户态是没有权限直接操作物理内存的，与硬件相关的交互都是通过系统调用由内核来完成操作的。Linux抽象出虚拟内存，用户态操作的只是虚拟内存，真正操作的物理内存由内核内存管理模块管理。本文通篇都在探索三个问题：</p>
+<ol>
+<li>虚拟地址空间是如何管理的</li>
+<li>物理地址空间是如何管理的</li>
+<li>虚拟地址空间和物理地址空间是如何映射的</li>
+</ol>
+<p>上述三个问题得到解决之后，我们就可通过一个虚拟地址空间找到对应的物理地址空间。我们首先来看一下Linux虚拟地址空间的管理。</p>
+<h1 id="1-虚拟地址空间的管理">1. 虚拟地址空间的管理</h1>
+<p>是不是用户态使用虚拟内存，内核态直接使用物理内存呢？</p>
+<blockquote>
+<p>不是的，内核态和用户态使用的都是虚拟内存。</p>
+</blockquote>
+<p>使用虚拟地址一个核心的问题，需要记录虚拟地址到物理地址的映射，最简单的方式是虚拟地址与物理地址一一对应，这样4G内存光是维护映射关系就需要4G（扯淡）。所以需要其他有效的内存管理方案。通常有两种：分段、分页。下面我们来一起分析一下这两种管理机制以及在Linux中是如何应用的。</p>
+<h2 id="分段">分段</h2>
+<p><img src="/images/memory-management-x86-cpu.png" alt="">
+8086升级到80386之后，段寄存器CS、DS、SS、ES从直接存放地址变成高位存放段选择子，低位做段描述符缓存器。由原来的直接使用内存地址变为现在的通过分段机制来使用内存地址。</p>
+<p>那我们先来看一下内存管理中分段机制的原理。</p>
+<p><img src="/images/memory-management-segmented.png" alt=""></p>
+<p>分段机制下虚拟地址由两部分组成，<strong>段选择子</strong>和<strong>段内偏移量</strong>。段选择子中的段号作为段表的索引，通过段号可以在段表找到对应段表项，每一项记录了一段空间：段基址、段的界限、特权级等。用段基址+段内偏移量就可以计算出对应的物理地址。</p>
+<p>Linux中段表称为段描述符表，放在全局描述符表中，用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/desc_defs.h#L23">GDT_ENTRY_INIT</a>函数来初始化表项<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/desc_defs.h#L16">desc_struct</a>。</p>
+<p>下面是Linux中<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/segment.h#L171">段选择子</a>和<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/kernel/cpu/common.c#L115">段表</a>的定义，看一下所有段表项初始化传入的参数中，段基址base都是0，这没有分段。事实上Linux中没有用到全部的分段功能，对于内存管理更倾向于分页机制。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#define GDT_ENTRY_KERNEL32_CS		1
+</span><span style="color:#75715e">#define GDT_ENTRY_KERNEL_CS		2
+</span><span style="color:#75715e">#define GDT_ENTRY_KERNEL_DS		3
+</span><span style="color:#75715e"></span>
+<span style="color:#75715e">#define GDT_ENTRY_DEFAULT_USER32_CS	4
+</span><span style="color:#75715e">#define GDT_ENTRY_DEFAULT_USER_DS	5
+</span><span style="color:#75715e">#define GDT_ENTRY_DEFAULT_USER_CS	6
+</span></code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c">DEFINE_PER_CPU_PAGE_ALIGNED(<span style="color:#66d9ef">struct</span> gdt_page, gdt_page) <span style="color:#f92672">=</span> { .gdt <span style="color:#f92672">=</span> {
+<span style="color:#75715e">#ifdef CONFIG_X86_64
+</span><span style="color:#75715e"></span>	[GDT_ENTRY_KERNEL32_CS]		<span style="color:#f92672">=</span> GDT_ENTRY_INIT(<span style="color:#ae81ff">0xc09b</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0xfffff</span>),
+	[GDT_ENTRY_KERNEL_CS]		<span style="color:#f92672">=</span> GDT_ENTRY_INIT(<span style="color:#ae81ff">0xa09b</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0xfffff</span>),
+	[GDT_ENTRY_KERNEL_DS]		<span style="color:#f92672">=</span> GDT_ENTRY_INIT(<span style="color:#ae81ff">0xc093</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0xfffff</span>),
+	[GDT_ENTRY_DEFAULT_USER32_CS]	<span style="color:#f92672">=</span> GDT_ENTRY_INIT(<span style="color:#ae81ff">0xc0fb</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0xfffff</span>),
+	[GDT_ENTRY_DEFAULT_USER_DS]	<span style="color:#f92672">=</span> GDT_ENTRY_INIT(<span style="color:#ae81ff">0xc0f3</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0xfffff</span>),
+	[GDT_ENTRY_DEFAULT_USER_CS]	<span style="color:#f92672">=</span> GDT_ENTRY_INIT(<span style="color:#ae81ff">0xa0fb</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0xfffff</span>),
+<span style="color:#75715e">#else
+</span><span style="color:#75715e"></span>	[GDT_ENTRY_KERNEL_CS]		<span style="color:#f92672">=</span> GDT_ENTRY_INIT(<span style="color:#ae81ff">0xc09a</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0xfffff</span>),
+	[GDT_ENTRY_KERNEL_DS]		<span style="color:#f92672">=</span> GDT_ENTRY_INIT(<span style="color:#ae81ff">0xc092</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0xfffff</span>),
+	[GDT_ENTRY_DEFAULT_USER_CS]	<span style="color:#f92672">=</span> GDT_ENTRY_INIT(<span style="color:#ae81ff">0xc0fa</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0xfffff</span>),
+	[GDT_ENTRY_DEFAULT_USER_DS]	<span style="color:#f92672">=</span> GDT_ENTRY_INIT(<span style="color:#ae81ff">0xc0f2</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0xfffff</span>),
+	......
+<span style="color:#75715e">#endif
+</span><span style="color:#75715e"></span>} };
+EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
+</code></pre></div><h2 id="分页">分页</h2>
+<p>分页机制和分段机制差不多，都是将物理地址分块。不同的是分段一般将内存大段大段的分割且每段大小一般不相同。而分页将物理内存分成一块块大小相同的页，一般大小为4KB。
+<img src="/images/memory-management-pagination_0.png" alt="">
+在分页机制下，虚拟地址有两部分组成(两部分不是严格的两段，比如页号就可以有多级页号)，<strong>页号、页内偏移量</strong>。通过页号找到对应页表项，页表项高位存了物理页号，低位存储了FLAGS。</p>
+<p>例如页大小为4KB，只分一级，32位环境中虚拟地址为32位，$2^{32}/2^{12}=2^{20}$可以分1M个页，用20位可以表示页号，12位表示页内偏移。页表项大小为4B(32位)，那么页表大小就是$1M*4B=4MB$，因为每个进程都有自己独立的虚拟地址空间，有100个进程的话光维护页表就需要100MB的空间，这个对于内核来说有点太大了。
+<img src="/images/memory-management-pagination_1.png" alt=""></p>
+<p>Linux是如何解决页表太大的问题呢？</p>
+<blockquote>
+<p>采用多级分页的策略才解决页表太大的问题。</p>
+</blockquote>
+<p>32位环境中，一级分页和上边描述的一样，分成1M个4KB的页，由页表维护虚拟页号到物理页号的映射。内核在这次分页之后，又对页表进行分页。页表大小为4MB，我们在按照4KB一页进行分页，4KB包含页表项1K项。所以二级分页就是把页表1M的项按照1K项为一页分了1K页。
+<img src="/images/memory-management-pagination_2.png" alt="">
+二级分页后，虚拟地址就被分成三部分：页目录号、页表内偏移、页内偏移。通过虚拟地址查找物理地址时：</p>
+<ol>
+<li>通过虚拟地址前10位的页目录号找到对应页目录项，这个页目录项管理了1K个页表项。</li>
+<li>通过虚拟地址中10位的页表内偏移，从1K个页表项中定位到一个页表项。这个页表项里有物理页号和各种标志位。</li>
+<li>物理页号+虚拟地址中后12位的页内偏移得到对应物理地址。</li>
+</ol>
+<p>这样用于维护分页机制的额外空间就是页表（4MB）+ 页表目录（4KB），这不是比一级分页更高了吗？</p>
+<blockquote>
+<p>实际不是的:</p>
+<ol>
+<li>如果使用一级页表，那么每个进程都需要一个页表来维护虚拟地址空间，就是说100个进程需要额外400 MB的空间。</li>
+<li>如果使用二级页表，每个进程必须的是一个4KB的页目录表。当然并不是每个进程都是用全部4GB内存的。所以4MB的二级页表不会全部使用，用到多少地址就建多少个页表项。所以实际需要额外空间为4KB+使用的页表项数量*4KB
+<img src="/images/memory-management-pagination_3.png" alt=""></li>
+</ol>
+</blockquote>
+<p>当然64位的环境中，二级页表就不够了，使用的是四级页表，包括<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/pgtable_types.h#L286">全局页目录项 PGD（Page Global Directory）</a>、<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/pgtable_types.h#L359">上层页目录项 PUD（Page Upper Directory）</a>、<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/pgtable_types.h#L385">中间页目录项 PMD（Page Middle Directory）</a>和<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/pgtable_64_types.h#L21">页表项 PTE（Page Table Entry）</a>
+<img src="/images/memory-management-pagination_4.png" alt=""></p>
+<p>虽然多级分页解决了页表过大的问题，但是同时也增大了访问延时，由原来的一次访问内存，变为现在访问多次页表之后才能访问目的地址。</p>
+<p>到目前为止，我们已经知道如何通过一个虚拟地址得到对应的物理地址。</p>
+<h1 id="2-进程的虚拟地址空间">2. 进程的虚拟地址空间</h1>
+<p>接下来我们再一起看一下进程内的虚拟地址空间是什么样的，Linux中没有进程线程的区别，用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched.h#L640">struct task_struct</a>表示任务。那么我们可以分析<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched.h#L640">struct task_struct</a>中内存相关变量来分析进程的虚拟内存布局。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">struct</span> task_struct {
+	...
+	<span style="color:#66d9ef">struct</span> mm_struct		<span style="color:#f92672">*</span>mm;
+	...	
+};
+</code></pre></div><p><a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched.h#L640">struct task_struct</a>里面<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L388">struct mm_struct</a>来管理内存。</p>
+<p>首先，既然分析用户态的基本布局，当然要知道用户态和内核态的界限在哪，<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L388">struct mm_struct</a>里面的<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L405">task_size</a>变量表示用户态空间的大小。</p>
+<p>使用系统调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/exec.c#L2054">execve</a>加载二进制文件的调用链是<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/exec.c#L1977">do_execve</a> -&gt; <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/exec.c#L1855">do_execveat_common</a> -&gt; <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/exec.c#L1775">bprm_execve</a> -&gt; <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/exec.c#L1727">exec_binprm</a> -&gt; <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/exec.c#L1681">search_binary_handler</a> -&gt; <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/binfmt_elf.c#L100">linux_binfmt的load_binary接口</a>。load_binary接口实际是<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/binfmt_elf.c#L820">load_elf_binary</a>。</p>
+<p><a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/binfmt_elf.c#L820">load_elf_binary</a>调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/exec.c#L1412">setup_new_exec</a>。这个函数中会将task的mm_struct成员变量task_size 设置为TASK_SIZE。</p>
+<p>32位环境中内核定义如下，TASK_SIZE为0xC0000000，用户空间默认3GB，内核空间1GB。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">/*
+</span><span style="color:#75715e"> * User space process size: 3GB (default).
+</span><span style="color:#75715e"> */</span>
+<span style="color:#75715e">#define IA32_PAGE_OFFSET	__PAGE_OFFSET
+</span><span style="color:#75715e">#define TASK_SIZE		__PAGE_OFFSET
+</span><span style="color:#75715e">#define TASK_SIZE_LOW		TASK_SIZE
+</span><span style="color:#75715e">#define TASK_SIZE_MAX		TASK_SIZE
+</span><span style="color:#75715e">#define DEFAULT_MAP_WINDOW	TASK_SIZE
+</span><span style="color:#75715e">#define STACK_TOP		TASK_SIZE
+</span><span style="color:#75715e">#define STACK_TOP_MAX		STACK_TOP
+</span></code></pre></div><p>64位环境中虚拟地址只是用了48位，TASK_SIZE为 (1 &laquo; 47) 减去一页的大小为0x00007FFFFFFFF000。用户空间大概位128TB，内核空间也是128TB，且用户空间和内核空间之间留有空隙用于隔离。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#define TASK_SIZE_MAX	((_AC(1,UL) &lt;&lt; __VIRTUAL_MASK_SHIFT) - PAGE_SIZE)
+</span><span style="color:#75715e"></span>
+<span style="color:#75715e">#define DEFAULT_MAP_WINDOW	((1UL &lt;&lt; 47) - PAGE_SIZE)
+</span><span style="color:#75715e"></span>
+<span style="color:#75715e">/* This decides where the kernel will search for a free chunk of vm
+</span><span style="color:#75715e"> * space during mmap&#39;s.
+</span><span style="color:#75715e"> */</span>
+<span style="color:#75715e">#define IA32_PAGE_OFFSET	((current-&gt;personality &amp; ADDR_LIMIT_3GB) ? \
+</span><span style="color:#75715e">					0xc0000000 : 0xFFFFe000)
+</span><span style="color:#75715e"></span>
+<span style="color:#75715e">#define TASK_SIZE_LOW		(test_thread_flag(TIF_ADDR32) ? \
+</span><span style="color:#75715e">					IA32_PAGE_OFFSET : DEFAULT_MAP_WINDOW)
+</span><span style="color:#75715e">#define TASK_SIZE		(test_thread_flag(TIF_ADDR32) ? \
+</span><span style="color:#75715e">					IA32_PAGE_OFFSET : TASK_SIZE_MAX)
+</span><span style="color:#75715e">#define TASK_SIZE_OF(child)	((test_tsk_thread_flag(child, TIF_ADDR32)) ? \
+</span><span style="color:#75715e">					IA32_PAGE_OFFSET : TASK_SIZE_MAX)
+</span></code></pre></div><p><img src="/images/memory-management-task-size.png" alt=""></p>
+<h2 id="用户态">用户态</h2>
+<p>了解了用户空间和内核空间分界之后，我们先来看下用户空间。用户态虚拟内存布局如下，32位和64位区域和布局差别不大。
+<img src="/images/memory-management-user-mode-memory-layout.png" alt="">
+这些空间里的内容是从哪填充来的呢？没错，是不是感觉和可执行文件的格式有点像。一个进程创建之后所有的内存空间都是复制父进程的，当父进程调用exec加载新的二进制时就会将二进制文件内容加载到进程内存各个模块中，但是不一定是立即加载，有些非必需字段是用时加载。
+<img src="/images/memory-management-executable-file-format.png" alt="">
+<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L388">struct mm_struct</a>结构体中如下参数定义了这些模块的属性和位置。</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>字段名</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>struct vm_area_struct *</td>
+<td>mmap</td>
+<td>内存中每个区域对应一个mmap，这些区域用链表连接起来</td>
+</tr>
+<tr>
+<td>struct rb_root</td>
+<td>mm_rb</td>
+<td>红黑树，用来辅助操作mmap</td>
+</tr>
+<tr>
+<td>unsigned long</td>
+<td>mmap_base</td>
+<td>用于映射的内存起始位置</td>
+</tr>
+<tr>
+<td>unsigned long</td>
+<td>task_size</td>
+<td>用户空间大小</td>
+</tr>
+<tr>
+<td>unsigned long</td>
+<td>total_vm</td>
+<td>总共映射的页数</td>
+</tr>
+<tr>
+<td>unsigned long</td>
+<td>locked_vm</td>
+<td>当内存吃紧，将个别页换到磁盘上，locaked_vm表示被锁定不能换出的页数</td>
+</tr>
+<tr>
+<td>unsigned long</td>
+<td>pinned_vm</td>
+<td>不能换出也不能移动的页数</td>
+</tr>
+<tr>
+<td>unsigned long</td>
+<td>data_vm</td>
+<td>存放数据页数</td>
+</tr>
+<tr>
+<td>unsigned long</td>
+<td>exec_vm</td>
+<td>可执行文件占用的页数</td>
+</tr>
+<tr>
+<td>unsigned long</td>
+<td>stack_vm</td>
+<td>栈占用的页数</td>
+</tr>
+<tr>
+<td>unsigned long</td>
+<td>start_code, end_code, start_data, end_data</td>
+<td>代码段起始和结束位置，数据段起始和结束位置</td>
+</tr>
+<tr>
+<td>unsigned long</td>
+<td>start_brk, brk, start_stack</td>
+<td>堆起始结束位置，栈起始位置(栈结束位置在SP寄存器中)</td>
+</tr>
+<tr>
+<td>unsigned long</td>
+<td>arg_start, arg_end, env_start, env_end</td>
+<td>参数列表起始和结束位置，环境变量起始和结束位置</td>
+</tr>
+</tbody>
+</table>
+<p>函数<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/binfmt_elf.c#L820">load_elf_binary</a>负责加载二进制，并且根据可执行文件内容初始化各个区域。</p>
+<ol>
+<li>调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/exec.c#L1412">setup_new_exec</a>设置<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L388">struct mm_struct</a>的mm_base参数（mmap内存映射区域）,并且设置task_size的值。</li>
+<li>调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/exec.c#L741">setup_arg_pages</a>设置栈的<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L305">struct vm_area_struct</a>结构，并设置参数列表起始位置arg_start的值，arg_start指向栈低start_stack的位置。</li>
+<li>调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/binfmt_elf.c#L360">elf_map</a>将可执行文件中的代码段映射到内存空间。</li>
+<li>调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/binfmt_elf.c#L110">set_brk</a>设置堆空间的<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L305">struct vm_area_struct</a>，并且初始化start_brk=brk（堆为空）。</li>
+<li>如果有动态库，则调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/binfmt_elf.c#L588">load_elf_interp</a>映射到内存映射区域。</li>
+<li>给start_code, end_code, start_data, end_data赋值。</li>
+</ol>
+<p>进程的用户态布局就变成下面这样。
+<img src="/images/memory-management-user-mode-memory-layout_1.png" alt=""></p>
+<p>内存区域映射完之后，存在一下情况区域会发生变化：</p>
+<ol>
+<li>用户调用malloc/free申请堆空间，小内存操作调用brk移动堆结束指针，大内存操作调用mmap。</li>
+<li>创建临时变量或函数调用导致栈指针移动时对应栈区域也会移动。</li>
+</ol>
+<p>这里简单看下堆内存操作brk的过程，mmap后边会讲解。</p>
+<ol>
+<li>入口在<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/mmap.c#L190">SYSCALL_DEFINE1(brk, unsigned long, brk)</a>。参数brk就是新堆顶的位置。</li>
+<li>将参数堆顶位置brk和进程旧堆顶位置brk关于页对齐，如果对齐后两者相同说明变化量很小可以在同一页里解决。将mm_struct的brk指向新的brk即可。</li>
+<li>如果两者对齐后不相同，说明操作跨页了，如果新brk小于旧的brk说明是释放内存，就调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/mmap.c#L2806">__do_munmap</a>将多余的页去掉映射。</li>
+<li>如果新brk大于旧brk说明是申请内存，就调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/mmap.c#L2300">find_vma</a>在红黑树中找到下一个<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L305">struct vm_area_struct</a>的位置，看中间是否还能分配一个完整的页，分配不了就报错。如果能就更新各参数分配。</li>
+</ol>
+<h2 id="内核态">内核态</h2>
+<p>内核态的虚拟地址空间和某个进程没关系，所有进程共享同一个内核态虚拟地址空间。并且此时讨论的还是虚拟地址空间。前面分析用户态和内核态分界的时候讲了32位内核态是1GB，64位内核态是128TB。因为空间的数量级就差很大，可想而知布局也会有一定差别，毕竟32位太小了。我们先来分析一下32位内核态的布局。
+<img src="/images/memory-management-kernel-mode-memory-layout.png" alt=""></p>
+<ol>
+<li>前896M为直接映射区，这部分地址连续，虚拟地址与物理地址映射关系较为简单，内核用了两个宏定义来转换地址<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/page.h#L59">#define __va(x)</a>，<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/page.h#L42">#define __pa(x)</a>实际转换规则就是虚拟地址-PAGE_OFFSET(前面讲过用户空和内核空间分界)得到物理地址，物理地址+PAGE_OFFSET得到虚拟地址。直接映射区前1M空间开机处于实模式时会使用，内核代码从1M开始加载，然后就是全局变量、BSS等，另外内存管理的页表以及进程的内核栈都会放在这个区域。</li>
+<li>接下来就是8M的空洞，用于捕捉内存越界。其他空洞也是这个原因。</li>
+<li>VMALLOC_START到VMALLOC_END成为动态映射空间，类似进程的堆，内核使用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/vmalloc.c#L2632">vmalloc</a>进行动态申请内存的区域。</li>
+<li>PKMAP_BASE到FIXADDR_START是持久映射空间，通常为4M，内核使用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/gfp.h#L555">alloc_pages</a>获得<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L68">struct page</a>结构，然后调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/highmem.h#L48">kmap</a>将其映射到这个区域。</li>
+<li>FIXADDR_START到FIXADDR_TOP为固定映射区域，留作特定用途。</li>
+</ol>
+<p>64位的内核态布局就较为简单了，毕竟128TB太大不需要扣内存。
+<img src="/images/memory-management-kernel-mode-memory-layout-64.png" alt=""></p>
+<ol>
+<li>内核空间从0xffff800000000000开始，之后有8T空洞。</li>
+<li>0xFFFF880000000000到0xFFFFC80000000000是直接映射区，同32位。</li>
+<li>0xFFFFC90000000000到0xFFFFE90000000000是动态映射区，同32位。</li>
+<li>然后就是存放物理页表，同32位持久映射区域。</li>
+</ol>
+<h1 id="3-物理地址空间的管理">3. 物理地址空间的管理</h1>
+<p>讲完了虚拟地址空间的管理，现在再来看一下Linux是如何管理物理内存的。</p>
+<p>传统的x86架构的工作模式中，多处理器与一个集中存储器相连时，所有CPU都要通过总线去访问内存。也就是对称多处理器模式<a href="https://en.wikipedia.org/wiki/Symmetric_multiprocessing">SMP（Symmetric multiprocessing）</a>。
+<img src="/images/memory-management-symmetric-multiprocessing.png" alt="">
+由于所有的内存访问都要经过总线，所以总线会成为瓶颈。</p>
+<p>为了提高性能和扩展性，诞生了一种更高级的模式，非一致性内存访问<a href="https://en.wikipedia.org/wiki/Non-uniform_memory_access">NUMA（Non-uniform memory access）</a>。这种模式下每个CPU有自己本地的内存，当本地内存不足时才会访问其他NUMA节点的内存。这样就提高了访问的效率。
+<img src="/images/memory-management-physical-memory.png" alt=""></p>
+<p>值得注意的一点就是Mysql对NUMA支持不友好，NUMA在默认在本地CPU上分配内存，会导致CPU节点之间内存分配不均衡，当某个CPU节点的内存不足会使用Swap而不是直接从远程节点分配内存。经常内存还有耗尽，Mysql就已经使用Swap照成抖动，这就是&quot;Swap Insanity&rdquo;。所以单机部署Mysql的时候最好将NUMA关掉。</p>
+<h2 id="节点">节点</h2>
+<p>接下来我们就看一下当前主流的模式NUMA，NUMA模式中内存分节点，每个CPU有本地内存，内核中用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mmzone.h#L726">typedef struct pglist_data pg_data_t</a>表示节点。我们来看一下这个结构体重点的变量。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">typedef</span> <span style="color:#66d9ef">struct</span> pglist_data {
+	<span style="color:#66d9ef">struct</span> zone node_zones[MAX_NR_ZONES];
+	<span style="color:#66d9ef">struct</span> zonelist node_zonelists[MAX_ZONELISTS];
+	<span style="color:#66d9ef">int</span> nr_zones; <span style="color:#75715e">/* number of populated zones in this node */</span>
+<span style="color:#75715e">#ifdef CONFIG_FLAT_NODE_MEM_MAP	</span><span style="color:#75715e">/* means !SPARSEMEM */</span><span style="color:#75715e">
+</span><span style="color:#75715e"></span>	<span style="color:#66d9ef">struct</span> page <span style="color:#f92672">*</span>node_mem_map;
+<span style="color:#75715e">#ifdef CONFIG_PAGE_EXTENSION
+</span><span style="color:#75715e"></span>	...
+	<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">long</span> node_start_pfn;
+	<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">long</span> node_present_pages; <span style="color:#75715e">/* total number of physical pages */</span>
+	<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">long</span> node_spanned_pages; <span style="color:#75715e">/* total size of physical page
+</span><span style="color:#75715e">					     range, including holes */</span>
+	<span style="color:#66d9ef">int</span> node_id;
+	...
+} pg_data_t;
+</code></pre></div><ol>
+<li>节点ID，node_id。</li>
+<li>node_mem_map 就是这个节点的 struct page 数组，用于描述这个节点里面的所有的页。</li>
+<li>node_start_pfn 是这个节点的起始页号。</li>
+<li>node_spanned_pages 是这个节点中包含不连续的物理内存地址的页面数。</li>
+<li>node_present_pages 是真正可用的物理页面的数目。</li>
+<li>节点内再将页分成区，存放在node_zones数组中。大小是MAX_NR_ZONES。</li>
+<li>nr_zones表示节点的区域数量。</li>
+<li>node_zonelists是备用节点和它的内存区域的情况。当本地内存不足时会使用到。</li>
+</ol>
+<p>区域的类型如下：</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">enum</span> zone_type {
+<span style="color:#75715e">#ifdef CONFIG_ZONE_DMA
+</span><span style="color:#75715e"></span>	ZONE_DMA,
+<span style="color:#75715e">#endif
+</span><span style="color:#75715e">#ifdef CONFIG_ZONE_DMA32
+</span><span style="color:#75715e"></span>	ZONE_DMA32,
+<span style="color:#75715e">#endif
+</span><span style="color:#75715e"></span>	ZONE_NORMAL,
+<span style="color:#75715e">#ifdef CONFIG_HIGHMEM
+</span><span style="color:#75715e"></span>	ZONE_HIGHMEM,
+<span style="color:#75715e">#endif
+</span><span style="color:#75715e"></span>	ZONE_MOVABLE,
+<span style="color:#75715e">#ifdef CONFIG_ZONE_DEVICE
+</span><span style="color:#75715e"></span>	ZONE_DEVICE,
+<span style="color:#75715e">#endif
+</span><span style="color:#75715e"></span>	__MAX_NR_ZONES
+};
+</code></pre></div><ol>
+<li>ZONE_DMA直接内存读取区域，DMA是一种机制，要把外设的数据读入内存或把内存的数据传送到外设，原来都要通过 CPU 控制完成，但是这会占用 CPU，影响 CPU 处理其他事情，所以有了 DMA 模式。CPU 只需向 DMA 控制器下达指令，让 DMA 控制器来处理数据的传送，数据传送完毕再把信息反馈给 CPU，这样就可以解放 CPU。对于64位系统有两个DMA区域ZONE_DMA、ZONE_DMA32，后者只能被32位设备访问。</li>
+<li>ZONE_NORMAL直接映射区，内核虚拟地址空间讲过，就是地址加上一个常量与虚拟地址空间映射。</li>
+<li>ZONE_HIGHMEM高端内存区，64位系统是不需要的。</li>
+<li>ZONE_MOVABLE可移动区，通过将内存划分为可移动区和不可移动区来避免碎片。</li>
+<li>ZONE_DEVICE为支持热插拔设备而分配的Non Volatile Memory非易失性内存</li>
+</ol>
+<h2 id="区">区</h2>
+<p>内核将内存分区的目的是形成不同内存池，从而根据用途进行分配。内核使用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mmzone.h#L448">struct zone</a>表示区。区就是本节点一个个页集合了。我们再来看一下这个结构体。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">struct</span> zone {
+	...
+	<span style="color:#66d9ef">struct</span> pglist_data	<span style="color:#f92672">*</span>zone_pgdat;
+	<span style="color:#66d9ef">struct</span> per_cpu_pageset __percpu <span style="color:#f92672">*</span>pageset;
+	...
+	<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">long</span>		zone_start_pfn;
+	atomic_long_t		managed_pages;
+	<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">long</span>		spanned_pages;
+	<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">long</span>		present_pages;
+	<span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span>		<span style="color:#f92672">*</span>name;
+	...
+	<span style="color:#66d9ef">struct</span> free_area	free_area[MAX_ORDER];
+	<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">long</span>		flags;
+	spinlock_t		lock;
+	...
+} ____cacheline_internodealigned_in_smp;
+</code></pre></div><ol>
+<li>zone_start_pfn表示这个区中第一页。</li>
+<li>spanned_pages表示和节点中的node_spanned_pages变量类似，都是不连续物理页数，就是终止页减去起始页(中间可能有空洞，但是不管)。</li>
+<li>present_pages实际物理页数量。</li>
+<li>managed_pages被伙伴系统管理的所有的 page 数目。</li>
+<li>pageset用于区分冷热页，前面将分段机制时说过80386架构CS、DS等段寄存器由单纯表示段地址升级为段选择子和段描述符缓存器。就是说有些经常被访问的页会被缓存在寄存器中，被缓存的就是热页，这个变量就是用于区分冷热页。</li>
+<li>free_area空闲页。</li>
+</ol>
+<h2 id="页">页</h2>
+<p>然后就到了最基本的内存单元——页，内核使用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L68">struct page</a>表示物理页。结构体中有很多union，用于不同模式时的表示。主要有两种模式，1. 整页分配使用伙伴系统、2. 小内存分配使用slab allocator技术。</p>
+<h2 id="页的分配">页的分配</h2>
+<p>页的分配有两种情况：</p>
+<ol>
+<li>按页分配</li>
+<li>Slab分配（通常分配大小小于一页）</li>
+</ol>
+<h3 id="按页分配">按页分配</h3>
+<p>使用伙伴系统分配，<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mmzone.h#L448">struct zone</a>中的free_area数组每个元素都是一个链表首地址，每条链表有1、2、4、8、16、32、64、128、256、512 和 1024 个连续页。也就是说最多可以分配4MB的连续内存，每个页块的地址物理页地址是页块大小的整数倍。
+<img src="/images/memory-management-free-area.png" alt="">
+分配使用函数<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/gfp.h#L545">alloc_pages</a>，该函数返回连续物理页的第一页的<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L68">struct page</a>的地址。</p>
+<ol>
+<li><a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/gfp.h#L545">alloc_pages</a>调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/mempolicy.c#L2256">alloc_pages_current</a>。</li>
+<li><a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/mempolicy.c#L2256">alloc_pages_current</a>中根据参数gfp判断分配什么类型的页，GFP_USER用户空间页，GFP_KERNEL内核空间页，GFP_HIGHMEM高端内存页。参数order表示分配$2^{order}$个页。之后调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/page_alloc.c#L4917">__alloc_pages_nodemask</a>。</li>
+<li><a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/page_alloc.c#L4917">__alloc_pages_nodemask</a>是伙伴系统的核心方法，大概逻辑就是先看当前区空闲页是否足够，不够就看备用区，遍历每个区时，比如要分配128个页，就会从128个页的块往上找，例如128没有，256有，就将256分割称128和128，一个用于分配，另一个放入128页为一块的链表中。</li>
+</ol>
+<p>释放页使用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/page_alloc.c#L5020">free_pages</a>，参数addr和order分别为page地址和要是释放的页数，释放页数为$2^{order}$。</p>
+<h3 id="slab分配">Slab分配</h3>
+<p>内核以及用户空间几乎很少用到按页分配的情况，普遍使用都是像malloc那样小段内存申请，并且操作十分频繁。这种频繁的操作通常会使用空闲链表，空闲链表缓存被释放的结构，下次分配是直接从链表抓取而不是申请。</p>
+<p>内核中，空闲链表面临的主要问题是不能全局控制，当可用内存紧缺时，内核无法通知每个空闲链表收缩从而释放一些内存。事实上内核根本不知道存在哪些空闲链表。为了弥补这一缺陷，Linux内核提供了Slab层。Slab分配器来充当通用数据结构缓存层的角色，以感知所有缓存链表状态。<sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup></p>
+<p><img src="/images/memory-management-slab-allocator.png" alt=""></p>
+<p>Slab分配模式中：</p>
+<ul>
+<li>每个结构体对应一个高速缓存，由<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slab.h#L147">kmem_cache_create</a>函数创建，由<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slab.h#L155">kmem_cache_destroy</a>函数销毁。例如进程线程的结构体<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched.h#L640">struct task_struct</a>对应高速缓存为<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/kernel/fork.c#L166">task_struct_cachep</a>，进程虚拟内存管理结构体<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L388">struct mm_struct</a>对应高速缓存为<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/kernel/fork.c#L342">mm_cachep</a>，每个高速缓存都使用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slub_def.h#L83">struct kmem_cache</a>表示。这里的<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slub_def.h#L83">struct kmem_cache</a>是<code>include/linux/slub_def.h</code>下的，高速缓存中有多个slab。</li>
+</ul>
+<blockquote>
+<p><strong>内核最开始只有slab，后来开发者对slab逐渐完善，就出现了slob和slub。slob针对嵌入式等内存有限的机器，slub针对large NUMA系统的大型机。</strong></p>
+</blockquote>
+<ul>
+<li>每个slab里面存放了若干个连续物理页用于分配，物理页按照结构体大小分割。工程师通过<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slab.h#L390">kmem_cache_alloc</a>申请结构体，通过<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slab.h#L391">kmem_cache_free</a>释放结构体(放回)。</li>
+</ul>
+<p>先分析一下高速缓存<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slub_def.h#L83">struct kmem_cache</a>。
+<img src="/images/memory-management-kmem-cache.png" alt=""></p>
+<ol>
+<li>cpu_slab 是每个CPU本地缓存。
+<ul>
+<li>void **freelist 空闲对象链表</li>
+<li>struct page *page 所有连续的物理页</li>
+<li>struct page *partial 部分分配的物理页，这是备用的。</li>
+</ul>
+</li>
+<li>list 是高速缓存所在链表。</li>
+<li>node[MAX_NUMNODES] 是该高速缓存所有的slab的数组，每个slab都有一个状态(1.满的，2.空的，3.半满)，本地缓存不够时根据这个状态去找其他的slab。另外还用链表维护着这三个状态的slab。
+<ul>
+<li>struct list_head slabs_partial 存放半满的slab</li>
+<li>struct list_head slabs_full 存放已满的slab</li>
+<li>struct list_head slabs_free 存放空的slab</li>
+</ul>
+</li>
+</ol>
+<p>下面我们根据调用系统调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/exec.c#L2054">execve</a>加载二进制文件的例子来看一下NUMA环境中Slab分配内存的完整过程。既然要加载二进制文件，那么进程结构体<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched.h#L640">struct task_struct</a>中内存管理变量<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L388">struct mm_struct</a>当然要申请了。</p>
+<p>调用链为<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/exec.c#L2054">execve</a>-&gt;<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/exec.c#L1977">do_execve</a> -&gt; <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/exec.c#L1855">do_execveat_common</a> -&gt; <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/exec.c#L1484">alloc_bprm</a> -&gt; <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/exec.c#L363">bprm_mm_init</a> -&gt; <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/kernel/fork.c#L1059">mm_alloc</a> -&gt; <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/kernel/fork.c#L669">allocate_mm</a> -&gt; <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slab.h#L390">kmem_cache_alloc</a></p>
+<p>到这里可以看到高速缓存申请的接口<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slab.h#L390">kmem_cache_alloc</a>，其中参数<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slub_def.h#L83">struct kmem_cache</a>是<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L388">struct mm_struct</a>对应的高速缓存。再看一下这个函数做了哪些事情：</p>
+<ol>
+<li>调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/slub.c#L2896">slab_alloc</a>，紧接着调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/slub.c#L2807">slab_alloc_node</a>。</li>
+<li><a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/slub.c#L2807">slab_alloc_node</a>中首先在CPU本地缓存cpu_slab中分配，这就是注释中说的快速通道，分配到了直接返回，否则就调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/slub.c#L2660">__slab_alloc</a>去其他slab中分配，这就是普通通道。</li>
+<li><a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/slub.c#L2660">__slab_alloc</a>中首先再尝试从本地缓存cpu_slab中分配，没有的话就跳到<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/slub.c#L2732">new_slab</a>先考虑从本地缓存cpu_slab备用物理页partial中分配，再没有的话就调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/slub.c#L2564">new_slab_objects</a>去其他slab中分配了。如果在没有就只能在申请物理页了。</li>
+</ol>
+<p>到现在已经说完slab分配对象的逻辑了，但是还有一个问题，就是空闲缓存的回收，由于有了slab层内核已经可以感知所有空闲链表的状态了，所以回收问题是可以解决的。初始化时内核就会注册回收任务，每隔两秒进行一次检查，检查是否需要收缩空闲链表。调用链是<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/slab.c#L1311">cpucache_init</a> -&gt; <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/slab.c#L1077">slab_online_cpu</a> -&gt; <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/slab.c#L510">start_cpu_timer</a> 将<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/slab.c#L3951">cache_reap</a>注册为定时回调函数。</p>
+<h2 id="页换出">页换出</h2>
+<p>不管32位还是64位操作系统，不一定非得按照操作系统要求装内存条，例如32位最大4G虚拟地址空间，但是用户就买了2G怎么办？超过2G的虚拟地址空间不用了吗？不会的，现在几乎所有操作系统都是支持SWAP，就是将不活跃的物理页暂时缓存到磁盘上。</p>
+<p>一般页换出有两种方式：</p>
+<ol>
+<li>主动（当申请内存时，内存紧张就考虑将部分页缓存到磁盘）</li>
+<li>被动（Linux 内核线程<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/vmscan.c#L3862">kswapd</a>定时检查是否需要换出部分页）
+<ul>
+<li>调用链为<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/vmscan.c#L3542">balance_pgdat</a> -&gt; <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/vmscan.c#L3494">kswapd_shrink_node</a> -&gt; <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/vmscan.c#L2667">shrink_node</a> -&gt; <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/vmscan.c#L2610">shrink_node_memcgs</a></li>
+<li><a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/vmscan.c#L2610">shrink_node_memcgs</a>就是处理页换出的函数了，里面有个LRU表，根据最近最少未使用的原则换出。</li>
+</ul>
+</li>
+</ol>
+<h1 id="4-内存映射">4. 内存映射</h1>
+<p>上边讲完了虚拟地址空间和物理地址空间是如何管理的，还剩下最后一个问题，这俩是怎么映射的？其实虚拟地址不止可以和物理内存映射，还可以和文件等映射。物理内存只是一种特殊的情况。</p>
+<h2 id="用户态映射">用户态映射</h2>
+<p>首先来看一下用户态映射方式。
+<img src="/images/memory-management-user-mode-memory-mapping.png" alt="">
+前边说堆的时候，malloc函数只讲了小内存brk的方式，当申请内存较大时会使用mmap（不是系统调用那个），对于堆来说就是将虚拟地址映射到物理地址。另外如果想将文件映射到内存也可以调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/kernel/sys_x86_64.c#L89">mmap</a>。</p>
+<p>我们先来分析一下<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/kernel/sys_x86_64.c#L89">mmap</a>。</p>
+<ol>
+<li>调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/mmap.c#L1591">ksys_mmap_pgoff</a>参数有fd，通过fd找到对应<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/fs.h#L916">struct file</a>。接下来调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/util.c#L494">vm_mmap_pgoff</a> -&gt; <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/mmap.c#L1404">do_mmap</a>。</li>
+<li><a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/mmap.c#L1404">do_mmap</a>中：
+<ol>
+<li>首先调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/mmap.c#L2256">get_unmapped_area</a>在进程地址空间里找到一个没映射的区域(那棵红黑树)。</li>
+<li>然后调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/mmap.c#L1726">mmap_region</a>将文件映射到这个区域，并且调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/fs.h#L1906">call_mmap</a>执行file-&gt;f_op-&gt;mmap接口把这个区域的<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L305">struct vm_area_struct</a>结构的内存操作接口换成那个文件的操作函数，也就是说对这段虚拟内存读写，就相当于执行该文件的读写函数。如果是ext4文件系统对应的mmap接口就是<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/ext4/file.c#L748">ext4_file_mmap</a>。<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/ext4/file.c#L748">ext4_file_mmap</a>中执行内存操作替换为文件操作vma-&gt;vm_ops = &amp;ext4_file_vm_ops;</li>
+<li>然后将<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L305">struct vm_area_struct</a>挂到进程的<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L388">struct mm_struct</a>上。</li>
+</ol>
+</li>
+<li>现在文件已经和虚拟内存地址有映射了。还没有与物理内存产生关系，而物理内存的映射是用到的时候才映射。</li>
+</ol>
+<h3 id="缺页">缺页</h3>
+<p>访问某个虚拟地址时，如果没有对应的物理页就会触发缺页中断<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/mm/fault.c#L1416">handle_page_fault</a>这里会判断是内核态缺页还是用户态缺页，我们先来看用户态的，会调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/mm/fault.c#L1213">do_user_addr_fault</a>。这个函数中：</p>
+<ol>
+<li>找到缺页区域对应的<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L305">struct vm_area_struct</a>。</li>
+<li>然后调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/memory.c#L4579">handle_mm_fault</a>-&gt;<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/memory.c#L4423">__handle_mm_fault</a>。</li>
+<li><a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/memory.c#L4423">__handle_mm_fault</a>中首先会创建前面一直提的页表，然后调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/memory.c#L4330">handle_pte_fault</a>。</li>
+<li><a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/memory.c#L4330">handle_pte_fault</a>中有三种情况：
+<ol>
+<li>PTE表为空，说明是缺页(新的)
+<ul>
+<li>如果映射到物理内存就调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/memory.c#L3469">do_anonymous_page</a>。</li>
+<li>如果映射到文件就调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/memory.c#L4098">do_fault</a>。</li>
+</ul>
+</li>
+<li>PTE表不为空，说明页表创建过了，是被换出到磁盘的就调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/memory.c#L3241">do_swap_page</a>。</li>
+</ol>
+</li>
+</ol>
+<p>一个个分析，首先看映射到物理页的函数<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/memory.c#L3469">do_anonymous_page</a>：</p>
+<ol>
+<li>调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm.h#L2231">pte_alloc</a>分配一个页表。</li>
+<li>页表有了，就要申请一个物理页放到页表项里了，调用链是<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/highmem.h#L274">alloc_zeroed_user_highpage_movable</a> -&gt; <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/highmem.h#L251">__alloc_zeroed_user_highpage</a> -&gt; <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/gfp.h#L565">alloc_page_vma</a> -&gt; <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/mempolicy.c#L2173">alloc_pages_vma</a> -&gt; <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/page_alloc.c#L4917">__alloc_pages_nodemask</a>。又看到熟悉的函数了<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/page_alloc.c#L4917">__alloc_pages_nodemask</a>就是前边说过的伙伴系统核心函数。</li>
+<li>调用mk_pte创建一个页表项并把物理页放进去，最后调用set_pte_at将页表项放入页表。至此页表里面有对应物理页了，虚拟地址就有映射了。</li>
+</ol>
+<p>再来看下映射到文件的函数<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/memory.c#L4098">do_fault</a>:</p>
+<ol>
+<li><a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/memory.c#L4098">do_fault</a>也有几种不同情况但最终都会调到<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/memory.c#L3585">__do_fault</a>。</li>
+<li><a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/memory.c#L3585">__do_fault</a>中会调用vma-&gt;vm_ops-&gt;fault接口，之前文件映射是说过在缺页之前已经将内存操作接口换成文件操作接口了，所以如果是ext4文件系统，这里的vm_ops就应该是ext4_file_vm_ops，也就是调用了<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/ext4/inode.c#L6186">ext4_filemap_fault</a>。紧接着调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/filemap.c#L2709">filemap_fault</a>。</li>
+<li><a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/filemap.c#L2709">filemap_fault</a>首先调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/pagemap.h#L332">find_get_page</a>查找一下物理内存里事先有没有缓存好的，如果找到了就调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/filemap.c#L2662">do_async_mmap_readahead</a>从文件中预读一些数据到内存。没有的话就调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/filemap.c#L1787">pagecache_get_page</a>分配一个物理页并且把物理页加到LRU表里，然后调用struct address_space *mapping-&gt;a_ops-&gt;readpage接口将文件内容缓存到物理页中。ext4文件系统readpage接口对应<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/ext4/inode.c#L3228">ext4_readpage</a>，这个函数又调用到<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/ext4/inline.c#L498">ext4_readpage_inline</a> -&gt; <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/ext4/inline.c#L464">ext4_read_inline_page</a>。</li>
+<li><a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/fs/ext4/inline.c#L464">ext4_read_inline_page</a>中首先调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/highmem.h#L92">kmap_atomic</a>映射到内核的虚拟地址空间得到虚拟地址kaddr，本来的目的是将物理内存映射到用户虚拟地址空间，但是从文件读取内容缓存到物理内存又不能用物理地址(除了内存管理模块其他操作都得是虚拟地址)，所以这里kaddr只是临时虚拟地址，读取完再把kaddr取消就行。</li>
+</ol>
+<p>最后一种是交换空间类型的，函数<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/memory.c#L3241">do_swap_page</a>，swap类型的和映射到文件的差不多，都是需要从把磁盘文件映射到内存。</p>
+<ol>
+<li>首先调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/swap_state.c#L369">lookup_swap_cache</a>查看swap文件在内存有没有缓存页，有就直接用，没有就调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/swap_state.c#L891">swapin_readahead</a>将swap文件读到内存页中缓存，再调用mk_pte创建页表项，调用set_pte_at将页表项放入页表。</li>
+<li>读swap文件过程和上一步映射到文件的差不多。</li>
+<li>调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/swapfile.c#L1357">swap_free</a>释放掉swap文件。</li>
+</ol>
+<p>处理完缺页之后，物理页有内容、进程空间有页表，接下来就可以通过虚拟地址找到物理地址了。</p>
+<p>为了加快映射速度，我们引进了<a href="https://en.wikipedia.org/wiki/Translation_lookaside_buffer">TLB</a>专门来做地址映射的硬件，缓存了部分页表。查询时先查快表TLB查到了直接用物理内存，查不到再到内存访问页表。</p>
+<h2 id="内核态映射">内核态映射</h2>
+<p>首先内核页表和用户态页表不同，内核页表在初始化时就创建了。内核<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/init-mm.c#L31">初始化时</a>将swapper_pg_dir赋值给顶级目录pgd。<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/pgtable_64.h#L29">swapper_pg_dir</a>指向顶级目录init_top_pgt。</p>
+<p>系统初始化函数<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/kernel/setup.c#L771">setup_arch</a>调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/processor.h#L255">load_cr3(swapper_pg_dir)</a>刷新TLB说明页表已经构建完了。</p>
+<p>实际初始化在<a href="https://github.com/torvalds/linux/blob/v5.10/arch/x86/kernel/head_64.S">arch/x86/kernel/head_64.S</a>中。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#if defined(CONFIG_XEN_PV) || defined(CONFIG_PVH)
+</span><span style="color:#75715e"></span>SYM_DATA_START_PTI_ALIGNED(init_top_pgt)
+	.quad   level3_ident_pgt <span style="color:#f92672">-</span> __START_KERNEL_map <span style="color:#f92672">+</span> _KERNPG_TABLE_NOENC
+	.org    init_top_pgt <span style="color:#f92672">+</span> L4_PAGE_OFFSET<span style="color:#f92672">*</span><span style="color:#ae81ff">8</span>, <span style="color:#ae81ff">0</span>
+	.quad   level3_ident_pgt <span style="color:#f92672">-</span> __START_KERNEL_map <span style="color:#f92672">+</span> _KERNPG_TABLE_NOENC
+	.org    init_top_pgt <span style="color:#f92672">+</span> L4_START_KERNEL<span style="color:#f92672">*</span><span style="color:#ae81ff">8</span>, <span style="color:#ae81ff">0</span>
+	<span style="color:#75715e">/* (2^48-(2*1024*1024*1024))/(2^39) = 511 */</span>
+	.quad   level3_kernel_pgt <span style="color:#f92672">-</span> __START_KERNEL_map <span style="color:#f92672">+</span> _PAGE_TABLE_NOENC
+	.fill	PTI_USER_PGD_FILL,<span style="color:#ae81ff">8</span>,<span style="color:#ae81ff">0</span>
+SYM_DATA_END(init_top_pgt)
+
+SYM_DATA_START_PAGE_ALIGNED(level3_ident_pgt)
+	.quad	level2_ident_pgt <span style="color:#f92672">-</span> __START_KERNEL_map <span style="color:#f92672">+</span> _KERNPG_TABLE_NOENC
+	.fill	<span style="color:#ae81ff">511</span>, <span style="color:#ae81ff">8</span>, <span style="color:#ae81ff">0</span>
+SYM_DATA_END(level3_ident_pgt)
+SYM_DATA_START_PAGE_ALIGNED(level2_ident_pgt)
+	<span style="color:#75715e">/*
+</span><span style="color:#75715e">	 * Since I easily can, map the first 1G.
+</span><span style="color:#75715e">	 * Don&#39;t set NX because code runs from these pages.
+</span><span style="color:#75715e">	 *
+</span><span style="color:#75715e">	 * Note: This sets _PAGE_GLOBAL despite whether
+</span><span style="color:#75715e">	 * the CPU supports it or it is enabled.  But,
+</span><span style="color:#75715e">	 * the CPU should ignore the bit.
+</span><span style="color:#75715e">	 */</span>
+	PMDS(<span style="color:#ae81ff">0</span>, __PAGE_KERNEL_IDENT_LARGE_EXEC, PTRS_PER_PMD)
+SYM_DATA_END(level2_ident_pgt)
+<span style="color:#75715e">#else
+</span><span style="color:#75715e"></span>SYM_DATA_START_PTI_ALIGNED(init_top_pgt)
+	.fill	<span style="color:#ae81ff">512</span>,<span style="color:#ae81ff">8</span>,<span style="color:#ae81ff">0</span>
+	.fill	PTI_USER_PGD_FILL,<span style="color:#ae81ff">8</span>,<span style="color:#ae81ff">0</span>
+SYM_DATA_END(init_top_pgt)
+<span style="color:#75715e">#endif
+</span></code></pre></div><h2 id="缺页-1">缺页</h2>
+<p>内核空间缺页同样会调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/mm/fault.c#L1416">handle_page_fault</a>。</p>
+<h1 id="5-总结">5. 总结</h1>
+<ol>
+<li>Linux虚拟地址空间采用分页机制，多级页表来减小页表占用空间。其原因就是越往后的页表项没用到的可以不用建。</li>
+<li>物理地址管理:
+<ol>
+<li>内核管理单元管理。主流采用NUMA模型，每个CPU有本地内存(节点)，本地内存根绝用途再分区，每个区里就是物理页集合。</li>
+<li>物理页申请时:
+<ol>
+<li>大内存按页分配通过伙伴系统</li>
+<li>小内存通过slab分配器。那个结构体对应一个高速缓存，结构体申请释放都通过高速缓存，高速缓存里有很多slab，每个CPU又一个本地slab。slab里面就是很多待分配的结构体了。</li>
+</ol>
+</li>
+<li>物理内存紧张时会换出部分页面到磁盘上，也就是swap文件。</li>
+</ol>
+</li>
+<li>地址映射
+<ol>
+<li>虚拟地址映射到物理地址</li>
+<li>虚拟地址映射到文件</li>
+<li>用到虚拟地址是会检查是否有对应物理地址没有的话，就缺页。
+<ol>
+<li>虚拟地址映射到物理地址的缺页——分配物理页。</li>
+<li>虚拟地址映射到文件的缺页——分配物理页，加载部分数据到物理页。</li>
+<li>物理地址映射到磁盘swap文件——分配物理页，将swap文件加载进来。</li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<section class="footnotes" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn:1" role="doc-endnote">
+<p><a href="https://book.douban.com/subject/6097773/">Linux内核设计与实现第三版</a> <a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+</ol>
+</section>
+
+        </div>
+        
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: 'a60f22cd3c5d7e6aafa8',
+        clientSecret: 'db8f7c66f2e8e20275173155975b749870291c5b',
+        repo: 'journey-c.github.io',
+        owner: 'journey-c',
+        admin: ['journey-c'],
+        id: 'Linux内存管理',
+        distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+</script>
+
+        
+
+        
+    </article>
+</div>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <p>Copyright @ 2020-<script>document.write(new Date().getFullYear())</script> <a class="footer-links-kudos" href="https://github.com/journey-c">Journey-C</a>.
+    </p>
+          </li>
+        </ul>
+      </footer>
+    </main>
+
+    <script type=text/javascript async src="https://cdn.staticfile.org/mathjax/2.7.7/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$']],
+            processEscapes: true,
+            processEnvironments: true,
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+            TeX: {
+                equationNumbers: {
+                    autoNumber: "AMS"
+                },
+                extensions: ["AMSmath.js", "AMSsymbols.js"]
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(),
+            i;
+        for (i = 0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+    MathJax.Hub.Config({
+        TeX: {
+            equationNumbers: {
+                autoNumber: "AMS"
+            }
+        }
+    });
+    </script>
+  </body>
+</html>
+

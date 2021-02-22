@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="{{ .Site.LanguageCode }}">
+
+<head>
+    {{ partial "head.html" . }}
+</head>
+
+<body>
+    <input type="checkbox" class="hidden toggle" id="toc-control" />
+    <main class="wrapper">
+        <div>
+            <header class="header">
+                {{ partial "nav.html" . }}
+            </header>
+        </div>
+
+        <div>
+            <header class="mobile-header">
+                <a href="{{ .Site.BaseURL }}" class="nav-logo">
+                    <img src="{{ .Site.BaseURL }}images/{{ .Site.Params.logo.url }}"
+                        width="{{ .Site.Params.logo.width }}" height="{{ .Site.Params.logo.height }}"
+                        alt="{{ .Site.Params.logo.alt }}">
+                </a>
+
+                <div style="float:right">
+                    <label for="toc-control">
+                        <img src="/svg/toc.svg" class="article-icon" alt="Table of Contents" />
+                    </label>
+                </div>
+
+                <ul class="nav-links">
+                    {{ range .Site.Menus.main }}
+                    <li><a href="{{ .URL }}">{{ .Name }}</a></li>
+                    {{ end }}
+                    <li>
+                </ul>
+
+                <aside class="hidden clearfix mobile-toc">
+                    {{ .TableOfContents}}
+                </aside>
+            </header>
+        </div>
