@@ -1,5 +1,0 @@
----
-layouts: tags
-hidden: true
----
-
