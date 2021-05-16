@@ -50,10 +50,10 @@ Linux的虚拟文件系统大概分为四块：
       
       <guid>https://journey-c.github.io/what-is-system-call/</guid>
       <description>1 .简介 系统调用就是操作系统提供给用户态应用与硬件交互的一组接口。在用户空间和硬件之间添加一个中间层(系统调用)主要的作用有:
- 为用户空间提供抽象接口，用户不需要关心硬件种类介质等。 保障系统的稳定和安全，避免用户错误的使用硬件危害系统或者窃取其他进程的资源。 由于Linux进程都是运行在虚拟系统中，如果操作系统对用户访问硬件一无所知，就几乎无法实现多任务和虚拟内存。  2. 三种使用系统调用方式 2.1 软件中断 没有外界打扰的情况下处理器会一直执行给定指令，中断就是打断处理器的执行并且告诉他先执行另一段指令，执行完毕再接着执行中断前的指令。从中断指令发出的对象可以分为硬件中断和软件中断。
+ 为用户空间提供抽象接口，用户不需要关心硬件种类介质等。 保障系统的稳定和安全，避免用户错误的使用硬件危害系统或者窃取其他进程的资源。 由于Linux进程都是运行在虚拟系统中，如果操作系统对用户访问硬件一无所知，就几乎无法实现多任务和虚拟内存。   图片来源《Advanced Programming in the UNIX Environment, 3rd Edition》  2. 三种使用系统调用方式 2.1 软件中断 没有外界打扰的情况下处理器会一直执行给定指令，中断就是打断处理器的执行并且告诉他先执行另一段指令，执行完毕再接着执行中断前的指令。从中断指令发出的对象可以分为硬件中断和软件中断。
  硬件中断就是硬件通过传输电信号到中断控制器的输入引脚，中断控制器收到电信号之后会给处理器发送一个电信号，处理器一经检测到电信号之后就中断当前工作转而处理中断。之后会通知操作系统已经产生中断，进而操作系统可以处理这个中断了。 软件中断就是处理器执行特定指令时触发的中断，之后也会通知操作系统。 除了系统调用，还有中断下半部tasklet也是用软件中断实现的。  在x86的机器上可以使用$INT$指令触发软件中断，Linux早期的时候就是使用软件中断来处理系统调用，中断号为128。 软件中断执行系统调用的流程为:
  用户将中断号放入$eax$寄存器，前六个参数按顺序放入$ebx$、$ecx$、$edx$、$esi$、$edi$、$ebp$寄存器，六个以上的情况，需要把所有参数放在用户空间的一段连续内存中(类似用struct传参)，然后将指向该内存区域的指针放入$ebx$中。 执行$int$ 0x80指令，处理器在中断向量表(IDT)中查找对应的中端处理程序，执行中断处理程序(操作系统由ring3进入ring0)entry_INT80_32:  a. 调用SAVE_ALL将当前上下文保存到内核栈，然后调用do_int80_syscall_32。 b. do_int80_syscall_32 从用户空间进入内核空间然后调用 do_syscall_32_irqs_on，退出内核空间返回用户空间。 c. do_syscall_32_irqs_on 检查系统调用号，从系统调用表ia32_sys_call_table syscall_32.tbl中找出对应函数，并且将参数传给对应系统调用函数，唤起软件中断，将返回值放入$eax$寄存器。 d. 从内核栈恢复上下文。    下面就是一个通过软件中断调用write系统调用的例子:
-global _start section .text _start: mov eax,4 ; system call number mov ebx,1 ; args 1: fd=1(STDOUT) mov ecx,msg ; args 2: &amp;quot;Hello World!&amp;quot; mov edx,msglen ; args 3: len(&amp;quot;Hello World!</description>
+global _start section .text _start: mov eax,4 ; system call number mov ebx,1 ; args 1: fd=1(STDOUT) mov ecx,msg ; args 2: &amp;#34;Hello World!</description>
     </item>
     
   </channel>

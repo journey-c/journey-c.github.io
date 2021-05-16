@@ -37,10 +37,10 @@ type hchan struct { qcount uint dataqsiz uint buf unsafe.Pointer elemsize uint16
     
     <item>
       <title>goroutine 源码阅读</title>
-      <link>https://journey-c.github.io/goroutine-read/</link>
+      <link>https://journey-c.github.io/golang-schedule/</link>
       <pubDate>Thu, 29 Oct 2020 20:58:31 +0800</pubDate>
       
-      <guid>https://journey-c.github.io/goroutine-read/</guid>
+      <guid>https://journey-c.github.io/golang-schedule/</guid>
       <description>1.数据结构 调度相关的数据结构有三个，M(线程)，P(调度器)，G(goroutine) M表示线程，P作为调度器用来帮助每个线程管理自己的goroutine，G就是golang的协程。我们可以通过runtime.GOMAXPROCS(n int)函数设置P的个数，注意P的个数并不代表M的个数，例如程序启动时runtime代码会出实话procs个P，但开始的时候只会启动一个M，就是M0和一个栈为64K(其他goroutine默认初始栈大小2K)来执行runtime代码。
 那其他线程是什么时候创建的呐? 当goroutine被唤醒时，要在M上运行(恢复goroutine的上下文)，P是帮助M管理goroutine的，恢复上下文的操作也由P来完成。如果被唤醒时发现还有空闲的P，并且没有其他M在窃取goroutine(M发现本地goroutine队列和全局goroutine队列都没有goroutine的时候，会去其他线程窃取goroutine)，说明其他M都在忙，就会创建一个M让这个空闲的P帮他来管理goroutine。 总之一句话，开始的时候创建一个M，当发现调度不过来且还有空闲P没有工作就在创建新的，直到创建procs个M(procs通过runtime.GOMAXPROCS设置)
 1.1 G golang 用结构体g表示goroutine

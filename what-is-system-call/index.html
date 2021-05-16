@@ -186,7 +186,9 @@ if (!doNotTrack) {
 <li>由于Linux进程都是运行在虚拟系统中，如果操作系统对用户访问硬件一无所知，就几乎无法实现多任务和虚拟内存。</li>
 </ol>
 <p><img src="/images/unix_arch.jpeg" alt="unix_arch"></p>
-<!-- raw HTML omitted -->
+<div>
+	<center>图片来源<a href="https://www.amazon.com/Advanced-Programming-UNIX-Environment-3rd/dp/0321637739">《Advanced Programming in the UNIX Environment, 3rd Edition》</a></center>
+</div>
 <h1 id="2-三种使用系统调用方式">2. 三种使用系统调用方式</h1>
 <p><img src="/images/syscall_method.png" alt="syscall_method"></p>
 <h2 id="21-软件中断">2.1 软件中断</h2>
@@ -212,23 +214,23 @@ if (!doNotTrack) {
 </ol>
 <p><img src="/images/interrupt_call.png" alt="interrupt_call">
 下面就是一个通过软件中断调用write系统调用的例子:</p>
-<pre><code class="language-x86asm" data-lang="x86asm">global _start
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">global _start
 
 section .text
 _start:
     mov eax,4      ; system call number
-    mov ebx,1      ; args 1: fd=1(STDOUT)
-    mov ecx,msg    ; args 2: &quot;Hello World!&quot;
-    mov edx,msglen ; args 3: len(&quot;Hello World!&quot;)
+    mov ebx,1      ; args 1: fd<span style="color:#f92672">=</span>1<span style="color:#f92672">(</span>STDOUT<span style="color:#f92672">)</span>
+    mov ecx,msg    ; args 2: <span style="color:#e6db74">&#34;Hello World!&#34;</span>
+    mov edx,msglen ; args 3: len<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;Hello World!&#34;</span><span style="color:#f92672">)</span>
     int 0x80       ; soft interrupt
     mov eax,1      ; syscall exit number
-    mov ebx,0      ; args 1: 0 (exit(0))
+    mov ebx,0      ; args 1: <span style="color:#ae81ff">0</span> <span style="color:#f92672">(</span>exit<span style="color:#f92672">(</span>0<span style="color:#f92672">))</span>
     int 0x80       ; soft interrupt
 
 section .rodata
-    msg: db &quot;Hello, World!&quot;, 10
+    msg: db <span style="color:#e6db74">&#34;Hello, World!&#34;</span>, <span style="color:#ae81ff">10</span>
     msglen: equ $ - msg 
-</code></pre><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">nasm -g -f elf64 -o sys_call.o sys_call.s
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">nasm -g -f elf64 -o sys_call.o sys_call.s
 ld -o sys_call sys_call.o
 </code></pre></div><h2 id="22-汇编指令">2.2 汇编指令</h2>
 <p>由于中断实现的系统调用在个别处理器上表现非常差，Linux在较新版本上使用了intel和amd上实现的快速系统调用指令syscall/sysret(64)和sysenter/sysexit(32)。这也是目前最常用的系统调用方式。

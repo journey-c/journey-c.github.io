@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.74.3" />
+
+
+<title>Redis的网络模型 - Journey-C</title>
+<meta property="og:title" content="Redis的网络模型 - Journey-C">
+
+
+<link href='https://journey-c.github.io/favicon.png' rel='icon' type='image/x-icon' />
+
+
+
+
+
+
+
+
+<link rel="icon" href="https://journey-c.github.io/images/" type="image/x-icon" />
+<link rel="stylesheet" href="https://journey-c.github.io/css/main.css" media="all">
+<link rel="stylesheet" href="https://journey-c.github.io/css/fonts.css" media="all">
+<link rel="stylesheet" href="https://journey-c.github.io/css/prism.css" media="all">
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Merriweather:400|Lato:400,400italic,700">
+<script type="text/javascript" src="https://journey-c.github.io/js/main.js"></script>
+<script type="text/javascript" src="https://journey-c.github.io/js/prism.js"></script>
+
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-181048644-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-181048644-1"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-181048644-1');
+</script>
+
+
+
+</head>
+
+<body>
+    <input type="checkbox" class="hidden toggle" id="toc-control" />
+    <main class="wrapper">
+        <div>
+            <header class="header">
+                <nav class="nav">
+    <a href="https://journey-c.github.io/" class="nav-logo">
+        <img src="https://journey-c.github.io/images/yangguo.png" width="50"
+            height="50" alt="Logo">
+    </a>
+
+    <ul class="nav-links">
+        
+        <li><a href="/tags/"></a></li>
+        
+        <li><a href="/about/">About</a></li>
+        
+        <li><a href="https://github.com/journey-c">Github</a></li>
+        
+        <li><a href="https://www.cnblogs.com/wuwangchuxin0924/">博客园</a></li>
+        
+        <li>
+    </ul>
+</nav>
+
+            </header>
+        </div>
+
+        <div>
+            <header class="mobile-header">
+                <a href="https://journey-c.github.io/" class="nav-logo">
+                    <img src="https://journey-c.github.io/images/yangguo.png"
+                        width="50" height="50"
+                        alt="Logo">
+                </a>
+
+                
+                <div style="float:right">
+                    <label for="toc-control">
+                        <img src="/svg/toc.svg" class="article-icon" alt="Table of Contents" />
+                    </label>
+                </div>
+                
+
+                <ul class="nav-links">
+                    
+                    <li><a href="/tags/"></a></li>
+                    
+                    <li><a href="/about/">About</a></li>
+                    
+                    <li><a href="https://github.com/journey-c">Github</a></li>
+                    
+                    <li><a href="https://www.cnblogs.com/wuwangchuxin0924/">博客园</a></li>
+                    
+                    <li>
+                </ul>
+
+                
+                <aside class="hidden clearfix mobile-toc">
+                    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#设计原理">设计原理</a></li>
+    <li><a href="#数据结构">数据结构</a></li>
+    <li><a href="#事件">事件</a></li>
+    <li><a href="#事件循环">事件循环</a></li>
+    <li><a href="#总结">总结</a></li>
+  </ul>
+</nav>
+                </aside>
+                
+            </header>
+        </div>
+
+
+<div class="content">
+    
+    <aside class="article-toc" id="article-toc">
+    <div class="article-toc-content">
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#设计原理">设计原理</a></li>
+    <li><a href="#数据结构">数据结构</a></li>
+    <li><a href="#事件">事件</a></li>
+    <li><a href="#事件循环">事件循环</a></li>
+    <li><a href="#总结">总结</a></li>
+  </ul>
+</nav>
+    </div>
+</aside>
+
+    
+
+    <article class="article">
+        
+        <span class="article-duration">2 min read</span>
+        
+
+        <h1 class="article-title">Redis的网络模型</h1>
+
+        
+        <span class="article-date">2021-05-16</span>
+        
+
+        
+        
+        
+
+        <div class="article-content">
+            <blockquote>
+<p>服务端程序几乎都会有网络交互的功能，一个优秀网络模型可以合理配合使用计算机的各资源。</p>
+</blockquote>
+<p>Redis作为广为人知的内存数据库，从玩具级项目到工业级项目中都可以看到它的身影，而Redis在最初的几个版本中一直是单线程，却能扛住<a href="https://redis.io/topics/faq#what39s-the-redis-memory-footprint">1 million requests per second</a>的请求量（非单点）。其实现的单线程网络模型必然十分优秀。
+<img src="/images/redis-network-model-share.png" alt="redis-network-model-share"></p>
+<h1 id="设计原理">设计原理</h1>
+<p>在分析网络模型之前先分析一下Redis中网络交互的场景。一般来说我们在使用Redis时，一般会和Redis-Server建若干个连接，然后并发的给Redis-Server发送指令并得到回复。而Redis-Server就需要同时维护若干个与Redis-Client的连接，并且随时处理每个连接发来的请求。</p>
+<p><img src="/images/redis-network-model-connecttion-per-thread.png" alt="redis-network-model-connecttion-per-thread">
+一种方式是起一个线程监听一个端口，当新连接到来时，创建一个新线程处理这个连接。这样做的缺点是，当连接过多时线程数也随之增多，线程栈大小一般8MB，大量的线程会占用大量内存和CPU资源。</p>
+<p><img src="/images/redis-network-model-connecttion-worker-pool.png" alt="redis-network-model-connecttion-worker-pool">
+另一种方式是起一个线程监听端口，新连接交给线程池来处理，这样做的优点是连接数不再会压垮计算机，而缺点就是服务器的处理能力受限与线程池的大小，并且空闲连接也会占用线程池的资源。</p>
+<p>上边两种网络模型的问题就在于一个线程只处理一个连接，而操作系统提供的<a href="/io-multiplexing">IO多路复用技术</a>可以解决这一问题。一个线程监听多个连接，每个连接只有在活跃时才会使用CPU，从而达到节省资源的目录。</p>
+<p>Redis采用Reactor模式实现的网络模型。主要由事件收集器、事件发送器、事件处理器组成。事件收集器主要收集所有事件，包括来自硬件软件的事件。事件发送器负责将事件发送到实现注册的事件处理器。而事件处理器则负责处理事件。其中事件收集器就是通过<a href="/io-multiplexing">IO多路复用技术</a>来实现的。</p>
+<p><img src="/images/redis-network-model.png" alt="redis-network-model"></p>
+<h1 id="数据结构">数据结构</h1>
+<p><img src="/images/redis-network-model-data-structure.png" alt="redis-network-model-data-structure"></p>
+<p>结构体<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.h#L99">aeEventLoop</a>封装了事件循环相关的变量，包括两种事件的链表(时间事件、文件事件)。然后文件事件（<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.h#L72">aeFileEvent</a>）中封装了读写事件接口充当事件处理器，时间事件（<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.h#L80">aeTimeEvent</a>）中也封装了相应接口作为事件处理器。</p>
+<h1 id="事件">事件</h1>
+<p>默认有两种事件：<code>文件事件</code>, <code>时间事件</code>。</p>
+<ol>
+<li>文件事件对应文件的I/O事件，例如socket可读可写事件。</li>
+<li>时间事件对应定时任务，例如Redis的定时清理等。</li>
+</ol>
+<p>首先来看一下文件事件的封装。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">/* File event structure */</span>
+<span style="color:#66d9ef">typedef</span> <span style="color:#66d9ef">struct</span> aeFileEvent {
+    <span style="color:#66d9ef">int</span> mask; <span style="color:#75715e">/* one of AE_(READABLE|WRITABLE|BARRIER) */</span>
+    aeFileProc <span style="color:#f92672">*</span>rfileProc;
+    aeFileProc <span style="color:#f92672">*</span>wfileProc;
+    <span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>clientData;
+} aeFileEvent;
+</code></pre></div><p>包含了一个标志位<code>mask</code>和<code>read事件</code>、<code>write事件</code>的处理器。如果文件事件对应的是客户端的话<code>clientData</code>就储存了对应<code>connection接口</code>。</p>
+<p>时间事件就比较复杂，redis没有采用<code>Time FD</code>来实现定时任务，采用事件循环的timeout来辅助实现的。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">/* Time event structure */</span>
+<span style="color:#66d9ef">typedef</span> <span style="color:#66d9ef">struct</span> aeTimeEvent {
+    <span style="color:#66d9ef">long</span> <span style="color:#66d9ef">long</span> id; <span style="color:#75715e">/* time event identifier. */</span>
+    monotime when;
+    aeTimeProc <span style="color:#f92672">*</span>timeProc;
+    aeEventFinalizerProc <span style="color:#f92672">*</span>finalizerProc;
+    <span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>clientData;
+    <span style="color:#66d9ef">struct</span> aeTimeEvent <span style="color:#f92672">*</span>prev;
+    <span style="color:#66d9ef">struct</span> aeTimeEvent <span style="color:#f92672">*</span>next;
+    <span style="color:#66d9ef">int</span> refcount; <span style="color:#75715e">/* refcount to prevent timer events from being
+</span><span style="color:#75715e">           * freed in recursive time event calls. */</span>
+} aeTimeEvent;
+</code></pre></div><p>其中<code>id</code>每个时间事件的ID。<code>when</code>为事件发生的时间戳（毫秒）。<code>timeProc</code>为事件发生时处理器。<code>finalizerProc</code>为事件终止处理器，时间事件被删除时触发。<code>prev</code>和<code>next</code>为时间事件链表的指针，所有的时间事件都在一个链表中。<code>refcount</code>为事件引用数。</p>
+<h1 id="事件循环">事件循环</h1>
+<p>首先最核心的数据结构就是<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.h#L99">aeEventLoop</a>，它封装了redis-server的事件循环，充当了事件收集器和事件发送器的作用。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">/* State of an event based program */</span>
+<span style="color:#66d9ef">typedef</span> <span style="color:#66d9ef">struct</span> aeEventLoop {
+    <span style="color:#66d9ef">int</span> maxfd;   <span style="color:#75715e">/* highest file descriptor currently registered */</span>
+    <span style="color:#66d9ef">int</span> setsize; <span style="color:#75715e">/* max number of file descriptors tracked */</span>
+    <span style="color:#66d9ef">long</span> <span style="color:#66d9ef">long</span> timeEventNextId;
+    aeFileEvent <span style="color:#f92672">*</span>events; <span style="color:#75715e">/* Registered events */</span>
+    aeFiredEvent <span style="color:#f92672">*</span>fired; <span style="color:#75715e">/* Fired events */</span>
+    aeTimeEvent <span style="color:#f92672">*</span>timeEventHead;
+    <span style="color:#66d9ef">int</span> stop;
+    <span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>apidata; <span style="color:#75715e">/* This is used for polling API specific data */</span>
+    aeBeforeSleepProc <span style="color:#f92672">*</span>beforesleep;
+    aeBeforeSleepProc <span style="color:#f92672">*</span>aftersleep;
+    <span style="color:#66d9ef">int</span> flags;
+} aeEventLoop;
+</code></pre></div><p>其中<code>maxfd</code>字段为当前监听fd的最大值。<code>setsize</code>为最多监听事件的数量，一般为最大连接数加上一部分冗余。<code>timeEventNextId</code>为下一个时间事件的id。<code>stop</code>为停止标志。<code>beforesleep</code>和<code>aftersleep</code>为事件循环之前和之后触发的函数。<code>flags</code>用于存各种标记。
+最后再看一下几个主要的字段:</p>
+<ul>
+<li><code>events</code>为所有注册的文件事件(最大长度为<code>setsize</code>)。</li>
+<li><code>fired</code>为已触发的文件事件。</li>
+<li><code>timeEventHead</code>用于存时间事件。</li>
+<li><code>apidata</code>为<a href="/io-multiplexing/">多路复用</a>的接口，根据平台的不同其实现可能是evport/epoll/kqueue/select等。</li>
+</ul>
+<p>主要数据结构介绍完了，下面再来通过客户端和服务端一次交互来分析网络模型的工作过程。</p>
+<p>Redis初始化时，首先调用<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/server.c#L2893">adjustOpenFilesLimit</a>函数根据配置文件中的最大连接数修改进程最大文件打开数。然后调用<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.c#L66">aeCreateEventLoop</a>创建<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.h#L99">aeEventLoop</a>结构维护事件循环。</p>
+<p>根据配置文件监听端口之后，会调用<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/server.c#L3000">createSocketAcceptHandler</a>将<code>Listen FD</code>封装成文件事件加入<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.h#L99">aeEventLoop</a>。</p>
+<p>此时服务端准备工作基本完成了，端口监听了，<code>Listen FD</code>的<code>accept</code>动作也监听了。</p>
+<p>然后就会调用<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.c#L484">aeMain</a>进入事件循环了。</p>
+<p><img src="/images/redis-network-model-eventloop.png" alt="redis-network-model-eventloop"></p>
+<p><a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.c#L484">aeMain</a>函数中是一个循环，不断判断是否停止，不停止就执行<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.c#L348">aeProcessEvents</a>函数。</p>
+<p><a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.c#L348">aeProcessEvents</a>中：</p>
+<ol>
+<li>计算最近一个时间事件距离现在的时间差和已触发时间事件。</li>
+<li>调用<code>aeApiPoll</code>接口（对应底层封装的select/poll/epoll_wait函数）。</li>
+<li>文件事件来临时执行实现注册的读写处理器。</li>
+<li>执行已触发的时间事件（如果有）。</li>
+</ol>
+<p>此时如果客户端连接到Redis的话，会触发初始化时注册的<code>Listen FD</code>的<code>accept</code>事件，对应处理器为<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/networking.c#L1106">acceptTcpHandler</a>，这个函数主要是调用<code>anetTcpAccept</code>接口（对应各平台的accept函数）获取<code>Conn FD</code>。得到<code>Conn FD</code>之后调用<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/networking.c#L1034">acceptCommonHandler</a>处理这个连接，参数为<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/connection.c#L95">connCreateAcceptedSocket</a>函数根据<code>Conn FD</code>创建的连接对象（<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/connection.h#L73">connection</a>）。</p>
+<p><a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/connection.c#L95">connCreateAcceptedSocket</a>首先根据<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/connection.h#L73">connection</a>调用<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/networking.c#L110">createClient</a>创建一个<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/server.h#L859">client</a>对象。</p>
+<p><a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/networking.c#L110">createClient</a>中首先会调用<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/connection.h#L165">connSetReadHandler</a>执行<code>conn-&gt;type-&gt;set_read_handler</code>接口，如果是TCP连接的话对应<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/connection.c#L348">CT_Socket</a>的<code>set_read_handler</code>接口，也就是<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/connection.c#L238">connSocketSetReadHandler</a>设置读处理器并且将<code>Conn FD</code>封装成文件事件加入<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.h#L99">aeEventLoop</a>。最后将<code>Connection</code>和<code>Client</code>关联起来。</p>
+<p>然后调用<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/networking.c#L973">clientAcceptHandler</a>函数处理一些客户端需要做的事情。</p>
+<p>到此为止，监听动作可以处理了，客户端发来的数据（读事件）也可以处理了。</p>
+<h1 id="总结">总结</h1>
+<p>上面分析的网络模型在Redis中都是在单线程中实现的，所有事件执行也是串行的，这也是很多人使用Redis实现分布式锁而不用考虑并发原因了。Redis采用单线程实现网络模型也能扛住大量请求，一方面是网络模型足够优秀，另一方面就是所有操作都在内存中，单事物处理时间短，并且Redis数据库中数据结构实现优化到了极致，比如同种数据结构根据数据量大小选择不同底层实现，通用回复字符串共享，秒级时间戳缓存等等。</p>
+<p>事件驱动实现并非只能单线程实现，Redis之所以使用单线程实现一方面是为了方便开发者，另一方面是Redis的瓶颈并不在网络请求。而多线程实现的代表就是<a href="https://nginx.org/">Nginx</a>了。</p>
+<p><img src="/images/redis-network-model-nginx.png" alt="redis-network-model-nginx"></p>
+<p>nginx实现时，Master监听，将连接分发给若干个Worker线程处理，每个Worker线程有自己的事件循环。为了避免调度对网络响应的损耗，nginx会调用<a href="https://man7.org/linux/man-pages/man2/sched_setaffinity.2.html">SCHED_SETAFFINITY</a>将每个Worker分散绑定到不同CPU上。</p>
+<p><img src="/images/redis-network-model-golang.png" alt="redis-network-model-golang"></p>
+<p>而以高并发著称的golang语言却不适合采用事件驱动编程。golang标准库中的网络模型都是<code>connection-per-goroutine</code>，这样做的原因是go无法将goroutine固定到指定<code>P</code>上，如果采用事件驱动模型，最坏的情况下所有Worker被调度到同一个<code>P</code>上，就变成单线程模型了。从上面golang事件驱动模型的尖刺非常明显（蓝色为 netpoll + 多路复用，绿色为 netpoll + 长连接，黄色为 net 库 + 长连接）。</p>
+
+        </div>
+        
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: 'a60f22cd3c5d7e6aafa8',
+        clientSecret: 'db8f7c66f2e8e20275173155975b749870291c5b',
+        repo: 'journey-c.github.io',
+        owner: 'journey-c',
+        admin: ['journey-c'],
+        id: 'Redis的网络模型',
+        distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+</script>
+
+        
+
+        
+    </article>
+</div>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <p>Copyright @ 2020-<script>document.write(new Date().getFullYear())</script> <a class="footer-links-kudos" href="https://github.com/journey-c">Journey-C</a>.
+    </p>
+          </li>
+        </ul>
+      </footer>
+    </main>
+
+    <script type=text/javascript async src="https://cdn.staticfile.org/mathjax/2.7.7/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$']],
+            processEscapes: true,
+            processEnvironments: true,
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+            TeX: {
+                equationNumbers: {
+                    autoNumber: "AMS"
+                },
+                extensions: ["AMSmath.js", "AMSsymbols.js"]
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(),
+            i;
+        for (i = 0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+    MathJax.Hub.Config({
+        TeX: {
+            equationNumbers: {
+                autoNumber: "AMS"
+            }
+        }
+    });
+    </script>
+  </body>
+</html>
+

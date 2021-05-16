@@ -167,6 +167,7 @@ input.toggle {
 
 .article-content p {
     margin: 15px 0 25px;
+
 }
 
 .article-content a {
@@ -740,8 +741,8 @@ code {
     padding: 1px 5px;
     font-family: Inconsolata, Monaco, Consolas, 'Courier New', Courier, monospace;
     font-size: 0.91rem;
-    color: #e96900;
-    background-color: #f8f8f8;
+    color: #000000;
+    background-color: #E9ECEF;
     border-radius: 2px;
 }
 

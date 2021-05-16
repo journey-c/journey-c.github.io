@@ -648,7 +648,7 @@ if (!doNotTrack) {
 </tr>
 </tbody>
 </table>
-<p><!-- raw HTML omitted --><!-- raw HTML omitted --></p>
+<p><span id = "event_callback"></span></p>
 <h1 id="7-事件回调">7. 事件回调</h1>
 <p>select/poll/epoll最后都会调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/include/linux/poll.h#L86">vfs_poll</a>，检查FD是否有相应事件。
 <a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/include/linux/poll.h#L86">vfs_poll</a>的核心流程就是:</p>

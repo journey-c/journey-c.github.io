@@ -6,10 +6,30 @@
     <description>Recent content in Posts on Journey-C</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 19 Feb 2021 23:25:19 +0800</lastBuildDate>
+    <lastBuildDate>Sun, 16 May 2021 23:10:11 +0800</lastBuildDate>
     
 	<atom:link href="https://journey-c.github.io/post/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Redis的网络模型</title>
+      <link>https://journey-c.github.io/redis-network-model/</link>
+      <pubDate>Sun, 16 May 2021 23:10:11 +0800</pubDate>
+      
+      <guid>https://journey-c.github.io/redis-network-model/</guid>
+      <description>服务端程序几乎都会有网络交互的功能，一个优秀网络模型可以合理配合使用计算机的各资源。
+ Redis作为广为人知的内存数据库，从玩具级项目到工业级项目中都可以看到它的身影，而Redis在最初的几个版本中一直是单线程，却能扛住1 million requests per second的请求量（非单点）。其实现的单线程网络模型必然十分优秀。 设计原理 在分析网络模型之前先分析一下Redis中网络交互的场景。一般来说我们在使用Redis时，一般会和Redis-Server建若干个连接，然后并发的给Redis-Server发送指令并得到回复。而Redis-Server就需要同时维护若干个与Redis-Client的连接，并且随时处理每个连接发来的请求。
+一种方式是起一个线程监听一个端口，当新连接到来时，创建一个新线程处理这个连接。这样做的缺点是，当连接过多时线程数也随之增多，线程栈大小一般8MB，大量的线程会占用大量内存和CPU资源。
+另一种方式是起一个线程监听端口，新连接交给线程池来处理，这样做的优点是连接数不再会压垮计算机，而缺点就是服务器的处理能力受限与线程池的大小，并且空闲连接也会占用线程池的资源。
+上边两种网络模型的问题就在于一个线程只处理一个连接，而操作系统提供的IO多路复用技术可以解决这一问题。一个线程监听多个连接，每个连接只有在活跃时才会使用CPU，从而达到节省资源的目录。
+Redis采用Reactor模式实现的网络模型。主要由事件收集器、事件发送器、事件处理器组成。事件收集器主要收集所有事件，包括来自硬件软件的事件。事件发送器负责将事件发送到实现注册的事件处理器。而事件处理器则负责处理事件。其中事件收集器就是通过IO多路复用技术来实现的。
+数据结构 结构体aeEventLoop封装了事件循环相关的变量，包括两种事件的链表(时间事件、文件事件)。然后文件事件（aeFileEvent）中封装了读写事件接口充当事件处理器，时间事件（aeTimeEvent）中也封装了相应接口作为事件处理器。
+事件 默认有两种事件：文件事件, 时间事件。
+ 文件事件对应文件的I/O事件，例如socket可读可写事件。 时间事件对应定时任务，例如Redis的定时清理等。  首先来看一下文件事件的封装。
+/* File event structure */ typedef struct aeFileEvent { int mask; /* one of AE_(READABLE|WRITABLE|BARRIER) */ aeFileProc *rfileProc; aeFileProc *wfileProc; void *clientData; } aeFileEvent; 包含了一个标志位mask和read事件、write事件的处理器。如果文件事件对应的是客户端的话clientData就储存了对应connection接口。
+时间事件就比较复杂，redis没有采用Time FD来实现定时任务，采用事件循环的timeout来辅助实现的。
+/* Time event structure */ typedef struct aeTimeEvent { long long id; /* time event identifier. */ monotime when; aeTimeProc *timeProc; aeEventFinalizerProc *finalizerProc; void *clientData; struct aeTimeEvent *prev; struct aeTimeEvent *next; int refcount; /* refcount to prevent timer events from being * freed in recursive time event calls.</description>
+    </item>
     
     <item>
       <title>Linux内存管理</title>
@@ -86,10 +106,10 @@ Linux的虚拟文件系统大概分为四块：
       
       <guid>https://journey-c.github.io/what-is-system-call/</guid>
       <description>1 .简介 系统调用就是操作系统提供给用户态应用与硬件交互的一组接口。在用户空间和硬件之间添加一个中间层(系统调用)主要的作用有:
- 为用户空间提供抽象接口，用户不需要关心硬件种类介质等。 保障系统的稳定和安全，避免用户错误的使用硬件危害系统或者窃取其他进程的资源。 由于Linux进程都是运行在虚拟系统中，如果操作系统对用户访问硬件一无所知，就几乎无法实现多任务和虚拟内存。  2. 三种使用系统调用方式 2.1 软件中断 没有外界打扰的情况下处理器会一直执行给定指令，中断就是打断处理器的执行并且告诉他先执行另一段指令，执行完毕再接着执行中断前的指令。从中断指令发出的对象可以分为硬件中断和软件中断。
+ 为用户空间提供抽象接口，用户不需要关心硬件种类介质等。 保障系统的稳定和安全，避免用户错误的使用硬件危害系统或者窃取其他进程的资源。 由于Linux进程都是运行在虚拟系统中，如果操作系统对用户访问硬件一无所知，就几乎无法实现多任务和虚拟内存。   图片来源《Advanced Programming in the UNIX Environment, 3rd Edition》  2. 三种使用系统调用方式 2.1 软件中断 没有外界打扰的情况下处理器会一直执行给定指令，中断就是打断处理器的执行并且告诉他先执行另一段指令，执行完毕再接着执行中断前的指令。从中断指令发出的对象可以分为硬件中断和软件中断。
  硬件中断就是硬件通过传输电信号到中断控制器的输入引脚，中断控制器收到电信号之后会给处理器发送一个电信号，处理器一经检测到电信号之后就中断当前工作转而处理中断。之后会通知操作系统已经产生中断，进而操作系统可以处理这个中断了。 软件中断就是处理器执行特定指令时触发的中断，之后也会通知操作系统。 除了系统调用，还有中断下半部tasklet也是用软件中断实现的。  在x86的机器上可以使用$INT$指令触发软件中断，Linux早期的时候就是使用软件中断来处理系统调用，中断号为128。 软件中断执行系统调用的流程为:
  用户将中断号放入$eax$寄存器，前六个参数按顺序放入$ebx$、$ecx$、$edx$、$esi$、$edi$、$ebp$寄存器，六个以上的情况，需要把所有参数放在用户空间的一段连续内存中(类似用struct传参)，然后将指向该内存区域的指针放入$ebx$中。 执行$int$ 0x80指令，处理器在中断向量表(IDT)中查找对应的中端处理程序，执行中断处理程序(操作系统由ring3进入ring0)entry_INT80_32:  a. 调用SAVE_ALL将当前上下文保存到内核栈，然后调用do_int80_syscall_32。 b. do_int80_syscall_32 从用户空间进入内核空间然后调用 do_syscall_32_irqs_on，退出内核空间返回用户空间。 c. do_syscall_32_irqs_on 检查系统调用号，从系统调用表ia32_sys_call_table syscall_32.tbl中找出对应函数，并且将参数传给对应系统调用函数，唤起软件中断，将返回值放入$eax$寄存器。 d. 从内核栈恢复上下文。    下面就是一个通过软件中断调用write系统调用的例子:
-global _start section .text _start: mov eax,4 ; system call number mov ebx,1 ; args 1: fd=1(STDOUT) mov ecx,msg ; args 2: &amp;quot;Hello World!&amp;quot; mov edx,msglen ; args 3: len(&amp;quot;Hello World!</description>
+global _start section .text _start: mov eax,4 ; system call number mov ebx,1 ; args 1: fd=1(STDOUT) mov ecx,msg ; args 2: &amp;#34;Hello World!</description>
     </item>
     
     <item>
@@ -118,10 +138,10 @@ type hchan struct { qcount uint dataqsiz uint buf unsafe.Pointer elemsize uint16
     
     <item>
       <title>goroutine 源码阅读</title>
-      <link>https://journey-c.github.io/goroutine-read/</link>
+      <link>https://journey-c.github.io/golang-schedule/</link>
       <pubDate>Thu, 29 Oct 2020 20:58:31 +0800</pubDate>
       
-      <guid>https://journey-c.github.io/goroutine-read/</guid>
+      <guid>https://journey-c.github.io/golang-schedule/</guid>
       <description>1.数据结构 调度相关的数据结构有三个，M(线程)，P(调度器)，G(goroutine) M表示线程，P作为调度器用来帮助每个线程管理自己的goroutine，G就是golang的协程。我们可以通过runtime.GOMAXPROCS(n int)函数设置P的个数，注意P的个数并不代表M的个数，例如程序启动时runtime代码会出实话procs个P，但开始的时候只会启动一个M，就是M0和一个栈为64K(其他goroutine默认初始栈大小2K)来执行runtime代码。
 那其他线程是什么时候创建的呐? 当goroutine被唤醒时，要在M上运行(恢复goroutine的上下文)，P是帮助M管理goroutine的，恢复上下文的操作也由P来完成。如果被唤醒时发现还有空闲的P，并且没有其他M在窃取goroutine(M发现本地goroutine队列和全局goroutine队列都没有goroutine的时候，会去其他线程窃取goroutine)，说明其他M都在忙，就会创建一个M让这个空闲的P帮他来管理goroutine。 总之一句话，开始的时候创建一个M，当发现调度不过来且还有空闲P没有工作就在创建新的，直到创建procs个M(procs通过runtime.GOMAXPROCS设置)
 1.1 G golang 用结构体g表示goroutine
@@ -184,7 +204,7 @@ type Pool struct { noCopy noCopy local unsafe.Pointer // local fixed-size per-P 
       <description>红黑树是一种自平衡二叉搜索树。二叉搜索树就是插入的时候，比当前节点小的放到左子树，大的放到右子树。这样查找的时候可以沿着树的一条路径找到想要的值，所以时间复杂度是树的深度，最坏$O(N)$，平均$O(lg^N)$。
 正因为二叉搜索树由于数据的不确定性可能造成树建的不平衡，导致树过深，时间复杂度过高。所以出现了自平衡二叉搜索树像红黑树。
 红黑树所有的性质和特点都是想让树尽可能的平衡。
-1. 性质  每个节点或是红色，或是黑色 根结点是黑色 每个叶节点(NIL)是黑色 如果一个节点是红色，则它两个子节点必须是黑色 对每个节点，从该节点到其所有后代叶节点的简单路径上，均包含相同数目的黑色节点  另外其他二叉树叶子结点一般为nil，红黑树为了节省内存空间，将所有叶子节点指向一个哨兵节点，哨兵节点color为BLACK，其他属性p、left、right、key为任意值，根结点的父节点也指向哨兵节点。
+ 图片引自《算法导论》第三版  1. 性质  每个节点或是红色，或是黑色 根结点是黑色 每个叶节点(NIL)是黑色 如果一个节点是红色，则它两个子节点必须是黑色 对每个节点，从该节点到其所有后代叶节点的简单路径上，均包含相同数目的黑色节点  另外其他二叉树叶子结点一般为nil，红黑树为了节省内存空间，将所有叶子节点指向一个哨兵节点，哨兵节点color为BLACK，其他属性p、left、right、key为任意值，根结点的父节点也指向哨兵节点。
 2. 为什么红黑树可以平衡 2.1 引理  一棵有n个内部节点的红黑树的高度至多为$2lg^{(n+1)}$
  如果可以证明上述引理，那么红黑树的查找最坏的时间复杂度也是$O(2lg^{(n+1)})$，因为在一棵高度为h的树上操作时间复杂度是$O(h)$，就是咱们要的平衡。
 2.2 证明 首先证明红黑树以任意一个节点x为根的子树中至少包含$2^{bh(x)}-1$个内部节点(从节点x出发，不包含x到达一个叶子节点的任意一条简单路径上黑节点的个数成为x节点的黑高，记为$bh(x)$)。
@@ -193,13 +213,11 @@ type Pool struct { noCopy noCopy local unsafe.Pointer // local fixed-size per-P 
   当高度为k时 假设以x为根的子树内部节点不超过$2^{bh(x)}-1$。
   当高度为k-1时 即当前节点是x(这个x节点是高度为k时假设的那个)的儿子，黑高为$bh(x)$或$bh(x)-1$，取决于儿子是黑还是红。所以以儿子节点为根的子树至少有$2^{bh(x)-1}-1$内部节点。于是，由儿子节点推父节点x内部节点的个数不超过$(2^{bh(x)-1}-1)+(2^{bh(x)-1}-1)=(2^{bh(x)}-1)$，由此假设成立。
   现在来证明引理。设h为树的高度，根据性质4得出从根节点到叶节点的任何一条简单路径上都至少有一半节点是黑色，所以根的黑高至少时h/2。于是有
-n为树的节点个数，这个公式上边证明过了。将1放到左边，然后取对数得到
-由此得到结论，高度小于等于$2lg^{(n+1)}$，所以只要满足红黑树性质的n节点二叉树高度最大为$2lg^{(n+1)}$。
-3. 红黑树如何实现自平衡 3.1 旋转 由于插入和删除操作会对红黑树修改，有可能会不符合红黑树的性质，所以必须通过调整节点的颜色和指针结构来重新满足性质，而调整指针结构的操作是旋转，有左旋、右旋。 下图α,β,γ代表一棵子树(可能为空)
+$n \geq 2^{h/2}-1$ n为树的节点个数，这个公式上边证明过了。将1放到左边，然后取对数得到
+$lg^{(n+1)} \geq h/2 $ 由此得到结论，高度小于等于$2lg^{(n+1)}$，所以只要满足红黑树性质的n节点二叉树高度最大为$2lg^{(n+1)}$。
+$h \leq 2lg^{(n+1)}$ 3. 红黑树如何实现自平衡 3.1 旋转 由于插入和删除操作会对红黑树修改，有可能会不符合红黑树的性质，所以必须通过调整节点的颜色和指针结构来重新满足性质，而调整指针结构的操作是旋转，有左旋、右旋。 下图α,β,γ代表一棵子树(可能为空)
 3.1.1 左旋 上图为例，左旋就是从右边树结构变成左边树结构的操作。 当在某点例如x点做左旋时:
- 以x-y这条路径当轴，逆时针旋转(左旋)，x变成y的左儿子，y到原来x的位置。 因为x变成了y的左儿子，所以要考虑y之前是否有左儿子，如果有的话就要将左儿子β在左子树中重新找位置了，之前β是在x的右边所以比x大，刚好x的右儿子旋转后是空的，所以β就放到x的右儿子的位置。就得到了左边树的结构。  3.1.2 右旋 和左旋步骤是一样的，方向相反。
-3.2 插入  插入节点颜色设置为红色。 首先从根结点开始遍历，插入节点比当前节点小就去左子树，否则就去右子树，直到遍历到叶子结点，然后比较插入节点和父节点大小选择作为父节点的左儿子还是右儿子。 现在已经将节点插入了，由于插入节点颜色是红色，所以可能破坏红节点儿子只能是黑节点的性质。所以从插入节点向上遍历修复破坏性质的地方，直到完全符合性质。  3.2.1 修复 回想一下插入新节点的过程，然后对比一下可能违反什么性质。
-   性质编号 描述 是否可能违反     1 每个节点或是红色，或是黑色 不会违反，除非插入第三种颜色   2 根结点是黑色 可能违反，只有树为空的时候，插入节点(红色)作为根结点   3 每个叶节点(NIL)是黑色 不会违反，插入节点不会改变叶节点的颜色，叶节点永远都是T.</description>
+ 以x-y这条路径当轴，逆时针旋转(左旋)，x变成y的左儿子，y到原来x的位置。 因为x变成了y的左儿子，所以要考虑y之前是否有左儿子，如果有的话就要将左儿子β在左子树中重新找位置了，之前β是在x的右边所以比x大，刚好x的右儿子旋转后是空的，所以β就放到x的右儿子的位置。就得到了左边树的结构。  3.1.2 右旋 和左旋步骤是一样的，方向相反。</description>
     </item>
     
     <item>
