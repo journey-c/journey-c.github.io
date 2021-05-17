@@ -75,6 +75,8 @@ if (!doNotTrack) {
         
         <li><a href="https://github.com/journey-c">Github</a></li>
         
+        <li><a href="/index.xml">RSS</a></li>
+        
         <li><a href="https://www.cnblogs.com/wuwangchuxin0924/">博客园</a></li>
         
         <li>
@@ -107,6 +109,8 @@ if (!doNotTrack) {
                     <li><a href="/about/">About</a></li>
                     
                     <li><a href="https://github.com/journey-c">Github</a></li>
+                    
+                    <li><a href="/index.xml">RSS</a></li>
                     
                     <li><a href="https://www.cnblogs.com/wuwangchuxin0924/">博客园</a></li>
                     
@@ -222,11 +226,11 @@ if (!doNotTrack) {
         
         
         
-        <a class="article-tag" href="https://journey-c.github.io/%20tags/vim">Vim</a>
+        <a class="article-tag" href="https://journey-c.github.io/tags/vim">Vim</a>
         
-        <a class="article-tag" href="https://journey-c.github.io/%20tags/golang">Golang</a>
+        <a class="article-tag" href="https://journey-c.github.io/tags/golang">Golang</a>
         
-        <a class="article-tag" href="https://journey-c.github.io/%20tags/cxx">Cxx</a>
+        <a class="article-tag" href="https://journey-c.github.io/tags/cxx">Cxx</a>
         
         
         
@@ -434,8 +438,8 @@ vim-plug更新的命令为<code>:PlugUpgrade</code></p>
 <li>go
 golang 有官方出的gopls，上面步骤里面vim-go已经给安装好了，只需要配置下环境变量即可</li>
 </ul>
-<pre><code>export PATH=$PATH:$GOPATH/bin:$HOME/.cargo/bin
-</code></pre><p>在终端直接输入gopls有反应即可</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">export PATH<span style="color:#f92672">=</span>$PATH:$GOPATH/bin:$HOME/.cargo/bin
+</code></pre></div><p>在终端直接输入gopls有反应即可</p>
 <ul>
 <li>clangd
 cpp和c的补全跳转等功能向来没有完美解决方案，小编用的是<a href="https://clangd.llvm.org/">clangd</a> + <a href="https://github.com/rizsotto/Bear">bear</a>

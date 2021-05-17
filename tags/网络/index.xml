@@ -6,10 +6,30 @@
     <description>Recent content in 网络 on Journey-C</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 31 Jan 2021 03:35:33 +0800</lastBuildDate>
+    <lastBuildDate>Sun, 16 May 2021 23:10:11 +0800</lastBuildDate>
     
 	<atom:link href="https://journey-c.github.io/tags/%E7%BD%91%E7%BB%9C/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Redis的网络模型</title>
+      <link>https://journey-c.github.io/redis-network-model/</link>
+      <pubDate>Sun, 16 May 2021 23:10:11 +0800</pubDate>
+      
+      <guid>https://journey-c.github.io/redis-network-model/</guid>
+      <description>服务端程序几乎都会有网络交互的功能，一个优秀网络模型可以合理配合使用计算机的各资源。
+ Redis作为广为人知的内存数据库，从玩具级项目到工业级项目中都可以看到它的身影，而Redis在最初的几个版本中一直是单线程，却能扛住1 million requests per second的请求量（非单点）。其实现的单线程网络模型必然十分优秀。 设计原理 在分析网络模型之前先分析一下Redis中网络交互的场景。一般来说我们在使用Redis时，一般会和Redis-Server建若干个连接，然后并发的给Redis-Server发送指令并得到回复。而Redis-Server就需要同时维护若干个与Redis-Client的连接，并且随时处理每个连接发来的请求。
+一种方式是起一个线程监听一个端口，当新连接到来时，创建一个新线程处理这个连接。这样做的缺点是，当连接过多时线程数也随之增多，线程栈大小一般8MB，大量的线程会占用大量内存和CPU资源。
+另一种方式是起一个线程监听端口，新连接交给线程池来处理，这样做的优点是连接数不再会压垮计算机，而缺点就是服务器的处理能力受限与线程池的大小，并且空闲连接也会占用线程池的资源。
+上边两种网络模型的问题就在于一个线程只处理一个连接，而操作系统提供的IO多路复用技术可以解决这一问题。一个线程监听多个连接，每个连接只有在活跃时才会使用CPU，从而达到节省资源的目录。
+Redis采用Reactor模式实现的网络模型。主要由事件收集器、事件发送器、事件处理器组成。事件收集器主要收集所有事件，包括来自硬件软件的事件。事件发送器负责将事件发送到实现注册的事件处理器。而事件处理器则负责处理事件。其中事件收集器就是通过IO多路复用技术来实现的。
+数据结构 结构体aeEventLoop封装了事件循环相关的变量，包括两种事件的链表(时间事件、文件事件)。然后文件事件（aeFileEvent）中封装了读写事件接口充当事件处理器，时间事件（aeTimeEvent）中也封装了相应接口作为事件处理器。
+事件 默认有两种事件：文件事件, 时间事件。
+ 文件事件对应文件的I/O事件，例如socket可读可写事件。 时间事件对应定时任务，例如Redis的定时清理等。  首先来看一下文件事件的封装。
+/* File event structure */ typedef struct aeFileEvent { int mask; /* one of AE_(READABLE|WRITABLE|BARRIER) */ aeFileProc *rfileProc; aeFileProc *wfileProc; void *clientData; } aeFileEvent; 包含了一个标志位mask和read事件、write事件的处理器。如果文件事件对应的是客户端的话clientData就储存了对应connection接口。
+时间事件就比较复杂，redis没有采用Time FD来实现定时任务，采用事件循环的timeout来辅助实现的。
+/* Time event structure */ typedef struct aeTimeEvent { long long id; /* time event identifier. */ monotime when; aeTimeProc *timeProc; aeEventFinalizerProc *finalizerProc; void *clientData; struct aeTimeEvent *prev; struct aeTimeEvent *next; int refcount; /* refcount to prevent timer events from being * freed in recursive time event calls.</description>
+    </item>
     
     <item>
       <title>backlog参数指的是什么？</title>

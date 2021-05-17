@@ -75,6 +75,8 @@ if (!doNotTrack) {
         
         <li><a href="https://github.com/journey-c">Github</a></li>
         
+        <li><a href="/index.xml">RSS</a></li>
+        
         <li><a href="https://www.cnblogs.com/wuwangchuxin0924/">博客园</a></li>
         
         <li>
@@ -107,6 +109,8 @@ if (!doNotTrack) {
                     <li><a href="/about/">About</a></li>
                     
                     <li><a href="https://github.com/journey-c">Github</a></li>
+                    
+                    <li><a href="/index.xml">RSS</a></li>
                     
                     <li><a href="https://www.cnblogs.com/wuwangchuxin0924/">博客园</a></li>
                     
@@ -268,9 +272,9 @@ if (!doNotTrack) {
         
         
         
-        <a class="article-tag" href="https://journey-c.github.io/%20tags/%E6%BA%90%E7%A0%81">源码</a>
+        <a class="article-tag" href="https://journey-c.github.io/tags/%E6%BA%90%E7%A0%81">源码</a>
         
-        <a class="article-tag" href="https://journey-c.github.io/%20tags/golang">Golang</a>
+        <a class="article-tag" href="https://journey-c.github.io/tags/golang">Golang</a>
         
         
         
@@ -1054,22 +1058,22 @@ chanrecv2是使用channel出来的元素，类似 elem := &lt;- c
 }
 </code></pre></div><h1 id="附录">附录</h1>
 <h2 id="chandot">chan.dot</h2>
-<pre><code class="language-dot" data-lang="dot">digraph {
-    bgcolor=&quot;#C6CFD532&quot;; 
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">digraph <span style="color:#f92672">{</span>
+    bgcolor<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;#C6CFD532&#34;</span>; 
 
-    node [shape=record, fontsize=&quot;8&quot;, margin=&quot;0.04&quot;, height=0.2, color=gray] 
-	edge [fontname=&quot;Inconsolata, Consolas&quot;, fontsize=10, arrowhead=normal]
+    node <span style="color:#f92672">[</span>shape<span style="color:#f92672">=</span>record, fontsize<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;8&#34;</span>, margin<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;0.04&#34;</span>, height<span style="color:#f92672">=</span>0.2, color<span style="color:#f92672">=</span>gray<span style="color:#f92672">]</span> 
+	edge <span style="color:#f92672">[</span>fontname<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;Inconsolata, Consolas&#34;</span>, fontsize<span style="color:#f92672">=</span>10, arrowhead<span style="color:#f92672">=</span>normal<span style="color:#f92672">]</span>
 
-    hchan [shape=record,label=&quot;{qcount|dataqsiz|buf|elemsize|closed|elemtype|&lt;sendx&gt;sendx|&lt;recvx&gt;recvx|recvq|sendq|lock}&quot;,xlabel=&quot;hchan&quot;]
-    waitq[shape=record,label=&quot;{&lt;first&gt;first|&lt;last&gt;last}&quot;,xlabel=&quot;waitq&quot;]
-    sudog[shape=record,label=&quot;{g|isSelect|next|prev|elem|acquiretime|releasetime|ticket|parent|waitlink|waittail|c}&quot;,xlabel=&quot;sudog&quot;]
+    hchan <span style="color:#f92672">[</span>shape<span style="color:#f92672">=</span>record,label<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;{qcount|dataqsiz|buf|elemsize|closed|elemtype|&lt;sendx&gt;sendx|&lt;recvx&gt;recvx|recvq|sendq|lock}&#34;</span>,xlabel<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;hchan&#34;</span><span style="color:#f92672">]</span>
+    waitq<span style="color:#f92672">[</span>shape<span style="color:#f92672">=</span>record,label<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;{&lt;first&gt;first|&lt;last&gt;last}&#34;</span>,xlabel<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;waitq&#34;</span><span style="color:#f92672">]</span>
+    sudog<span style="color:#f92672">[</span>shape<span style="color:#f92672">=</span>record,label<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;{g|isSelect|next|prev|elem|acquiretime|releasetime|ticket|parent|waitlink|waittail|c}&#34;</span>,xlabel<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;sudog&#34;</span><span style="color:#f92672">]</span>
 
-    hchan:sendx -&gt; waitq [label=&quot;发送队列&quot;]
-    hchan:recvx -&gt; waitq [label=&quot;接收队列&quot;]
+    hchan:sendx -&gt; waitq <span style="color:#f92672">[</span>label<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;发送队列&#34;</span><span style="color:#f92672">]</span>
+    hchan:recvx -&gt; waitq <span style="color:#f92672">[</span>label<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;接收队列&#34;</span><span style="color:#f92672">]</span>
     waitq:first -&gt; sudog
     waitq:last -&gt; sudog
-}
-</code></pre>
+<span style="color:#f92672">}</span>
+</code></pre></div>
         </div>
         
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
