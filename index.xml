@@ -1,256 +1,59 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>Journey-C</title>
-    <link>https://journey-c.github.io/</link>
-    <description>Recent content on Journey-C</description>
-    <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language>
-    <lastBuildDate>Sun, 16 May 2021 23:10:11 +0800</lastBuildDate>
+<channel>
+  <title>Journey-C</title>
+  <link>https://journey-c.github.io/</link>
+  <description>Recent content on Journey-C</description>
+  <generator>Hugo -- gohugo.io</generator>
+  
+  <language>en-us</language>
+  
+  
+  
+  
+  <lastBuildDate>Mon, 12 Jul 2021 22:38:33 +0800</lastBuildDate>
+  
+      <atom:link href="https://journey-c.github.io/index.xml" rel="self" type="application/rss+xml" />
+  
+  
+  <item>
+    <title>Posts</title>
+    <link>https://journey-c.github.io/post/</link>
+    <pubDate>Mon, 12 Jul 2021 22:38:33 +0800</pubDate>
     
-	<atom:link href="https://journey-c.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <guid>https://journey-c.github.io/post/</guid>
+    <description></description>
+  </item>
+  
+  <item>
+    <title>关于这个神秘美男子</title>
+    <link>https://journey-c.github.io/about/</link>
+    <pubDate>Wed, 21 Oct 2020 21:28:08 +0000</pubDate>
     
+    <guid>https://journey-c.github.io/about/</guid>
+    <description>&lt;h1 id=&#34;journey-c&#34;&gt;Journey-C&lt;/h1&gt;
+&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/golang.png&#34; alt=&#34;cool&#34;&gt;&lt;/p&gt;
+&lt;hr&gt;
+&lt;blockquote&gt;
+&lt;p&gt;    来自齐鲁大地，孔孟之乡。从小对传统文化充满兴趣，发誓以后要做一个像杨过一样不羁的人(&lt;del&gt;娶到小龙女&lt;/del&gt;)，长大后怀揣着对自然的敬畏投身于人造自然世界。是什么让我放弃理想(&lt;del&gt;小龙女&lt;/del&gt;)？是计算机的魅力吗？不！一颗不羁的心。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;hr&gt;
+&lt;ul&gt;
+&lt;li&gt;目前: &lt;del&gt;快乐的&lt;/del&gt;码农，工业互联网相关&lt;/li&gt;
+&lt;li&gt;坐标: 帝都&lt;/li&gt;
+&lt;li&gt;标签: 有趣的灵魂、一颗不羁的心❤️&lt;/li&gt;
+&lt;li&gt;联系: &lt;a href=&#34;mailto:lyuc0924@foxmail.com&#34;&gt;lyuc0924@foxmail.com&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+  </item>
+  
+  <item>
+    <title></title>
+    <link>https://journey-c.github.io/tags/</link>
+    <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
     
-    <item>
-      <title>Redis的网络模型</title>
-      <link>https://journey-c.github.io/redis-network-model/</link>
-      <pubDate>Sun, 16 May 2021 23:10:11 +0800</pubDate>
-      
-      <guid>https://journey-c.github.io/redis-network-model/</guid>
-      <description>服务端程序几乎都会有网络交互的功能，一个优秀网络模型可以合理配合使用计算机的各资源。
- Redis作为广为人知的内存数据库，从玩具级项目到工业级项目中都可以看到它的身影，而Redis在最初的几个版本中一直是单线程，却能扛住1 million requests per second的请求量（非单点）。其实现的单线程网络模型必然十分优秀。 设计原理 在分析网络模型之前先分析一下Redis中网络交互的场景。一般来说我们在使用Redis时，一般会和Redis-Server建若干个连接，然后并发的给Redis-Server发送指令并得到回复。而Redis-Server就需要同时维护若干个与Redis-Client的连接，并且随时处理每个连接发来的请求。
-一种方式是起一个线程监听一个端口，当新连接到来时，创建一个新线程处理这个连接。这样做的缺点是，当连接过多时线程数也随之增多，线程栈大小一般8MB，大量的线程会占用大量内存和CPU资源。
-另一种方式是起一个线程监听端口，新连接交给线程池来处理，这样做的优点是连接数不再会压垮计算机，而缺点就是服务器的处理能力受限与线程池的大小，并且空闲连接也会占用线程池的资源。
-上边两种网络模型的问题就在于一个线程只处理一个连接，而操作系统提供的IO多路复用技术可以解决这一问题。一个线程监听多个连接，每个连接只有在活跃时才会使用CPU，从而达到节省资源的目录。
-Redis采用Reactor模式实现的网络模型。主要由事件收集器、事件发送器、事件处理器组成。事件收集器主要收集所有事件，包括来自硬件软件的事件。事件发送器负责将事件发送到实现注册的事件处理器。而事件处理器则负责处理事件。其中事件收集器就是通过IO多路复用技术来实现的。
-数据结构 结构体aeEventLoop封装了事件循环相关的变量，包括两种事件的链表(时间事件、文件事件)。然后文件事件（aeFileEvent）中封装了读写事件接口充当事件处理器，时间事件（aeTimeEvent）中也封装了相应接口作为事件处理器。
-事件 默认有两种事件：文件事件, 时间事件。
- 文件事件对应文件的I/O事件，例如socket可读可写事件。 时间事件对应定时任务，例如Redis的定时清理等。  首先来看一下文件事件的封装。
-/* File event structure */ typedef struct aeFileEvent { int mask; /* one of AE_(READABLE|WRITABLE|BARRIER) */ aeFileProc *rfileProc; aeFileProc *wfileProc; void *clientData; } aeFileEvent; 包含了一个标志位mask和read事件、write事件的处理器。如果文件事件对应的是客户端的话clientData就储存了对应connection接口。
-时间事件就比较复杂，redis没有采用Time FD来实现定时任务，采用事件循环的timeout来辅助实现的。
-/* Time event structure */ typedef struct aeTimeEvent { long long id; /* time event identifier. */ monotime when; aeTimeProc *timeProc; aeEventFinalizerProc *finalizerProc; void *clientData; struct aeTimeEvent *prev; struct aeTimeEvent *next; int refcount; /* refcount to prevent timer events from being * freed in recursive time event calls.</description>
-    </item>
-    
-    <item>
-      <title>Linux内存管理</title>
-      <link>https://journey-c.github.io/linux-memory-management/</link>
-      <pubDate>Fri, 19 Feb 2021 23:25:19 +0800</pubDate>
-      
-      <guid>https://journey-c.github.io/linux-memory-management/</guid>
-      <description>计算机的计算，一方面说的是进程、线程对于CPU的使用，另一方面是对于内存的管理。本文就是介绍Linux的内存管理。
- 在Linux中用户态是没有权限直接操作物理内存的，与硬件相关的交互都是通过系统调用由内核来完成操作的。Linux抽象出虚拟内存，用户态操作的只是虚拟内存，真正操作的物理内存由内核内存管理模块管理。本文通篇都在探索三个问题：
- 虚拟地址空间是如何管理的 物理地址空间是如何管理的 虚拟地址空间和物理地址空间是如何映射的  上述三个问题得到解决之后，我们就可通过一个虚拟地址空间找到对应的物理地址空间。我们首先来看一下Linux虚拟地址空间的管理。
-1. 虚拟地址空间的管理 是不是用户态使用虚拟内存，内核态直接使用物理内存呢？
- 不是的，内核态和用户态使用的都是虚拟内存。
- 使用虚拟地址一个核心的问题，需要记录虚拟地址到物理地址的映射，最简单的方式是虚拟地址与物理地址一一对应，这样4G内存光是维护映射关系就需要4G（扯淡）。所以需要其他有效的内存管理方案。通常有两种：分段、分页。下面我们来一起分析一下这两种管理机制以及在Linux中是如何应用的。
-分段 8086升级到80386之后，段寄存器CS、DS、SS、ES从直接存放地址变成高位存放段选择子，低位做段描述符缓存器。由原来的直接使用内存地址变为现在的通过分段机制来使用内存地址。
-那我们先来看一下内存管理中分段机制的原理。
-分段机制下虚拟地址由两部分组成，段选择子和段内偏移量。段选择子中的段号作为段表的索引，通过段号可以在段表找到对应段表项，每一项记录了一段空间：段基址、段的界限、特权级等。用段基址+段内偏移量就可以计算出对应的物理地址。
-Linux中段表称为段描述符表，放在全局描述符表中，用GDT_ENTRY_INIT函数来初始化表项desc_struct。
-下面是Linux中段选择子和段表的定义，看一下所有段表项初始化传入的参数中，段基址base都是0，这没有分段。事实上Linux中没有用到全部的分段功能，对于内存管理更倾向于分页机制。
-#define GDT_ENTRY_KERNEL32_CS	1 #define GDT_ENTRY_KERNEL_CS	2 #define GDT_ENTRY_KERNEL_DS	3  #define GDT_ENTRY_DEFAULT_USER32_CS	4 #define GDT_ENTRY_DEFAULT_USER_DS	5 #define GDT_ENTRY_DEFAULT_USER_CS	6 DEFINE_PER_CPU_PAGE_ALIGNED(struct gdt_page, gdt_page) = { .gdt = { #ifdef CONFIG_X86_64 	[GDT_ENTRY_KERNEL32_CS]	= GDT_ENTRY_INIT(0xc09b, 0, 0xfffff), [GDT_ENTRY_KERNEL_CS]	= GDT_ENTRY_INIT(0xa09b, 0, 0xfffff), [GDT_ENTRY_KERNEL_DS]	= GDT_ENTRY_INIT(0xc093, 0, 0xfffff), [GDT_ENTRY_DEFAULT_USER32_CS]	= GDT_ENTRY_INIT(0xc0fb, 0, 0xfffff), [GDT_ENTRY_DEFAULT_USER_DS]	= GDT_ENTRY_INIT(0xc0f3, 0, 0xfffff), [GDT_ENTRY_DEFAULT_USER_CS]	= GDT_ENTRY_INIT(0xa0fb, 0, 0xfffff), #else 	[GDT_ENTRY_KERNEL_CS]	= GDT_ENTRY_INIT(0xc09a, 0, 0xfffff), [GDT_ENTRY_KERNEL_DS]	= GDT_ENTRY_INIT(0xc092, 0, 0xfffff), [GDT_ENTRY_DEFAULT_USER_CS]	= GDT_ENTRY_INIT(0xc0fa, 0, 0xfffff), [GDT_ENTRY_DEFAULT_USER_DS]	= GDT_ENTRY_INIT(0xc0f2, 0, 0xfffff), .</description>
-    </item>
-    
-    <item>
-      <title>backlog参数指的是什么？</title>
-      <link>https://journey-c.github.io/what-is-the-backlog/</link>
-      <pubDate>Sun, 31 Jan 2021 03:35:33 +0800</pubDate>
-      
-      <guid>https://journey-c.github.io/what-is-the-backlog/</guid>
-      <description>背景介绍 服务端编程中涉及网络交互的服务几乎都会监听一个端口，然后等待客户端的请求，然后交互。在Linux中监听的系统调用是listen。glibc的接口如下：
-int listen(int sockfd, int backlog); 其中参数sockfd为已经bind过端口和地址的fd，而backlog就是本文介绍的对象。
-BSD手册中给它的定义是：
- &amp;ldquo;the maximum length the queue of pending connections may grow to.（由未处理连接构成的队列可能增长的最大长度）
- 这句话并没有解释backlog到底是处于SYN_RCVD状态的连接数还是处于ESTABLISHED状态的连接数。或者是处于两者皆可。
-Linux中的backlog是如何实现 下面我们从Linux实现来一步步揭开backlog的真面目。
-首先listen涉及与网卡的交互，这种涉及与硬件交互的操作Linux都是通过系统调用来实现的，既然是系统调用那么目标就明确了，从listen的系统调用入口开始看。
-listen函数的入口是SYSCALL_DEFINE2(listen, int, fd, int, backlog)参数正如glibc的listen接口，第一个参数是listen用的socket，第二个参数是backlog。这个函数没有做任何事情只是调用了__sys_listen，__sys_listen就是具体的listen实现了：
- 首先根据传入的fd调用sockfd_lookup_light找到对应的socket对象。 将backlog和Linux配置中的somaxconn(/proc/sys/net/core/somaxconn，默认128)比较，如果比somaxconn大，就用somaxconn替换。 调用struct socket结构里面ops的listen函数，拿TCP来说，创建socket时type=SOCK_STREAM，protocol=IPPROTO_TCP的ops是inet_stream_ops，对应的listen函数是inet_listen。 inet_listen中判断一下socket状态还不是LISTEN的话，会调用inet_csk_listen_start进入监听状态。另外还会将backlog值赋给socket的sk_max_ack_backlog参数，后边虽然调用一直带着backlog参数，实际没用了，socket中已经有了。 inet_csk_listen_start中会创建一个新结构struct inet_connection_sock。这个结构体是维护连接状态的，里面包含了各种状态队列和超时以及拥塞控制的变量，其中我们关心的是icsk_accept_queue队列。内核会为每个socket维护两个队列，一个是三次握手完成处于ESTABLISHED状态的连接队列，另一个是三次握手进行中处于SYN_RCVD状态的连接队列，icsk_accept_queue就是前者。而用户调用accept实际是从icsk_accept_queue队列取出连接。 初始化完之后，将 TCP 的状态设置为 TCP_LISTEN，再次调用 get_port 判断端口是否冲突。listen的逻辑就结束了。  上面已经介绍完listen的整个逻辑了，与咱们讨论的backlog有关的就是icsk_accept_queue队列。
-当内核收到网卡收到数据而触发的硬中断之后，并且数据传递到四层时：
- 如果是ipv4的tcp包会调用tcp_v4_rcv，处理完tcp头以及其他一些信息之后就调用tcp_v4_do_rcv，这个函数中分两种情况：处于ESTABLISHED状态的socket和未处于ESTABLISHED状态的socket。 我们关心的是未处于ESTABLISHED状态的socket，会调用tcp_rcv_state_process，这个函数中，当socket状态是LISTEN时（因为客户端的连接包是发给listen fd的），会调用struct inet_connection_sock(listen系统调用时创建的)icsk_af_ops对象的conn_request接口，对应tcp_conn_request函数。 tcp_conn_request会调用inet_csk_reqsk_queue_is_full函数判断当前icsk_accept_queue长度是否超过sk_max_ack_backlog，如果超过就给客户端发一个RST包，客户端就当SYN包丢了，然后一直重试，第一次6s超时，然后24s，直到75s还没收到SYNACK就返回用户连接超时。  到目前为止得出结论，backlog是指用户未处理的连接数量，例如backlog为1，有三个客户端在同时连接，第一个连接可以正常三次握手，第二个连接SYN包到来时内核只会回一个RST包，客户端就当SYN包丢了不停重试，当用户调用accept获取了第一个连接之后，第二个内核才会给第二个连接回复SYNACK继续握手。
-当然icsk_accept_queue最大长度不是绝对为backlog，而是backlog*模糊因子，下面是不同操作系统的backlog的设置。 图片转自《UNIX网络编程卷一》</description>
-    </item>
-    
-    <item>
-      <title>为什么redis有多个数据库?</title>
-      <link>https://journey-c.github.io/why-redis-has-multiple-databases/</link>
-      <pubDate>Fri, 01 Jan 2021 20:58:31 +0800</pubDate>
-      
-      <guid>https://journey-c.github.io/why-redis-has-multiple-databases/</guid>
-      <description>概述 Redis是一个开源内存数据库，在今天几乎每个服务端程序员都会或多或少的使用到。但是很少有人会注意到一个Redis实例并不是只有一个数据库。
-设计 Redis实例使用redisServer结构体表示，结构体成员变量中的redisDb *db;是redisServer用来存储用户存入的键值。(默认有16个，通过配置文件中databases配置。每个客户端可以通过SELECT index命令选择要访问的数据库)
-redisDb *db成员变量如下图最右边方框。
-分析 数据分块优化查询速度? 将数据分块添加多级索引，但是找了很多地方发现每个db都是独立的，而且客户端对单个数据库操作时不会访问其他数据库，并且其他客户端无关操作例如RDB、AOF持久化操作也不会将各db关联起来。
-并且redisdb中的dict本身就会在数据增多时对数据进行rehash，所以这个可能大概率不存在。
-对数据进行分类? redis本身是一个nosql数据库，想查询部分特征的数据本身操作会非常复杂，所以可能作者想用户可以根据需要将不同数据存入不同的db，但是db本身不支持自定义名称，只有编号，用户如果想将数据分类只能记住db的编号，每次访问数据时先用SELECT index命令切换数据库然后再操作。这个可能性很高，但也说服力不强。
-因为实在没有想到其他的可能，所以我开始在网上找一下其他同行对此的见解，意外的搜到了作者一封邮件&amp;hellip;
-原来作者最初的想法很多，但最后觉得很鸡肋，由于要保持向下兼容，所以就保留了这个功能。虽然实际生产中Redis实例很少会用到多个DB，但每个DB大概1m左右也不是十分耗费资源，所以无伤大雅。</description>
-    </item>
-    
-    <item>
-      <title>Linux的I/O多路复用机制</title>
-      <link>https://journey-c.github.io/io-multiplexing/</link>
-      <pubDate>Sun, 20 Dec 2020 21:58:31 +0800</pubDate>
-      
-      <guid>https://journey-c.github.io/io-multiplexing/</guid>
-      <description>1. 文件系统简介 Linux平台万物皆文件，这句话实际是在夸Linux出色的虚拟文件系统，Linux将所有设备抽象为文件，与设备的数据交互抽象为文件的I/O。
-Linux的虚拟文件系统大概分为四块：
- 超级块   文件系统(ext3,ext4以及windows上的NTFS、FAT32、FAT16等) 内核结构对应super_block，对应操作对象super_operations。   索引节点   操作系统以块为单位对磁盘操作(块是扇区大小的整数倍)。索引节点记录了文件在磁盘上所有的物理块(文件内容)，以及其他信心(更新时间，操作时间等)。 内核结构对应inode，对应操作对象inode_operations。   目录项   可以理解为文件的路径(不是目录，Linux上目录也是文件)，进程操作文件时通过目录项找到实际文件。 内核结构对应dentry，对应操作对象dentry_operations。   文件   由进程打开的文件。 内核结构对应file，对应操作对象file_operations  通常服务里例如socket，pipe等对象的read，write实际就是file对应的file_operations的操作，而本文讲解I/O相关事情。
-2. 几种I/O模型 2.1 Blocking I/O  传统的阻塞I/O，对一个文件描述符操作(FD)时，如果操作没有响应就会一直等待，直到内核有反馈。缺点就是单线程一次只能操作一个FD。  2.2 Nonblocking I/O  非阻塞I/O，对FD操作时，如果内核没反馈不会一直等待。非阻塞I/O会将所有FD放入FD set，一直轮询所有FD，直到有反馈的。缺点就是每次轮询时没有事件的FD也会被操作，浪费CPU。  2.3 Signal Driven I/O  信号驱动I/O的基本原理就是首先注册signal handler，当FD有事件到来时，内核会像进程发送信号，然后应用进程执行signal handler。缺点就是，编程难度高，信号处理起来复杂。  2.4 Asynchronous I/O  异步I/O和信号驱动I/O都是异步的，区别是:信号驱动I/O是FD满足条件时内核通知应用程序可以进行I/O了，而异步I/O是应用程序将I/O操作交给内核，当内核做完之后再通知应用程序I/O做完了。缺点是异步的并发量不好控制。  2.5 I/O Multiplexing  多路复用实际不是一个技术而是一个理念，在I/O多路复用之前就有通讯线路的频分复用和时分复用，大概就是合理的安排每个单位使用资源的时间和位置，看起来所有单位一起在使用原本只能允许少量单位同时使用的资源。 Linux的I/O多路复用机制就是本文要讲的内容了。I/O多路复用就是将所有的FD注册到内核，然后当哪个FD可用时，那个会通知应用程序可用。  应用程序使用Linux提供的I/O多路复用机制都是通过系统调用使用的。最初Linux只提供了Select，在哪个服务端fd使用数量普遍不高的年代是够用的，后来随着网络的发展，1024个FD的限制已经不够用了，所以Linux提供了Poll，Poll只优化了存储结构，Select使用BitMap来存储FD，Poll使用数组来存储FD，不再限制数量，但是遍历时间复杂度还是$O(lg^N)$。终于在Linux 2.</description>
-    </item>
-    
-    <item>
-      <title>系统调用</title>
-      <link>https://journey-c.github.io/what-is-system-call/</link>
-      <pubDate>Fri, 27 Nov 2020 20:58:31 +0800</pubDate>
-      
-      <guid>https://journey-c.github.io/what-is-system-call/</guid>
-      <description>1 .简介 系统调用就是操作系统提供给用户态应用与硬件交互的一组接口。在用户空间和硬件之间添加一个中间层(系统调用)主要的作用有:
- 为用户空间提供抽象接口，用户不需要关心硬件种类介质等。 保障系统的稳定和安全，避免用户错误的使用硬件危害系统或者窃取其他进程的资源。 由于Linux进程都是运行在虚拟系统中，如果操作系统对用户访问硬件一无所知，就几乎无法实现多任务和虚拟内存。   图片来源《Advanced Programming in the UNIX Environment, 3rd Edition》  2. 三种使用系统调用方式 2.1 软件中断 没有外界打扰的情况下处理器会一直执行给定指令，中断就是打断处理器的执行并且告诉他先执行另一段指令，执行完毕再接着执行中断前的指令。从中断指令发出的对象可以分为硬件中断和软件中断。
- 硬件中断就是硬件通过传输电信号到中断控制器的输入引脚，中断控制器收到电信号之后会给处理器发送一个电信号，处理器一经检测到电信号之后就中断当前工作转而处理中断。之后会通知操作系统已经产生中断，进而操作系统可以处理这个中断了。 软件中断就是处理器执行特定指令时触发的中断，之后也会通知操作系统。 除了系统调用，还有中断下半部tasklet也是用软件中断实现的。  在x86的机器上可以使用$INT$指令触发软件中断，Linux早期的时候就是使用软件中断来处理系统调用，中断号为128。 软件中断执行系统调用的流程为:
- 用户将中断号放入$eax$寄存器，前六个参数按顺序放入$ebx$、$ecx$、$edx$、$esi$、$edi$、$ebp$寄存器，六个以上的情况，需要把所有参数放在用户空间的一段连续内存中(类似用struct传参)，然后将指向该内存区域的指针放入$ebx$中。 执行$int$ 0x80指令，处理器在中断向量表(IDT)中查找对应的中端处理程序，执行中断处理程序(操作系统由ring3进入ring0)entry_INT80_32:  a. 调用SAVE_ALL将当前上下文保存到内核栈，然后调用do_int80_syscall_32。 b. do_int80_syscall_32 从用户空间进入内核空间然后调用 do_syscall_32_irqs_on，退出内核空间返回用户空间。 c. do_syscall_32_irqs_on 检查系统调用号，从系统调用表ia32_sys_call_table syscall_32.tbl中找出对应函数，并且将参数传给对应系统调用函数，唤起软件中断，将返回值放入$eax$寄存器。 d. 从内核栈恢复上下文。    下面就是一个通过软件中断调用write系统调用的例子:
-global _start section .text _start: mov eax,4 ; system call number mov ebx,1 ; args 1: fd=1(STDOUT) mov ecx,msg ; args 2: &amp;#34;Hello World!</description>
-    </item>
-    
-    <item>
-      <title>如何使用vim作为golang和cxx开发IDE</title>
-      <link>https://journey-c.github.io/how-to-use-vim-as-golang-and-cxx-development-ide/</link>
-      <pubDate>Thu, 19 Nov 2020 23:58:31 +0800</pubDate>
-      
-      <guid>https://journey-c.github.io/how-to-use-vim-as-golang-and-cxx-development-ide/</guid>
-      <description>作为一个初学者，很多同学的路子都是这样的：费劲心思装好windows和Linux双系统，看着Linux界面难看，开始找美化软件的工具；美化好了，安装好了g++，因为gedit不好用，sublimetext、atom好用但是不太方便编译，然后陷入vim还是emacs的抉择；最终决定用vim，打印了一张vim键盘图开始学习，略为抱怨门槛高；入门之后发现写代码确实快了很多，为了更快，更美观，开始折腾vim的插件，学习怎么打tag等等等等…感觉万事具备，只欠好好学c++了，发现需要学习g++的编译连接，库文件，多个源文件，大工程，然后开始学习makefile的写法…从此越跑越偏，后来突然发现python看起来简单，要不学python吧。后来又觉得python似乎找工作不占很大优势，转而学java。后来又觉得javascript更简单，所以搞前端吧。然后发现还需要学html、css、数据库、日新月异的新框架…一本书，《c++从入门到放弃》。
- 1. 最终成品 先给大家看看成品的样子 2. 所见即所得 折腾vim大概有四五年的时间了，下面总结了想要将vim作为主开发工具需要的条件。
-   类别 功能 备注     开发 代码跳转 ✔    查看引用 ✔    代码补全 ✔    查找替换 ✔    变量、函数更名 ✔   辅助 文件目录 ✔    函数目录 ✔    注释 ✔    全局搜索文件 ✔    全局搜索关键词 ✔    补全括号 ✔   美化 主题 ✔    状态栏 ✔    Git信息 ✔    启动页美化 ✔    2.</description>
-    </item>
-    
-    <item>
-      <title>channel 源码阅读</title>
-      <link>https://journey-c.github.io/channel-read/</link>
-      <pubDate>Thu, 29 Oct 2020 20:58:31 +0800</pubDate>
-      
-      <guid>https://journey-c.github.io/channel-read/</guid>
-      <description>年初的时候go语言的学习提上了日程，前一篇sync.pool阅读之后，阅读代码进度本该更快些，奈何身体被掏空，所以这篇文章断断续续一个月终于攒起来了。
- 1. 简介 channel是golang中用于goroutine之间通讯的数据结构，有以下特点：
- 线程安全 创建channel时返回的是指针，不需要考虑拷贝的问题 顺序通讯，写入和读出的顺序一致  2. 数据部分 源码位置go/src/runtime/chan.go
-2.1 hchan channel对应的数据结构
-type hchan struct { qcount uint dataqsiz uint buf unsafe.Pointer elemsize uint16 closed uint32 elemtype *_type sendx uint recvx uint recvq waitq sendq waitq // lock protects all fields in hchan, as well as several 	// fields in sudogs blocked on this channel. 	// 	// Do not change another G&amp;#39;s status while holding this lock 	// (in particular, do not ready a G), as this can deadlock 	// with stack shrinking.</description>
-    </item>
-    
-    <item>
-      <title>goroutine 源码阅读</title>
-      <link>https://journey-c.github.io/golang-schedule/</link>
-      <pubDate>Thu, 29 Oct 2020 20:58:31 +0800</pubDate>
-      
-      <guid>https://journey-c.github.io/golang-schedule/</guid>
-      <description>1.数据结构 调度相关的数据结构有三个，M(线程)，P(调度器)，G(goroutine) M表示线程，P作为调度器用来帮助每个线程管理自己的goroutine，G就是golang的协程。我们可以通过runtime.GOMAXPROCS(n int)函数设置P的个数，注意P的个数并不代表M的个数，例如程序启动时runtime代码会出实话procs个P，但开始的时候只会启动一个M，就是M0和一个栈为64K(其他goroutine默认初始栈大小2K)来执行runtime代码。
-那其他线程是什么时候创建的呐? 当goroutine被唤醒时，要在M上运行(恢复goroutine的上下文)，P是帮助M管理goroutine的，恢复上下文的操作也由P来完成。如果被唤醒时发现还有空闲的P，并且没有其他M在窃取goroutine(M发现本地goroutine队列和全局goroutine队列都没有goroutine的时候，会去其他线程窃取goroutine)，说明其他M都在忙，就会创建一个M让这个空闲的P帮他来管理goroutine。 总之一句话，开始的时候创建一个M，当发现调度不过来且还有空闲P没有工作就在创建新的，直到创建procs个M(procs通过runtime.GOMAXPROCS设置)
-1.1 G golang 用结构体g表示goroutine
- g  type g struct { stack stack // 当前栈的范围[stack.lo, stack.hi) 	stackguard0 uintptr // 用于抢占的，一般情况值为stack.lo + StackGuard 	stackguard1 uintptr // 用于C语言的抢占 	_panic *_panic // 最内侧的panic函数 	_defer *_defer // 最外侧的defer函数 	m *m // 当前goroutine属于哪个m 	sched gobuf // 调度相关信息 	... schedlink guintptr // sched是全局的goroutine链表，schedlink表示这个goroutine在链表中的下一个goroutine的指针 	... preempt bool // 抢占标志，如果需要抢占就将preempt设置为true 	... }  gobuf gobuf保存goroutine的调度信息，当一个goroutine被调度的时，本质上就是把这个goroutine放到cpu，恢复各个寄存器的值，然后运行  type gobuf struct { sp uintptr // 栈指针 	pc uintptr // 程序计数器 	g guintptr // 当前被哪个goroutine持有 	ctxt unsafe.</description>
-    </item>
-    
-    <item>
-      <title>Timing wheel心跳机制</title>
-      <link>https://journey-c.github.io/timing-wheel/</link>
-      <pubDate>Thu, 29 Oct 2020 19:58:31 +0800</pubDate>
-      
-      <guid>https://journey-c.github.io/timing-wheel/</guid>
-      <description>在web服务中，断开空闲连接是一种减少资源浪费的一种手段，由此就有了心跳机制来判断一个连接是否空闲。
-1. 一种简单粗暴的方式：   服务端每个连接保存一个最后一次操作的时间戳，每次这个连接对应fd可读时（客户端发来请求），就更新一下时间戳。
-  服务端会起一个定时任务: close掉在时间戳(now – heart_beat)时刻之前的fd。
-  这种方式需要不断的遍历已有连接，检查是否过期。
-本文介绍的是，George Varghese 和 Tony Lauck 1996 年的论文《Hashed and Hierarchical Timing Wheels: data structures to efficiently implement a timer facility》中提出了一种时间轮(Timing wheel)管理time out事件的方式。
-2. 原理 下图是一个时间轮模型，假设当前心跳间隔是4S，将时间轮分为4分，每个格子表示当前格子的剩余寿命(s)。 每隔1S，pointer滚动一次，先清理掉0号格子存放的所有连接，然后当前时刻进来的连接放入(heart_beat – 1)号格子格子。
-2.1 例子 当前时刻conn 1连入，此时conn1剩余寿命3S，放入3号格子 1S后，此时conn1剩余寿命2S 当conn1剩余寿命为0S时，此连接会被清理。如果恰好这一秒conn进行操作了，那么会放入3号格子另一个conn1，如果时间轮上所有的conn1都被清理，那么这个连接会被关闭。
-3. 实现 C++以及一些指针友好型语言实现比较简单，轮子转动一次格子的指针引用数-1即可，当某个格子指针引用数为0时，代表格子时间到了，会析构掉。 事例代码可见: journey-c(basket网络库)中workthread的实现。</description>
-    </item>
-    
-    <item>
-      <title>关于2的n次幂对齐</title>
-      <link>https://journey-c.github.io/regarding-the-n-th-power-alignment-of-2/</link>
-      <pubDate>Wed, 28 Oct 2020 20:58:31 +0800</pubDate>
-      
-      <guid>https://journey-c.github.io/regarding-the-n-th-power-alignment-of-2/</guid>
-      <description>1. 应用场景 内存对齐时基本都会求关于n位对齐的向上取整
-2. 讲解 go1.13.8 中channel源码中有这样一个变量hchansize用来表示hchan(channel对应的实际结构体)所需大小(申请内存空间时，是根据hchansize给hchan申请对应大小的内存空间)，这个变量的值大概就是hchan的size关于maxAlign向上取整下一个较大倍数，看到源码实现时，就感觉真是怪物。
-hchanSize = unsafe.Sizeof(hchan{}) + uintptr(-int(unsafe.Sizeof(hchan{}))&amp;amp;(maxAlign-1)) 为了方便将上述表达式简化为 n + ( (-n) &amp;amp; (a - 1))，n是unsafe.Sizeof(hchan{})，a是maxAlign。等价于 n + (a - (n % a))
-( (-n) &amp;amp; (a - 1) ) 等价 a - (n % a) ?
-向上取整的问题实际可以转化为求出n距离下一个a的倍数差多少，然后n加上这个数就可以。
-当a为$2^n$时，n % a可以转化为 n &amp;amp; (a - 1)，取模运算就变成了n与(a - 1) AND时能留下多少个1。
-计算机实际计算时是以补码进行运算的，-n转化为补码，符号位不变其他位取反转化为反码，然后最低位+1转化为补码，下面分两步讲。
-以n = 3, a = 8为例(实际计算时是8字节，下面用一字节举例):
-原码: -n = 1000 0011 反码: -n = 1111 1100 此时(-n) &amp;amp; (a - 1)实际为 (a - 1) - n % a，而咱们要求的是a - (n % a) 补码：-n = 1111 1101 因为-n的反码变补码时最低位要+1，所以刚好(a - 1) - n % a + 1 = a - (n % a) 所以( (-n) &amp;amp; (a - 1) ) 等价 a - (n % a)</description>
-    </item>
-    
-    <item>
-      <title>sync.pool 源码阅读</title>
-      <link>https://journey-c.github.io/sync-pool-read/</link>
-      <pubDate>Tue, 27 Oct 2020 20:58:31 +0800</pubDate>
-      
-      <guid>https://journey-c.github.io/sync-pool-read/</guid>
-      <description>阅读项目代码的时候发现很多地方用到了golang的sync.pool，所以好奇golang的sync.pool底层实现是什么样的，有哪些优化。 本文是基于go1.13.10做讲解。
- 在golang开发中sync.pool是最常用的缓存池，当一个对象被频繁创建和释放时会用到，但一般不作为连接池使用因为sync.pool中的对象随时会被释放掉，对象生命周期一般为两个GC间隔，且释放时机用户无感知。
-1. 设计原理 sync.pool的操纵都是线程安全的，每个P都有自己私有的存储空间和共享的存储空间。
- GET 获取对象时，一般先在当前P的私有空间获取，如果没有，再到当前P的共享空间获取，如果还没有就窃取其他P的共享空间，如果还没有就访问上次GC遗留的对象。上述操作完成后还没有获取到，则调用New函数创建对象。 PUT 对象放回池子时，先判断当前P的私有空间是否为空，为空就放入，不为空就放入共享空间。  当GET/PUT非常频繁的时候，一般都只访问当前P的空间就可以完成操作。 GET/PUT不频繁时，即使访问到其他P的空间(有锁)，由于操作不频繁所以锁是可以接受的。
-2. 数据结构 Pool是sync.Pool的核心数据结构。先了解一下该结构体的内部字段。
-type Pool struct { noCopy noCopy local unsafe.Pointer // local fixed-size per-P pool, actual type is [P]poolLocal 	localSize uintptr // size of the local array  victim unsafe.Pointer // local from previous cycle 	victimSize uintptr // size of victims array  // New optionally specifies a function to generate 	// a value when Get would otherwise return nil.</description>
-    </item>
-    
-    <item>
-      <title>红黑树</title>
-      <link>https://journey-c.github.io/red-black-tree/</link>
-      <pubDate>Thu, 22 Oct 2020 21:58:31 +0800</pubDate>
-      
-      <guid>https://journey-c.github.io/red-black-tree/</guid>
-      <description>红黑树是一种自平衡二叉搜索树。二叉搜索树就是插入的时候，比当前节点小的放到左子树，大的放到右子树。这样查找的时候可以沿着树的一条路径找到想要的值，所以时间复杂度是树的深度，最坏$O(N)$，平均$O(lg^N)$。
-正因为二叉搜索树由于数据的不确定性可能造成树建的不平衡，导致树过深，时间复杂度过高。所以出现了自平衡二叉搜索树像红黑树。
-红黑树所有的性质和特点都是想让树尽可能的平衡。
- 图片引自《算法导论》第三版  1. 性质  每个节点或是红色，或是黑色 根结点是黑色 每个叶节点(NIL)是黑色 如果一个节点是红色，则它两个子节点必须是黑色 对每个节点，从该节点到其所有后代叶节点的简单路径上，均包含相同数目的黑色节点  另外其他二叉树叶子结点一般为nil，红黑树为了节省内存空间，将所有叶子节点指向一个哨兵节点，哨兵节点color为BLACK，其他属性p、left、right、key为任意值，根结点的父节点也指向哨兵节点。
-2. 为什么红黑树可以平衡 2.1 引理  一棵有n个内部节点的红黑树的高度至多为$2lg^{(n+1)}$
- 如果可以证明上述引理，那么红黑树的查找最坏的时间复杂度也是$O(2lg^{(n+1)})$，因为在一棵高度为h的树上操作时间复杂度是$O(h)$，就是咱们要的平衡。
-2.2 证明 首先证明红黑树以任意一个节点x为根的子树中至少包含$2^{bh(x)}-1$个内部节点(从节点x出发，不包含x到达一个叶子节点的任意一条简单路径上黑节点的个数成为x节点的黑高，记为$bh(x)$)。
-下面用数学归纳法证明
-  当高度为0时 即子树为空，满足内部节点不超过$2^{0}-1=0$的要求。
-  当高度为k时 假设以x为根的子树内部节点不超过$2^{bh(x)}-1$。
-  当高度为k-1时 即当前节点是x(这个x节点是高度为k时假设的那个)的儿子，黑高为$bh(x)$或$bh(x)-1$，取决于儿子是黑还是红。所以以儿子节点为根的子树至少有$2^{bh(x)-1}-1$内部节点。于是，由儿子节点推父节点x内部节点的个数不超过$(2^{bh(x)-1}-1)+(2^{bh(x)-1}-1)=(2^{bh(x)}-1)$，由此假设成立。
-  现在来证明引理。设h为树的高度，根据性质4得出从根节点到叶节点的任何一条简单路径上都至少有一半节点是黑色，所以根的黑高至少时h/2。于是有
-$n \geq 2^{h/2}-1$ n为树的节点个数，这个公式上边证明过了。将1放到左边，然后取对数得到
-$lg^{(n+1)} \geq h/2 $ 由此得到结论，高度小于等于$2lg^{(n+1)}$，所以只要满足红黑树性质的n节点二叉树高度最大为$2lg^{(n+1)}$。
-$h \leq 2lg^{(n+1)}$ 3. 红黑树如何实现自平衡 3.1 旋转 由于插入和删除操作会对红黑树修改，有可能会不符合红黑树的性质，所以必须通过调整节点的颜色和指针结构来重新满足性质，而调整指针结构的操作是旋转，有左旋、右旋。 下图α,β,γ代表一棵子树(可能为空)
-3.1.1 左旋 上图为例，左旋就是从右边树结构变成左边树结构的操作。 当在某点例如x点做左旋时:
- 以x-y这条路径当轴，逆时针旋转(左旋)，x变成y的左儿子，y到原来x的位置。 因为x变成了y的左儿子，所以要考虑y之前是否有左儿子，如果有的话就要将左儿子β在左子树中重新找位置了，之前β是在x的右边所以比x大，刚好x的右儿子旋转后是空的，所以β就放到x的右儿子的位置。就得到了左边树的结构。  3.1.2 右旋 和左旋步骤是一样的，方向相反。</description>
-    </item>
-    
-    <item>
-      <title>关于这个神秘美男子</title>
-      <link>https://journey-c.github.io/about/</link>
-      <pubDate>Wed, 21 Oct 2020 21:28:08 +0000</pubDate>
-      
-      <guid>https://journey-c.github.io/about/</guid>
-      <description>Journey-C    来自齐鲁大地，孔孟之乡。从小对传统文化充满兴趣，发誓以后要做一个像杨过一样不羁的人(娶到小龙女)，长大后怀揣着对自然的敬畏投身于人造自然世界。是什么让我放弃理想(小龙女)？是计算机的魅力吗？不！一颗不羁的心。
-   目前: 快乐的码农，工业互联网相关 坐标: 帝都 标签: 有趣的灵魂、一颗不羁的心❤️ 联系: lyuc0924@foxmail.com  </description>
-    </item>
-    
-    <item>
-      <title>长连接平滑重启</title>
-      <link>https://journey-c.github.io/long-connection-smooth-restart-realization/</link>
-      <pubDate>Wed, 21 Oct 2020 22:48:31 +0800</pubDate>
-      
-      <guid>https://journey-c.github.io/long-connection-smooth-restart-realization/</guid>
-      <description>最近小编一直在做长连接相关的事情，最大的感触就是发版太痛苦，一个个踢掉连接然后发版，导致发版时长过长，操作繁琐。所以在想能不能实现优雅重启, 发版时客户端无感知。
- 1.难点   如何做到不中断接收连接
-  如何做到已有连接不中断
-  2.解决 2.1 如何做到不中断接受连接 以下是linux源码中bind的实现(linux-1.0)
-// linux-1.0/net/socket.c 536 static int sock_bind(int fd, struct sockaddr *umyaddr, int addrlen) { struct socket *sock; int i; DPRINTF((net_debug, &amp;#34;NET: sock_bind: fd = %d\n&amp;#34;, fd)); if (fd &amp;lt; 0 || fd &amp;gt;= NR_OPEN || current-&amp;gt;filp[fd] == NULL) return(-EBADF); //获取fd对应的socket结构  if (!(sock = sockfd_lookup(fd, NULL))) return(-ENOTSOCK); // 转调用bind指向的函数，下层函数(inet_bind)  if ((i = sock-&amp;gt;ops-&amp;gt;bind(sock, umyaddr, addrlen)) &amp;lt; 0) { DPRINTF((net_debug, &amp;#34;NET: sock_bind: bind failed\n&amp;#34;)); return(i); } return(0); } // linux-1.</description>
-    </item>
-    
-    <item>
-      <title></title>
-      <link>https://journey-c.github.io/tags/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://journey-c.github.io/tags/</guid>
-      <description></description>
-    </item>
-    
-  </channel>
+    <guid>https://journey-c.github.io/tags/</guid>
+    <description></description>
+  </item>
+  
+</channel>
 </rss>
