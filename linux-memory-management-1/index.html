@@ -7,6 +7,7 @@
 <meta name="generator" content="Hugo 0.74.3" />
 
 
+
 <title>Linux内存管理 - Journey-C</title>
 <meta property="og:title" content="Linux内存管理 - Journey-C">
 
@@ -54,10 +55,17 @@ if (!doNotTrack) {
 
 
 
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+
+
 </head>
 
 <body>
     <input type="checkbox" class="hidden toggle" id="toc-control" />
+
     <main class="wrapper">
         <div>
             <header class="header">
@@ -93,15 +101,6 @@ if (!doNotTrack) {
                         width="50" height="50"
                         alt="Logo">
                 </a>
-
-                
-                <div style="float:right">
-                    <label for="toc-control">
-                        <img src="/svg/toc.svg" class="article-icon" alt="Table of Contents" />
-                    </label>
-                </div>
-                
-
                 <ul class="nav-links">
                     
                     <li><a href="/tags/"></a></li>
@@ -116,114 +115,11 @@ if (!doNotTrack) {
                     
                     <li>
                 </ul>
-
-                
-                <aside class="hidden clearfix mobile-toc">
-                    <nav id="TableOfContents">
-  <ul>
-    <li><a href="#1-虚拟地址空间的管理">1. 虚拟地址空间的管理</a>
-      <ul>
-        <li><a href="#分段">分段</a></li>
-        <li><a href="#分页">分页</a></li>
-      </ul>
-    </li>
-    <li><a href="#2-进程的虚拟地址空间">2. 进程的虚拟地址空间</a>
-      <ul>
-        <li><a href="#用户态">用户态</a></li>
-        <li><a href="#内核态">内核态</a></li>
-      </ul>
-    </li>
-    <li><a href="#3-物理地址空间的管理">3. 物理地址空间的管理</a>
-      <ul>
-        <li><a href="#节点">节点</a></li>
-        <li><a href="#区">区</a></li>
-        <li><a href="#页">页</a></li>
-        <li><a href="#页的分配">页的分配</a>
-          <ul>
-            <li><a href="#按页分配">按页分配</a></li>
-            <li><a href="#slab分配">Slab分配</a></li>
-          </ul>
-        </li>
-        <li><a href="#页换出">页换出</a></li>
-      </ul>
-    </li>
-    <li><a href="#4-内存映射">4. 内存映射</a>
-      <ul>
-        <li><a href="#用户态映射">用户态映射</a>
-          <ul>
-            <li><a href="#缺页">缺页</a></li>
-          </ul>
-        </li>
-        <li><a href="#内核态映射">内核态映射</a>
-          <ul>
-            <li><a href="#缺页-1">缺页</a></li>
-          </ul>
-        </li>
-      </ul>
-    </li>
-    <li><a href="#5-总结">5. 总结</a></li>
-  </ul>
-</nav>
-                </aside>
-                
             </header>
         </div>
 
 
 <div class="content">
-    
-    <aside class="article-toc" id="article-toc">
-    <div class="article-toc-content">
-        <nav id="TableOfContents">
-  <ul>
-    <li><a href="#1-虚拟地址空间的管理">1. 虚拟地址空间的管理</a>
-      <ul>
-        <li><a href="#分段">分段</a></li>
-        <li><a href="#分页">分页</a></li>
-      </ul>
-    </li>
-    <li><a href="#2-进程的虚拟地址空间">2. 进程的虚拟地址空间</a>
-      <ul>
-        <li><a href="#用户态">用户态</a></li>
-        <li><a href="#内核态">内核态</a></li>
-      </ul>
-    </li>
-    <li><a href="#3-物理地址空间的管理">3. 物理地址空间的管理</a>
-      <ul>
-        <li><a href="#节点">节点</a></li>
-        <li><a href="#区">区</a></li>
-        <li><a href="#页">页</a></li>
-        <li><a href="#页的分配">页的分配</a>
-          <ul>
-            <li><a href="#按页分配">按页分配</a></li>
-            <li><a href="#slab分配">Slab分配</a></li>
-          </ul>
-        </li>
-        <li><a href="#页换出">页换出</a></li>
-      </ul>
-    </li>
-    <li><a href="#4-内存映射">4. 内存映射</a>
-      <ul>
-        <li><a href="#用户态映射">用户态映射</a>
-          <ul>
-            <li><a href="#缺页">缺页</a></li>
-          </ul>
-        </li>
-        <li><a href="#内核态映射">内核态映射</a>
-          <ul>
-            <li><a href="#缺页-1">缺页</a></li>
-          </ul>
-        </li>
-      </ul>
-    </li>
-    <li><a href="#5-总结">5. 总结</a></li>
-  </ul>
-</nav>
-    </div>
-</aside>
-
-    
-
     <article class="article">
         
         <span class="article-duration">5 min read</span>
@@ -247,6 +143,74 @@ if (!doNotTrack) {
         
         
 
+        <div class="toc">
+    <details >
+        <summary>
+            <span class="details">Table Of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#1-%e8%99%9a%e6%8b%9f%e5%9c%b0%e5%9d%80%e7%a9%ba%e9%97%b4%e7%9a%84%e7%ae%a1%e7%90%86" aria-label="1. 虚拟地址空间的管理">1. 虚拟地址空间的管理</a><ul>
+                        
+                <li>
+                    <a href="#%e5%88%86%e6%ae%b5" aria-label="分段">分段</a></li>
+                <li>
+                    <a href="#%e5%88%86%e9%a1%b5" aria-label="分页">分页</a></li></ul>
+                </li>
+                <li>
+                    <a href="#2-%e8%bf%9b%e7%a8%8b%e7%9a%84%e8%99%9a%e6%8b%9f%e5%9c%b0%e5%9d%80%e7%a9%ba%e9%97%b4" aria-label="2. 进程的虚拟地址空间">2. 进程的虚拟地址空间</a><ul>
+                        
+                <li>
+                    <a href="#%e7%94%a8%e6%88%b7%e6%80%81" aria-label="用户态">用户态</a></li>
+                <li>
+                    <a href="#%e5%86%85%e6%a0%b8%e6%80%81" aria-label="内核态">内核态</a></li></ul>
+                </li>
+                <li>
+                    <a href="#3-%e7%89%a9%e7%90%86%e5%9c%b0%e5%9d%80%e7%a9%ba%e9%97%b4%e7%9a%84%e7%ae%a1%e7%90%86" aria-label="3. 物理地址空间的管理">3. 物理地址空间的管理</a><ul>
+                        
+                <li>
+                    <a href="#%e8%8a%82%e7%82%b9" aria-label="节点">节点</a></li>
+                <li>
+                    <a href="#%e5%8c%ba" aria-label="区">区</a></li>
+                <li>
+                    <a href="#%e9%a1%b5" aria-label="页">页</a></li>
+                <li>
+                    <a href="#%e9%a1%b5%e7%9a%84%e5%88%86%e9%85%8d" aria-label="页的分配">页的分配</a><ul>
+                        
+                <li>
+                    <a href="#%e6%8c%89%e9%a1%b5%e5%88%86%e9%85%8d" aria-label="按页分配">按页分配</a></li>
+                <li>
+                    <a href="#slab%e5%88%86%e9%85%8d" aria-label="Slab分配">Slab分配</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e9%a1%b5%e6%8d%a2%e5%87%ba" aria-label="页换出">页换出</a></li></ul>
+                </li>
+                <li>
+                    <a href="#4-%e5%86%85%e5%ad%98%e6%98%a0%e5%b0%84" aria-label="4. 内存映射">4. 内存映射</a><ul>
+                        
+                <li>
+                    <a href="#%e7%94%a8%e6%88%b7%e6%80%81%e6%98%a0%e5%b0%84" aria-label="用户态映射">用户态映射</a><ul>
+                        
+                <li>
+                    <a href="#%e7%bc%ba%e9%a1%b5" aria-label="缺页">缺页</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e5%86%85%e6%a0%b8%e6%80%81%e6%98%a0%e5%b0%84" aria-label="内核态映射">内核态映射</a><ul>
+                        
+                <li>
+                    <a href="#%e7%bc%ba%e9%a1%b5-1" aria-label="缺页">缺页</a></li></ul>
+                </li></ul>
+                </li>
+                <li>
+                    <a href="#5-%e6%80%bb%e7%bb%93" aria-label="5. 总结">5. 总结</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+
         <div class="article-content">
             <blockquote>
 <p>计算机的计算，一方面说的是进程、线程对于CPU的使用，另一方面是对于内存的管理。本文就是介绍Linux的内存管理。</p>
@@ -265,10 +229,24 @@ if (!doNotTrack) {
 </blockquote>
 <p>使用虚拟地址一个核心的问题，需要记录虚拟地址到物理地址的映射，最简单的方式是虚拟地址与物理地址一一对应，这样4G内存光是维护映射关系就需要4G（扯淡）。所以需要其他有效的内存管理方案。通常有两种：分段、分页。下面我们来一起分析一下这两种管理机制以及在Linux中是如何应用的。</p>
 <h2 id="分段">分段</h2>
-<p><img src="/images/memory-management-x86-cpu.png" alt="">
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/memory-management-x86-cpu.png">
+<img src="/images/memory-management-x86-cpu.png" alt=""  />
+</a>
+</div>
+
+
 8086升级到80386之后，段寄存器CS、DS、SS、ES从直接存放地址变成高位存放段选择子，低位做段描述符缓存器。由原来的直接使用内存地址变为现在的通过分段机制来使用内存地址。</p>
 <p>那我们先来看一下内存管理中分段机制的原理。</p>
-<p><img src="/images/memory-management-segmented.png" alt=""></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/memory-management-segmented.png">
+<img src="/images/memory-management-segmented.png" alt=""  />
+</a>
+</div>
+
+</p>
 <p>分段机制下虚拟地址由两部分组成，<strong>段选择子</strong>和<strong>段内偏移量</strong>。段选择子中的段号作为段表的索引，通过段号可以在段表找到对应段表项，每一项记录了一段空间：段基址、段的界限、特权级等。用段基址+段内偏移量就可以计算出对应的物理地址。</p>
 <p>Linux中段表称为段描述符表，放在全局描述符表中，用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/desc_defs.h#L23">GDT_ENTRY_INIT</a>函数来初始化表项<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/desc_defs.h#L16">desc_struct</a>。</p>
 <p>下面是Linux中<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/segment.h#L171">段选择子</a>和<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/kernel/cpu/common.c#L115">段表</a>的定义，看一下所有段表项初始化传入的参数中，段基址base都是0，这没有分段。事实上Linux中没有用到全部的分段功能，对于内存管理更倾向于分页机制。</p>
@@ -298,16 +276,37 @@ if (!doNotTrack) {
 EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
 </code></pre></div><h2 id="分页">分页</h2>
 <p>分页机制和分段机制差不多，都是将物理地址分块。不同的是分段一般将内存大段大段的分割且每段大小一般不相同。而分页将物理内存分成一块块大小相同的页，一般大小为4KB。
-<img src="/images/memory-management-pagination_0.png" alt="">
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/memory-management-pagination_0.png">
+<img src="/images/memory-management-pagination_0.png" alt=""  />
+</a>
+</div>
+
+
 在分页机制下，虚拟地址有两部分组成(两部分不是严格的两段，比如页号就可以有多级页号)，<strong>页号、页内偏移量</strong>。通过页号找到对应页表项，页表项高位存了物理页号，低位存储了FLAGS。</p>
 <p>例如页大小为4KB，只分一级，32位环境中虚拟地址为32位，$2^{32}/2^{12}=2^{20}$可以分1M个页，用20位可以表示页号，12位表示页内偏移。页表项大小为4B(32位)，那么页表大小就是$1M*4B=4MB$，因为每个进程都有自己独立的虚拟地址空间，有100个进程的话光维护页表就需要100MB的空间，这个对于内核来说有点太大了。
-<img src="/images/memory-management-pagination_1.png" alt=""></p>
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/memory-management-pagination_1.png">
+<img src="/images/memory-management-pagination_1.png" alt=""  />
+</a>
+</div>
+
+</p>
 <p>Linux是如何解决页表太大的问题呢？</p>
 <blockquote>
 <p>采用多级分页的策略才解决页表太大的问题。</p>
 </blockquote>
 <p>32位环境中，一级分页和上边描述的一样，分成1M个4KB的页，由页表维护虚拟页号到物理页号的映射。内核在这次分页之后，又对页表进行分页。页表大小为4MB，我们在按照4KB一页进行分页，4KB包含页表项1K项。所以二级分页就是把页表1M的项按照1K项为一页分了1K页。
-<img src="/images/memory-management-pagination_2.png" alt="">
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/memory-management-pagination_2.png">
+<img src="/images/memory-management-pagination_2.png" alt=""  />
+</a>
+</div>
+
+
 二级分页后，虚拟地址就被分成三部分：页目录号、页表内偏移、页内偏移。通过虚拟地址查找物理地址时：</p>
 <ol>
 <li>通过虚拟地址前10位的页目录号找到对应页目录项，这个页目录项管理了1K个页表项。</li>
@@ -320,11 +319,25 @@ EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
 <ol>
 <li>如果使用一级页表，那么每个进程都需要一个页表来维护虚拟地址空间，就是说100个进程需要额外400 MB的空间。</li>
 <li>如果使用二级页表，每个进程必须的是一个4KB的页目录表。当然并不是每个进程都是用全部4GB内存的。所以4MB的二级页表不会全部使用，用到多少地址就建多少个页表项。所以实际需要额外空间为4KB+使用的页表项数量*4KB
-<img src="/images/memory-management-pagination_3.png" alt=""></li>
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/memory-management-pagination_3.png">
+<img src="/images/memory-management-pagination_3.png" alt=""  />
+</a>
+</div>
+
+</li>
 </ol>
 </blockquote>
 <p>当然64位的环境中，二级页表就不够了，使用的是四级页表，包括<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/pgtable_types.h#L286">全局页目录项 PGD（Page Global Directory）</a>、<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/pgtable_types.h#L359">上层页目录项 PUD（Page Upper Directory）</a>、<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/pgtable_types.h#L385">中间页目录项 PMD（Page Middle Directory）</a>和<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/pgtable_64_types.h#L21">页表项 PTE（Page Table Entry）</a>
-<img src="/images/memory-management-pagination_4.png" alt=""></p>
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/memory-management-pagination_4.png">
+<img src="/images/memory-management-pagination_4.png" alt=""  />
+</a>
+</div>
+
+</p>
 <p>虽然多级分页解决了页表过大的问题，但是同时也增大了访问延时，由原来的一次访问内存，变为现在访问多次页表之后才能访问目的地址。</p>
 <p>到目前为止，我们已经知道如何通过一个虚拟地址得到对应的物理地址。</p>
 <h1 id="2-进程的虚拟地址空间">2. 进程的虚拟地址空间</h1>
@@ -366,12 +379,33 @@ EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
 </span><span style="color:#75715e">					IA32_PAGE_OFFSET : TASK_SIZE_MAX)
 </span><span style="color:#75715e">#define TASK_SIZE_OF(child)	((test_tsk_thread_flag(child, TIF_ADDR32)) ? \
 </span><span style="color:#75715e">					IA32_PAGE_OFFSET : TASK_SIZE_MAX)
-</span></code></pre></div><p><img src="/images/memory-management-task-size.png" alt=""></p>
+</span></code></pre></div><p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/memory-management-task-size.png">
+<img src="/images/memory-management-task-size.png" alt=""  />
+</a>
+</div>
+
+</p>
 <h2 id="用户态">用户态</h2>
 <p>了解了用户空间和内核空间分界之后，我们先来看下用户空间。用户态虚拟内存布局如下，32位和64位区域和布局差别不大。
-<img src="/images/memory-management-user-mode-memory-layout.png" alt="">
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/memory-management-user-mode-memory-layout.png">
+<img src="/images/memory-management-user-mode-memory-layout.png" alt=""  />
+</a>
+</div>
+
+
 这些空间里的内容是从哪填充来的呢？没错，是不是感觉和可执行文件的格式有点像。一个进程创建之后所有的内存空间都是复制父进程的，当父进程调用exec加载新的二进制时就会将二进制文件内容加载到进程内存各个模块中，但是不一定是立即加载，有些非必需字段是用时加载。
-<img src="/images/memory-management-executable-file-format.png" alt="">
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/memory-management-executable-file-format.png">
+<img src="/images/memory-management-executable-file-format.png" alt=""  />
+</a>
+</div>
+
+
 <a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L388">struct mm_struct</a>结构体中如下参数定义了这些模块的属性和位置。</p>
 <table>
 <thead>
@@ -459,7 +493,14 @@ EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
 <li>给start_code, end_code, start_data, end_data赋值。</li>
 </ol>
 <p>进程的用户态布局就变成下面这样。
-<img src="/images/memory-management-user-mode-memory-layout_1.png" alt=""></p>
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/memory-management-user-mode-memory-layout_1.png">
+<img src="/images/memory-management-user-mode-memory-layout_1.png" alt=""  />
+</a>
+</div>
+
+</p>
 <p>内存区域映射完之后，存在一下情况区域会发生变化：</p>
 <ol>
 <li>用户调用malloc/free申请堆空间，小内存操作调用brk移动堆结束指针，大内存操作调用mmap。</li>
@@ -474,7 +515,14 @@ EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
 </ol>
 <h2 id="内核态">内核态</h2>
 <p>内核态的虚拟地址空间和某个进程没关系，所有进程共享同一个内核态虚拟地址空间。并且此时讨论的还是虚拟地址空间。前面分析用户态和内核态分界的时候讲了32位内核态是1GB，64位内核态是128TB。因为空间的数量级就差很大，可想而知布局也会有一定差别，毕竟32位太小了。我们先来分析一下32位内核态的布局。
-<img src="/images/memory-management-kernel-mode-memory-layout.png" alt=""></p>
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/memory-management-kernel-mode-memory-layout.png">
+<img src="/images/memory-management-kernel-mode-memory-layout.png" alt=""  />
+</a>
+</div>
+
+</p>
 <ol>
 <li>前896M为直接映射区，这部分地址连续，虚拟地址与物理地址映射关系较为简单，内核用了两个宏定义来转换地址<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/page.h#L59">#define __va(x)</a>，<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/page.h#L42">#define __pa(x)</a>实际转换规则就是虚拟地址-PAGE_OFFSET(前面讲过用户空和内核空间分界)得到物理地址，物理地址+PAGE_OFFSET得到虚拟地址。直接映射区前1M空间开机处于实模式时会使用，内核代码从1M开始加载，然后就是全局变量、BSS等，另外内存管理的页表以及进程的内核栈都会放在这个区域。</li>
 <li>接下来就是8M的空洞，用于捕捉内存越界。其他空洞也是这个原因。</li>
@@ -483,7 +531,14 @@ EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
 <li>FIXADDR_START到FIXADDR_TOP为固定映射区域，留作特定用途。</li>
 </ol>
 <p>64位的内核态布局就较为简单了，毕竟128TB太大不需要扣内存。
-<img src="/images/memory-management-kernel-mode-memory-layout-64.png" alt=""></p>
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/memory-management-kernel-mode-memory-layout-64.png">
+<img src="/images/memory-management-kernel-mode-memory-layout-64.png" alt=""  />
+</a>
+</div>
+
+</p>
 <ol>
 <li>内核空间从0xffff800000000000开始，之后有8T空洞。</li>
 <li>0xFFFF880000000000到0xFFFFC80000000000是直接映射区，同32位。</li>
@@ -493,10 +548,24 @@ EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
 <h1 id="3-物理地址空间的管理">3. 物理地址空间的管理</h1>
 <p>讲完了虚拟地址空间的管理，现在再来看一下Linux是如何管理物理内存的。</p>
 <p>传统的x86架构的工作模式中，多处理器与一个集中存储器相连时，所有CPU都要通过总线去访问内存。也就是对称多处理器模式<a href="https://en.wikipedia.org/wiki/Symmetric_multiprocessing">SMP（Symmetric multiprocessing）</a>。
-<img src="/images/memory-management-symmetric-multiprocessing.png" alt="">
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/memory-management-symmetric-multiprocessing.png">
+<img src="/images/memory-management-symmetric-multiprocessing.png" alt=""  />
+</a>
+</div>
+
+
 由于所有的内存访问都要经过总线，所以总线会成为瓶颈。</p>
 <p>为了提高性能和扩展性，诞生了一种更高级的模式，非一致性内存访问<a href="https://en.wikipedia.org/wiki/Non-uniform_memory_access">NUMA（Non-uniform memory access）</a>。这种模式下每个CPU有自己本地的内存，当本地内存不足时才会访问其他NUMA节点的内存。这样就提高了访问的效率。
-<img src="/images/memory-management-physical-memory.png" alt=""></p>
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/memory-management-physical-memory.png">
+<img src="/images/memory-management-physical-memory.png" alt=""  />
+</a>
+</div>
+
+</p>
 <p>值得注意的一点就是Mysql对NUMA支持不友好，NUMA在默认在本地CPU上分配内存，会导致CPU节点之间内存分配不均衡，当某个CPU节点的内存不足会使用Swap而不是直接从远程节点分配内存。经常内存还有耗尽，Mysql就已经使用Swap照成抖动，这就是&quot;Swap Insanity&rdquo;。所以单机部署Mysql的时候最好将NUMA关掉。</p>
 <h2 id="节点">节点</h2>
 <p>接下来我们就看一下当前主流的模式NUMA，NUMA模式中内存分节点，每个CPU有本地内存，内核中用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mmzone.h#L726">typedef struct pglist_data pg_data_t</a>表示节点。我们来看一下这个结构体重点的变量。</p>
@@ -586,7 +655,14 @@ EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
 </ol>
 <h3 id="按页分配">按页分配</h3>
 <p>使用伙伴系统分配，<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mmzone.h#L448">struct zone</a>中的free_area数组每个元素都是一个链表首地址，每条链表有1、2、4、8、16、32、64、128、256、512 和 1024 个连续页。也就是说最多可以分配4MB的连续内存，每个页块的地址物理页地址是页块大小的整数倍。
-<img src="/images/memory-management-free-area.png" alt="">
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/memory-management-free-area.png">
+<img src="/images/memory-management-free-area.png" alt=""  />
+</a>
+</div>
+
+
 分配使用函数<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/gfp.h#L545">alloc_pages</a>，该函数返回连续物理页的第一页的<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L68">struct page</a>的地址。</p>
 <ol>
 <li><a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/gfp.h#L545">alloc_pages</a>调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/mempolicy.c#L2256">alloc_pages_current</a>。</li>
@@ -597,7 +673,14 @@ EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
 <h3 id="slab分配">Slab分配</h3>
 <p>内核以及用户空间几乎很少用到按页分配的情况，普遍使用都是像malloc那样小段内存申请，并且操作十分频繁。这种频繁的操作通常会使用空闲链表，空闲链表缓存被释放的结构，下次分配是直接从链表抓取而不是申请。</p>
 <p>内核中，空闲链表面临的主要问题是不能全局控制，当可用内存紧缺时，内核无法通知每个空闲链表收缩从而释放一些内存。事实上内核根本不知道存在哪些空闲链表。为了弥补这一缺陷，Linux内核提供了Slab层。Slab分配器来充当通用数据结构缓存层的角色，以感知所有缓存链表状态。<sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup></p>
-<p><img src="/images/memory-management-slab-allocator.png" alt=""></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/memory-management-slab-allocator.png">
+<img src="/images/memory-management-slab-allocator.png" alt=""  />
+</a>
+</div>
+
+</p>
 <p>Slab分配模式中：</p>
 <ul>
 <li>每个结构体对应一个高速缓存，由<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slab.h#L147">kmem_cache_create</a>函数创建，由<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slab.h#L155">kmem_cache_destroy</a>函数销毁。例如进程线程的结构体<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched.h#L640">struct task_struct</a>对应高速缓存为<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/kernel/fork.c#L166">task_struct_cachep</a>，进程虚拟内存管理结构体<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L388">struct mm_struct</a>对应高速缓存为<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/kernel/fork.c#L342">mm_cachep</a>，每个高速缓存都使用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slub_def.h#L83">struct kmem_cache</a>表示。这里的<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slub_def.h#L83">struct kmem_cache</a>是<code>include/linux/slub_def.h</code>下的，高速缓存中有多个slab。</li>
@@ -609,7 +692,14 @@ EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
 <li>每个slab里面存放了若干个连续物理页用于分配，物理页按照结构体大小分割。工程师通过<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slab.h#L390">kmem_cache_alloc</a>申请结构体，通过<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slab.h#L391">kmem_cache_free</a>释放结构体(放回)。</li>
 </ul>
 <p>先分析一下高速缓存<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slub_def.h#L83">struct kmem_cache</a>。
-<img src="/images/memory-management-kmem-cache.png" alt=""></p>
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/memory-management-kmem-cache.png">
+<img src="/images/memory-management-kmem-cache.png" alt=""  />
+</a>
+</div>
+
+</p>
 <ol>
 <li>cpu_slab 是每个CPU本地缓存。
 <ul>
@@ -652,7 +742,14 @@ EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
 <p>上边讲完了虚拟地址空间和物理地址空间是如何管理的，还剩下最后一个问题，这俩是怎么映射的？其实虚拟地址不止可以和物理内存映射，还可以和文件等映射。物理内存只是一种特殊的情况。</p>
 <h2 id="用户态映射">用户态映射</h2>
 <p>首先来看一下用户态映射方式。
-<img src="/images/memory-management-user-mode-memory-mapping.png" alt="">
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/memory-management-user-mode-memory-mapping.png">
+<img src="/images/memory-management-user-mode-memory-mapping.png" alt=""  />
+</a>
+</div>
+
+
 前边说堆的时候，malloc函数只讲了小内存brk的方式，当申请内存较大时会使用mmap（不是系统调用那个），对于堆来说就是将虚拟地址映射到物理地址。另外如果想将文件映射到内存也可以调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/kernel/sys_x86_64.c#L89">mmap</a>。</p>
 <p>我们先来分析一下<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/kernel/sys_x86_64.c#L89">mmap</a>。</p>
 <ol>

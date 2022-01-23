@@ -7,6 +7,7 @@
 <meta name="generator" content="Hugo 0.74.3" />
 
 
+
 <title>Linux的I/O多路复用机制 - Journey-C</title>
 <meta property="og:title" content="Linux的I/O多路复用机制 - Journey-C">
 
@@ -54,10 +55,17 @@ if (!doNotTrack) {
 
 
 
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+
+
 </head>
 
 <body>
     <input type="checkbox" class="hidden toggle" id="toc-control" />
+
     <main class="wrapper">
         <div>
             <header class="header">
@@ -93,15 +101,6 @@ if (!doNotTrack) {
                         width="50" height="50"
                         alt="Logo">
                 </a>
-
-                
-                <div style="float:right">
-                    <label for="toc-control">
-                        <img src="/svg/toc.svg" class="article-icon" alt="Table of Contents" />
-                    </label>
-                </div>
-                
-
                 <ul class="nav-links">
                     
                     <li><a href="/tags/"></a></li>
@@ -116,120 +115,11 @@ if (!doNotTrack) {
                     
                     <li>
                 </ul>
-
-                
-                <aside class="hidden clearfix mobile-toc">
-                    <nav id="TableOfContents">
-  <ul>
-    <li><a href="#1-文件系统简介">1. 文件系统简介</a></li>
-    <li><a href="#2-几种io模型">2. 几种I/O模型</a>
-      <ul>
-        <li><a href="#21-blocking-io">2.1 Blocking I/O</a></li>
-        <li><a href="#22-nonblocking-io">2.2 Nonblocking I/O</a></li>
-        <li><a href="#23-signal-driven-io">2.3 Signal Driven I/O</a></li>
-        <li><a href="#24-asynchronous-io">2.4 Asynchronous I/O</a></li>
-        <li><a href="#25-io-multiplexing">2.5 I/O Multiplexing</a></li>
-      </ul>
-    </li>
-    <li><a href="#3-select">3. Select</a>
-      <ul>
-        <li><a href="#31-使用">3.1 使用</a></li>
-        <li><a href="#32-实现">3.2 实现</a></li>
-        <li><a href="#33-小结">3.3 小结</a></li>
-      </ul>
-    </li>
-    <li><a href="#4-poll">4. Poll</a>
-      <ul>
-        <li><a href="#41-使用">4.1 使用</a></li>
-        <li><a href="#42-实现">4.2 实现</a></li>
-        <li><a href="#43-小结">4.3 小结</a></li>
-      </ul>
-    </li>
-    <li><a href="#5-epoll">5. Epoll</a>
-      <ul>
-        <li><a href="#51-使用">5.1 使用</a></li>
-        <li><a href="#52-实现">5.2 实现</a>
-          <ul>
-            <li><a href="#521-epoll_create">5.2.1 epoll_create</a></li>
-            <li><a href="#522-epoll_ctl">5.2.2 epoll_ctl</a></li>
-            <li><a href="#523-epoll_wait">5.2.3 epoll_wait</a></li>
-          </ul>
-        </li>
-        <li><a href="#53-小结">5.3 小结</a></li>
-      </ul>
-    </li>
-    <li><a href="#6-selectpollepoll对比">6. select、poll、epoll对比</a></li>
-    <li><a href="#7-事件回调">7. 事件回调</a>
-      <ul>
-        <li><a href="#71-流程">7.1 流程</a></li>
-        <li><a href="#72-流程图">7.2 流程图</a></li>
-      </ul>
-    </li>
-  </ul>
-</nav>
-                </aside>
-                
             </header>
         </div>
 
 
 <div class="content">
-    
-    <aside class="article-toc" id="article-toc">
-    <div class="article-toc-content">
-        <nav id="TableOfContents">
-  <ul>
-    <li><a href="#1-文件系统简介">1. 文件系统简介</a></li>
-    <li><a href="#2-几种io模型">2. 几种I/O模型</a>
-      <ul>
-        <li><a href="#21-blocking-io">2.1 Blocking I/O</a></li>
-        <li><a href="#22-nonblocking-io">2.2 Nonblocking I/O</a></li>
-        <li><a href="#23-signal-driven-io">2.3 Signal Driven I/O</a></li>
-        <li><a href="#24-asynchronous-io">2.4 Asynchronous I/O</a></li>
-        <li><a href="#25-io-multiplexing">2.5 I/O Multiplexing</a></li>
-      </ul>
-    </li>
-    <li><a href="#3-select">3. Select</a>
-      <ul>
-        <li><a href="#31-使用">3.1 使用</a></li>
-        <li><a href="#32-实现">3.2 实现</a></li>
-        <li><a href="#33-小结">3.3 小结</a></li>
-      </ul>
-    </li>
-    <li><a href="#4-poll">4. Poll</a>
-      <ul>
-        <li><a href="#41-使用">4.1 使用</a></li>
-        <li><a href="#42-实现">4.2 实现</a></li>
-        <li><a href="#43-小结">4.3 小结</a></li>
-      </ul>
-    </li>
-    <li><a href="#5-epoll">5. Epoll</a>
-      <ul>
-        <li><a href="#51-使用">5.1 使用</a></li>
-        <li><a href="#52-实现">5.2 实现</a>
-          <ul>
-            <li><a href="#521-epoll_create">5.2.1 epoll_create</a></li>
-            <li><a href="#522-epoll_ctl">5.2.2 epoll_ctl</a></li>
-            <li><a href="#523-epoll_wait">5.2.3 epoll_wait</a></li>
-          </ul>
-        </li>
-        <li><a href="#53-小结">5.3 小结</a></li>
-      </ul>
-    </li>
-    <li><a href="#6-selectpollepoll对比">6. select、poll、epoll对比</a></li>
-    <li><a href="#7-事件回调">7. 事件回调</a>
-      <ul>
-        <li><a href="#71-流程">7.1 流程</a></li>
-        <li><a href="#72-流程图">7.2 流程图</a></li>
-      </ul>
-    </li>
-  </ul>
-</nav>
-    </div>
-</aside>
-
-    
-
     <article class="article">
         
         <span class="article-duration">3 min read</span>
@@ -251,10 +141,96 @@ if (!doNotTrack) {
         
         
 
+        <div class="toc">
+    <details >
+        <summary>
+            <span class="details">Table Of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#1-%e6%96%87%e4%bb%b6%e7%b3%bb%e7%bb%9f%e7%ae%80%e4%bb%8b" aria-label="1. 文件系统简介">1. 文件系统简介</a></li>
+                <li>
+                    <a href="#2-%e5%87%a0%e7%a7%8dio%e6%a8%a1%e5%9e%8b" aria-label="2. 几种I/O模型">2. 几种I/O模型</a><ul>
+                        
+                <li>
+                    <a href="#21-blocking-io" aria-label="2.1 Blocking I/O">2.1 Blocking I/O</a></li>
+                <li>
+                    <a href="#22-nonblocking-io" aria-label="2.2 Nonblocking I/O">2.2 Nonblocking I/O</a></li>
+                <li>
+                    <a href="#23-signal-driven-io" aria-label="2.3 Signal Driven I/O">2.3 Signal Driven I/O</a></li>
+                <li>
+                    <a href="#24-asynchronous-io" aria-label="2.4 Asynchronous I/O">2.4 Asynchronous I/O</a></li>
+                <li>
+                    <a href="#25-io-multiplexing" aria-label="2.5 I/O Multiplexing">2.5 I/O Multiplexing</a></li></ul>
+                </li>
+                <li>
+                    <a href="#3-select" aria-label="3. Select">3. Select</a><ul>
+                        
+                <li>
+                    <a href="#31-%e4%bd%bf%e7%94%a8" aria-label="3.1 使用">3.1 使用</a></li>
+                <li>
+                    <a href="#32-%e5%ae%9e%e7%8e%b0" aria-label="3.2 实现">3.2 实现</a></li>
+                <li>
+                    <a href="#33-%e5%b0%8f%e7%bb%93" aria-label="3.3 小结">3.3 小结</a></li></ul>
+                </li>
+                <li>
+                    <a href="#4-poll" aria-label="4. Poll">4. Poll</a><ul>
+                        
+                <li>
+                    <a href="#41-%e4%bd%bf%e7%94%a8" aria-label="4.1 使用">4.1 使用</a></li>
+                <li>
+                    <a href="#42-%e5%ae%9e%e7%8e%b0" aria-label="4.2 实现">4.2 实现</a></li>
+                <li>
+                    <a href="#43-%e5%b0%8f%e7%bb%93" aria-label="4.3 小结">4.3 小结</a></li></ul>
+                </li>
+                <li>
+                    <a href="#5-epoll" aria-label="5. Epoll">5. Epoll</a><ul>
+                        
+                <li>
+                    <a href="#51-%e4%bd%bf%e7%94%a8" aria-label="5.1 使用">5.1 使用</a></li>
+                <li>
+                    <a href="#52-%e5%ae%9e%e7%8e%b0" aria-label="5.2 实现">5.2 实现</a><ul>
+                        
+                <li>
+                    <a href="#521-epoll_create" aria-label="5.2.1 epoll_create">5.2.1 epoll_create</a></li>
+                <li>
+                    <a href="#522-epoll_ctl" aria-label="5.2.2 epoll_ctl">5.2.2 epoll_ctl</a></li>
+                <li>
+                    <a href="#523-epoll_wait" aria-label="5.2.3 epoll_wait">5.2.3 epoll_wait</a></li></ul>
+                </li>
+                <li>
+                    <a href="#53-%e5%b0%8f%e7%bb%93" aria-label="5.3 小结">5.3 小结</a></li></ul>
+                </li>
+                <li>
+                    <a href="#6-selectpollepoll%e5%af%b9%e6%af%94" aria-label="6. select、poll、epoll对比">6. select、poll、epoll对比</a></li>
+                <li>
+                    <a href="#7-%e4%ba%8b%e4%bb%b6%e5%9b%9e%e8%b0%83" aria-label="7. 事件回调">7. 事件回调</a><ul>
+                        
+                <li>
+                    <a href="#71-%e6%b5%81%e7%a8%8b" aria-label="7.1 流程">7.1 流程</a></li>
+                <li>
+                    <a href="#72-%e6%b5%81%e7%a8%8b%e5%9b%be" aria-label="7.2 流程图">7.2 流程图</a>
+                </li>
+            </ul>
+            </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+
         <div class="article-content">
             <h1 id="1-文件系统简介">1. 文件系统简介</h1>
 <p>Linux平台万物皆文件，这句话实际是在夸Linux出色的虚拟文件系统，Linux将所有设备抽象为文件，与设备的数据交互抽象为文件的I/O。</p>
-<p><img src="/images/file.png" alt="file"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/file.png">
+<img src="/images/file.png" alt="file"  />
+</a>
+</div>
+
+</p>
 <p>Linux的虚拟文件系统大概分为四块：</p>
 <ul>
 <li>超级块</li>
@@ -290,28 +266,63 @@ if (!doNotTrack) {
 <ul>
 <li>传统的阻塞I/O，对一个文件描述符操作(FD)时，如果操作没有响应就会一直等待，直到内核有反馈。缺点就是单线程一次只能操作一个FD。</li>
 </ul>
-<p><img src="/images/io_block.jpeg" alt="io_block"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/io_block.jpeg">
+<img src="/images/io_block.jpeg" alt="io_block"  />
+</a>
+</div>
+
+</p>
 <h2 id="22-nonblocking-io">2.2 Nonblocking I/O</h2>
 <ul>
 <li>非阻塞I/O，对FD操作时，如果内核没反馈不会一直等待。非阻塞I/O会将所有FD放入FD set，一直轮询所有FD，直到有反馈的。缺点就是每次轮询时没有事件的FD也会被操作，浪费CPU。</li>
 </ul>
-<p><img src="/images/io_noblock.jpeg" alt="io_noblock"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/io_noblock.jpeg">
+<img src="/images/io_noblock.jpeg" alt="io_noblock"  />
+</a>
+</div>
+
+</p>
 <h2 id="23-signal-driven-io">2.3 Signal Driven I/O</h2>
 <ul>
 <li>信号驱动I/O的基本原理就是首先注册signal handler，当FD有事件到来时，内核会像进程发送信号，然后应用进程执行signal handler。缺点就是，编程难度高，信号处理起来复杂。</li>
 </ul>
-<p><img src="/images/io_signal.jpeg" alt="io_signal"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/io_signal.jpeg">
+<img src="/images/io_signal.jpeg" alt="io_signal"  />
+</a>
+</div>
+
+</p>
 <h2 id="24-asynchronous-io">2.4 Asynchronous I/O</h2>
 <ul>
 <li>异步I/O和信号驱动I/O都是异步的，区别是:信号驱动I/O是FD满足条件时内核通知应用程序可以进行I/O了，而异步I/O是应用程序将I/O操作交给内核，当内核做完之后再通知应用程序I/O做完了。缺点是异步的并发量不好控制。</li>
 </ul>
-<p><img src="/images/io_async.jpeg" alt="io_async"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/io_async.jpeg">
+<img src="/images/io_async.jpeg" alt="io_async"  />
+</a>
+</div>
+
+</p>
 <h2 id="25-io-multiplexing">2.5 I/O Multiplexing</h2>
 <ul>
 <li>多路复用实际不是一个技术而是一个理念，在I/O多路复用之前就有通讯线路的频分复用和时分复用，大概就是合理的安排每个单位使用资源的时间和位置，看起来所有单位一起在使用原本只能允许少量单位同时使用的资源。</li>
 <li>Linux的I/O多路复用机制就是本文要讲的内容了。I/O多路复用就是将所有的FD注册到内核，然后当哪个FD可用时，那个会通知应用程序可用。</li>
 </ul>
-<p><img src="/images/io_multi.jpeg" alt="io_multi"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/io_multi.jpeg">
+<img src="/images/io_multi.jpeg" alt="io_multi"  />
+</a>
+</div>
+
+</p>
 <p>应用程序使用Linux提供的I/O多路复用机制都是通过<a href="/2020/11/27/what-is-system-call">系统调用</a>使用的。最初Linux只提供了Select，在哪个服务端fd使用数量普遍不高的年代是够用的，后来随着网络的发展，1024个FD的限制已经不够用了，所以Linux提供了Poll，Poll只优化了存储结构，Select使用BitMap来存储FD，Poll使用数组来存储FD，不再限制数量，但是遍历时间复杂度还是$O(lg^N)$。终于在Linux 2.5.44版本，epoll闪亮登场，这是现在普遍使用的I/O多路复用机制。</p>
 <h1 id="3-select">3. Select</h1>
 <h2 id="31-使用">3.1 使用</h2>
@@ -334,7 +345,14 @@ if (!doNotTrack) {
 <li>如果一直没有满足条件的fd，最多等多久(超时时间)</li>
 </ol>
 <p>select用一个<code>__FD_SETSIZE</code>位的BitMap表示输入参数，<code>__FD_SETSIZE</code>默认为1024。因为没有1024位那么长的数，所以用一个数组表示，因为数组元素地址连续，所以实际就是一个1024位的数，比如第1位为1，表示这次输入有fd1(标准输出fd)。这个地方也限制了<code>select最多支持1024个fd，并且fd的号码不能大于等于1024。</code></p>
-<p><img src="/images/fd_set.png" alt="fd_set"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/fd_set.png">
+<img src="/images/fd_set.png" alt="fd_set"  />
+</a>
+</div>
+
+</p>
 <p>解释完fd_set的构造，FD_SET、FD_CLR等操作也就明白了，FD_SET(d, s)就是d是几号fd就将s的第几位置1，其他的类似。</p>
 <h2 id="32-实现">3.2 实现</h2>
 <p>Linux的select函数是通过系统调用的机制提供给用户，我们来一起看一下Select的流程:</p>
@@ -352,7 +370,14 @@ if (!doNotTrack) {
 <ul>
 <li>传入fd_set是long的数组，openfiles也是long的数组，因为之前n根据线程最大打开文件数修正过，所以通过(n/(long的位数))可以最高位可以比较的数组下表，然后fd_set数组的那一位根据(n % (long的位数))来去掉不满足条件的FD</li>
 <li>然后就从最高位开始fd_set和open_file做AND操作，第一个匹配的就是最大FD。</li>
-<li><img src="/images/max_select_fd.png" alt="max_select_fd"></li>
+<li>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/max_select_fd.png">
+<img src="/images/max_select_fd.png" alt="max_select_fd"  />
+</a>
+</div>
+
+</li>
 </ul>
 </li>
 <li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L121">poll_initwait</a>初始化<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/include/linux/poll.h#L103">poll_wqueues</a>(维护select/poll任务的主要struct)，并且将<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L221">__pollwait</a>注册为<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/include/linux/poll.h#L43">poll_table</a>的proc函数，file_operations-&gt;poll会调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/include/linux/poll.h#L48">poll_wait</a>将此时所在线程(task)放入队列，poll_wait对调用__poll_wait，这个_poll_wait此时注册的函数。主要作用就是将任务放入队列，以及做一些其他任务。</li>
@@ -387,7 +412,14 @@ if (!doNotTrack) {
 </ol>
 <h2 id="33-小结">3.3 小结</h2>
 <p>select的流程简单来讲就是，将FD通过BitsMap传入内核，轮询所有的FD通过调用file-&gt;poll函数查询是否有对应事件，没有就将task加入FD对应file的待唤醒队列，等待事件来临被唤醒。(例如网卡来数据了)</p>
-<p><img src="/images/select_process.png" alt="select_process"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/select_process.png">
+<img src="/images/select_process.png" alt="select_process"  />
+</a>
+</div>
+
+</p>
 <ol>
 <li>select使用BitsMap来传入和接受FD，每次调用都会在用户空间和内核空间之间拷贝。</li>
 <li>select的BitsMap限制只能监听FD 0~1023。</li>
@@ -448,7 +480,14 @@ if (!doNotTrack) {
 </ol>
 <h2 id="43-小结">4.3 小结</h2>
 <p>poll和select差不多，区别就是BitsMap换成了链表，FD数量只受poll可用内核内存大小限制。</p>
-<p><img src="/images/poll_process.png" alt="poll_process"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/poll_process.png">
+<img src="/images/poll_process.png" alt="poll_process"  />
+</a>
+</div>
+
+</p>
 <ol>
 <li>poll监听FD数量不再有限制(除线程本身限制外)，但是每次调用poll还是要将FD集合拷贝到内核态，完成后再拷贝回来。</li>
 <li>监听所有FD的方式还是轮训，$O(n)$的复杂度。</li>
@@ -510,7 +549,14 @@ if (!doNotTrack) {
 <li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L1006">ep_alloc</a>申请一个<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L181">eventpoll</a>结构，这是存储epoll所有数据的数据结构。</li>
 <li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/file.c#L561">get_unused_fd_flags</a>根据flags申请一个本进程最小未使用的fd。</li>
 <li>调用<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/anon_inodes.c#L74">anon_inode_getfile</a>创建一个对应匿名inode的file，file的私有数据存的是eventpoll结构体。inode在VFS中对应一个文件，记录了此文件在磁盘那些块以及文件各种信息，匿名inode就是将此文件的dentry(目录项)删掉了，在文件系统中一般是通过dentry(目录项)来查找使用文件，这样其他进程就用不了这个文件。相当于创建一个临时文件。</li>
-<li><img src="/images/anonymous_inode.png" alt="anonymous_inode"></li>
+<li>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/anonymous_inode.png">
+<img src="/images/anonymous_inode.png" alt="anonymous_inode"  />
+</a>
+</div>
+
+</li>
 <li>现在file(由进程打开的文件)有了，fd有了，把file和fd的关系放入本进程的open_files中，就相当于本进程打开了这个文件。</li>
 </ul>
 </li>
@@ -597,7 +643,14 @@ if (!doNotTrack) {
 </ol>
 <h2 id="53-小结">5.3 小结</h2>
 <p>select和poll的模式都是，一次将参数拷贝到内核空间，等有结果了再一次拷贝出去，类似无状态服务。而epoll则只是在epoll_ctl(ADD)时将数据拷入，epoll_wait时在将数据拷出，多次复用没有其他数据拷贝，大大节省了数据拷贝。epoll采用<a href="/2020/10/22/red-black-tree">红黑树</a>存储所有被监听的FD是的查找删除时间复杂度由$O(N)$缩短为$O(log^N)$。</p>
-<p><img src="/images/epoll_process.png" alt="epoll_process"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/epoll_process.png">
+<img src="/images/epoll_process.png" alt="epoll_process"  />
+</a>
+</div>
+
+</p>
 <ol>
 <li>epoll_create创建eventpoll结构。</li>
 <li>epoll_ctl:
@@ -680,7 +733,14 @@ schedule               rcu_read_lock();
 <li>设备给中断控制器引脚发送信号。</li>
 <li>中断控制器收到后给CPU发送信号。</li>
 <li>CPU收到信号后产生中断，根据中断号在中断向量表中执行内核实现的中断处理程序。(执行程序实际就是已经与内核通讯了)
-<img src="/images/event_driver.png" alt="event_driver"></li>
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/event_driver.png">
+<img src="/images/event_driver.png" alt="event_driver"  />
+</a>
+</div>
+
+</li>
 </ul>
 <p>以intel的ixgb网卡为例。</p>
 <ol>
@@ -785,7 +845,14 @@ schedule               rcu_read_lock();
 <li>这就到了咱们最关心的问题了，<a href="https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/net/ipv4/tcp_input.c#L4837">tcp_data_ready</a>唤醒的是哪些task。</li>
 </ol>
 <h2 id="72-流程图">7.2 流程图</h2>
-<p><img src="/images/net_callback.png" alt="net_callback"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/net_callback.png">
+<img src="/images/net_callback.png" alt="net_callback"  />
+</a>
+</div>
+
+</p>
 
         </div>
         

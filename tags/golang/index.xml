@@ -26,7 +26,14 @@
 &lt;/blockquote&gt;
 &lt;h1 id=&#34;1-最终成品&#34;&gt;1. 最终成品&lt;/h1&gt;
 &lt;p&gt;先给大家看看成品的样子
-&lt;img src=&#34;https://journey-c.github.io/images/vim_0.jpeg&#34; alt=&#34;vim_0.jpg&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/vim_0.jpeg&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/vim_0.jpeg&#34; alt=&#34;vim_0.jpg&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h1 id=&#34;2-所见即所得&#34;&gt;2. 所见即所得&lt;/h1&gt;
 &lt;p&gt;折腾vim大概有四五年的时间了，下面总结了想要将vim作为主开发工具需要的条件。&lt;/p&gt;
 &lt;table&gt;
@@ -161,7 +168,14 @@ macOS version
 &lt;/span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;Plug&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;mhinz/vim-startify&amp;#39;&lt;/span&gt;                           &lt;span style=&#34;color:#75715e&#34;&gt;&amp;#34; 启动界面&lt;/span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;call&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;plug&lt;/span&gt;#&lt;span style=&#34;color:#a6e22e&#34;&gt;end&lt;/span&gt;()&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;
 &lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;然后在vim的NORMAL状态(按ESC)下执行&lt;code&gt;:PlugInstall&lt;/code&gt;即可完成插件的安装。
-&lt;img src=&#34;https://journey-c.github.io/images/vim_1.jpeg&#34; alt=&#34;vim_1&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/vim_1.jpeg&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/vim_1.jpeg&#34; alt=&#34;vim_1&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;插件更新的命令为&lt;code&gt;:PlugUpdate&lt;/code&gt;
 vim-plug更新的命令为&lt;code&gt;:PlugUpgrade&lt;/code&gt;&lt;/p&gt;
 &lt;h2 id=&#34;23-开发&#34;&gt;2.3 开发&lt;/h2&gt;
@@ -183,7 +197,14 @@ vim-plug更新的命令为&lt;code&gt;:PlugUpgrade&lt;/code&gt;&lt;/p&gt;
 &lt;li&gt;
 &lt;p&gt;coc-nvim
 安装完需要到vim里用coc-nvim配置golang和cxx环境，&lt;code&gt;:CocInstall coc-go&lt;/code&gt; &lt;code&gt;:CocInstall coc-clangd&lt;/code&gt;
-&lt;img src=&#34;https://journey-c.github.io/images/vim_3.jpeg&#34; alt=&#34;vim_3&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/vim_3.jpeg&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/vim_3.jpeg&#34; alt=&#34;vim_3&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;/li&gt;
 &lt;/ul&gt;
 &lt;h3 id=&#34;232-插件配置&#34;&gt;2.3.2 插件配置&lt;/h3&gt;
@@ -285,7 +306,14 @@ export PATH&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;$PATH:$GOPATH
 &lt;/tbody&gt;
 &lt;/table&gt;
 &lt;h3 id=&#34;235-效果&#34;&gt;2.3.5 效果&lt;/h3&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/vim_5.jpeg&#34; alt=&#34;vim_5&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/vim_5.jpeg&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/vim_5.jpeg&#34; alt=&#34;vim_5&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h2 id=&#34;24-辅助&#34;&gt;2.4 辅助&lt;/h2&gt;
 &lt;h3 id=&#34;241-目录树和注释&#34;&gt;2.4.1 目录树和注释&lt;/h3&gt;
 &lt;p&gt;目录插件: &lt;a href=&#34;https://github.com/preservim/nerdtree&#34;&gt;nerdtree&lt;/a&gt;
@@ -393,7 +421,14 @@ export PATH&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;$PATH:$GOPATH
 &lt;/table&gt;
 &lt;ul&gt;
 &lt;li&gt;成品图
-&lt;img src=&#34;https://journey-c.github.io/images/vim_2.jpeg&#34; alt=&#34;vim_2&#34;&gt;&lt;/li&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/vim_2.jpeg&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/vim_2.jpeg&#34; alt=&#34;vim_2&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/li&gt;
 &lt;/ul&gt;
 &lt;h2 id=&#34;25-美化&#34;&gt;2.5 美化&lt;/h2&gt;
 &lt;h3 id=&#34;251-主题&#34;&gt;2.5.1 主题&lt;/h3&gt;
@@ -481,7 +516,14 @@ export PATH&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;$PATH:$GOPATH
 &lt;/span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;call&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;plug&lt;/span&gt;#&lt;span style=&#34;color:#a6e22e&#34;&gt;end&lt;/span&gt;()&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;
 &lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
 &lt;li&gt;效果
-&lt;img src=&#34;https://journey-c.github.io/images/vim_4.jpeg&#34; alt=&#34;vim_4&#34;&gt;&lt;/li&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/vim_4.jpeg&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/vim_4.jpeg&#34; alt=&#34;vim_4&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/li&gt;
 &lt;/ul&gt;
 &lt;h1 id=&#34;附录&#34;&gt;附录&lt;/h1&gt;
 &lt;h2 id=&#34;完整配置&#34;&gt;完整配置&lt;/h2&gt;
@@ -924,7 +966,14 @@ export PATH&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;$PATH:$GOPATH
 &lt;li&gt;顺序通讯，写入和读出的顺序一致&lt;/li&gt;
 &lt;/ol&gt;
 &lt;h1 id=&#34;2-数据部分&#34;&gt;2. 数据部分&lt;/h1&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/chan.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/chan.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/chan.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;源码位置go/src/runtime/chan.go&lt;/strong&gt;&lt;/p&gt;
 &lt;h2 id=&#34;21--hchan&#34;&gt;2.1  hchan&lt;/h2&gt;
 &lt;p&gt;channel对应的数据结构&lt;/p&gt;
@@ -1721,7 +1770,14 @@ M表示线程，P作为调度器用来帮助每个线程管理自己的goroutine
 &lt;p&gt;&lt;strong&gt;那其他线程是什么时候创建的呐?&lt;/strong&gt;
 当goroutine被唤醒时，要在M上运行(恢复goroutine的上下文)，P是帮助M管理goroutine的，恢复上下文的操作也由P来完成。如果被唤醒时发现还有空闲的P，并且没有其他M在窃取goroutine(M发现本地goroutine队列和全局goroutine队列都没有goroutine的时候，会去其他线程窃取goroutine)，说明其他M都在忙，就会创建一个M让这个空闲的P帮他来管理goroutine。
 总之一句话，开始的时候创建一个M，当发现调度不过来且还有空闲P没有工作就在创建新的，直到创建procs个M(procs通过runtime.GOMAXPROCS设置)&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/model.png&#34; alt=&#34;model&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/model.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/model.png&#34; alt=&#34;model&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h2 id=&#34;11-g&#34;&gt;1.1 G&lt;/h2&gt;
 &lt;p&gt;golang 用结构体g表示goroutine&lt;/p&gt;
 &lt;ul&gt;
@@ -1951,7 +2007,14 @@ Breakpoint &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; at 0x1049360
 &lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;	&lt;span style=&#34;color:#a6e22e&#34;&gt;MOVQ&lt;/span&gt;	&lt;span style=&#34;color:#a6e22e&#34;&gt;SP&lt;/span&gt;, (&lt;span style=&#34;color:#a6e22e&#34;&gt;g_stack&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;stack_hi&lt;/span&gt;)(&lt;span style=&#34;color:#a6e22e&#34;&gt;DI&lt;/span&gt;) &lt;span style=&#34;color:#75715e&#34;&gt;// g0.stack.hi = SP
 &lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;创建完g0的内存分布&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/stack_0.png&#34; alt=&#34;stack_0&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/stack_0.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/stack_0.png&#34; alt=&#34;stack_0&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;然后略过一段CPU型号检测和CGO初始化的代码&lt;/p&gt;
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;color:#f92672&#34;&gt;...&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
@@ -1988,7 +2051,14 @@ Breakpoint &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; at 0x1049360
 	&lt;span style=&#34;color:#a6e22e&#34;&gt;CLD&lt;/span&gt;				&lt;span style=&#34;color:#75715e&#34;&gt;// convention is D is always left cleared
 &lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;	&lt;span style=&#34;color:#a6e22e&#34;&gt;CALL&lt;/span&gt;	&lt;span style=&#34;color:#a6e22e&#34;&gt;runtime&lt;/span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;·&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;check&lt;/span&gt;(&lt;span style=&#34;color:#a6e22e&#34;&gt;SB&lt;/span&gt;)
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;创建完m0之后的内存分布&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/stack_1.png&#34; alt=&#34;stack_1&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/stack_1.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/stack_1.png&#34; alt=&#34;stack_1&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;m0和g0的关系&lt;/li&gt;
 &lt;/ul&gt;
@@ -2360,7 +2430,14 @@ Breakpoint &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; at 0x1049360
 &lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;	&lt;span style=&#34;color:#a6e22e&#34;&gt;releasem&lt;/span&gt;(&lt;span style=&#34;color:#a6e22e&#34;&gt;_g_&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;m&lt;/span&gt;)
 }
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;总结一下创建第一个goroutine执行runtime.main的过程(只是创建啊，整个调度这时候还是没有跑起来)
-&lt;img src=&#34;https://journey-c.github.io/images/creat_goroutine_main.png&#34; alt=&#34;create_goroutine_main&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/creat_goroutine_main.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/creat_goroutine_main.png&#34; alt=&#34;create_goroutine_main&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h2 id=&#34;24-调度循环&#34;&gt;2.4 调度循环&lt;/h2&gt;
 &lt;p&gt;我们再返回runtime·rt0_go继续看，总结一下到目前为止已经准备好的事情&lt;/p&gt;
 &lt;ol&gt;
@@ -2890,7 +2967,14 @@ go/src/runtime/proc.go, line 1146&lt;/li&gt;
 &lt;li&gt;PUT
 对象放回池子时，先判断当前P的私有空间是否为空，为空就放入，不为空就放入共享空间。&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/design.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/design.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/design.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;当GET/PUT非常频繁的时候，一般都只访问当前P的空间就可以完成操作。 GET/PUT不频繁时，即使访问到其他P的空间(有锁)，由于操作不频繁所以锁是可以接受的。&lt;/p&gt;
 &lt;h1 id=&#34;2-数据结构&#34;&gt;2. 数据结构&lt;/h1&gt;
 &lt;p&gt;&lt;a href=&#34;https://github.com/golang/go/blob/9b955d2d3fcff6a5bc8bce7bafdc4c634a28e95b/src/sync/pool.go#L44&#34;&gt;Pool&lt;/a&gt;是sync.Pool的核心数据结构。先了解一下该结构体的内部字段。&lt;/p&gt;
@@ -2921,7 +3005,14 @@ GC时回调用 &lt;a href=&#34;https://github.com/golang/go/blob/a57f07aac237d36
 &lt;li&gt;将victim指向local指向的数组，并且将local指针置空。&lt;/li&gt;
 &lt;/ol&gt;
 &lt;p&gt;所以Pool中的Object存活时间为两次GC间隔。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/design_1.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/design_1.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/design_1.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;如上图所示，每个P都有一个&lt;a href=&#34;https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/pool.go#L65&#34;&gt;poolLocal&lt;/a&gt;用来存储对象。再来看下&lt;a href=&#34;https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/pool.go#L65&#34;&gt;poolLocal&lt;/a&gt;的内部字段。&lt;/p&gt;
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;poolLocal&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; {
 	&lt;span style=&#34;color:#a6e22e&#34;&gt;poolLocalInternal&lt;/span&gt;
@@ -2947,12 +3038,26 @@ GC时回调用 &lt;a href=&#34;https://github.com/golang/go/blob/a57f07aac237d36
 &lt;li&gt;shared是所有调度器公有的存储位置。&lt;/li&gt;
 &lt;/ol&gt;
 &lt;p&gt;&lt;a href=&#34;https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/pool.go#L62&#34;&gt;shared&lt;/a&gt;是一个双向链表实现的队列&lt;a href=&#34;https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/poolqueue.go#L194&#34;&gt;poolChain&lt;/a&gt;，而队列中每个元素&lt;a href=&#34;https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/poolqueue.go#L204&#34;&gt;poolChainElt&lt;/a&gt;，又是一个静态环形队列&lt;a href=&#34;https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/poolqueue.go#L19&#34;&gt;poolDequeue&lt;/a&gt;。环形队列的节点元素是&lt;a href=&#34;https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/poolqueue.go#L47&#34;&gt;eface&lt;/a&gt;结构如下：
-&lt;img src=&#34;https://journey-c.github.io/images/design_2.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/design_2.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/design_2.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/pool.go#L62&#34;&gt;shared&lt;/a&gt;队列是一个生产消费模型的队列，&lt;code&gt;head&lt;/code&gt;只用于生产，&lt;code&gt;tail&lt;/code&gt;只用于消费：&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;GET操作通常是从队列&lt;code&gt;tail&lt;/code&gt;端取对象。&lt;/li&gt;
 &lt;li&gt;PUT操作通常是将对象从&lt;code&gt;head&lt;/code&gt;端放入。
-&lt;img src=&#34;https://journey-c.github.io/images/design_3.png&#34; alt=&#34;&#34;&gt;&lt;/li&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/design_3.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/design_3.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/li&gt;
 &lt;/ol&gt;
 &lt;p&gt;其中环形队列&lt;a href=&#34;https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/poolqueue.go#L19&#34;&gt;poolDequeue&lt;/a&gt;实现挺巧妙。是一个无锁、固定大小的单生产端多消费端的环形队列，单一producer可以在头部push和pop(可能和传统队列头部只能push的定义不同)，多consumer可以在尾部pop。&lt;/p&gt;
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;poolDequeue&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; {

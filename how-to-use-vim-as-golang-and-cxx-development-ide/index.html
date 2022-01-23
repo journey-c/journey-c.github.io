@@ -7,6 +7,7 @@
 <meta name="generator" content="Hugo 0.74.3" />
 
 
+
 <title>如何使用vim作为golang和cxx开发IDE - Journey-C</title>
 <meta property="og:title" content="如何使用vim作为golang和cxx开发IDE - Journey-C">
 
@@ -54,10 +55,17 @@ if (!doNotTrack) {
 
 
 
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+
+
 </head>
 
 <body>
     <input type="checkbox" class="hidden toggle" id="toc-control" />
+
     <main class="wrapper">
         <div>
             <header class="header">
@@ -93,15 +101,6 @@ if (!doNotTrack) {
                         width="50" height="50"
                         alt="Logo">
                 </a>
-
-                
-                <div style="float:right">
-                    <label for="toc-control">
-                        <img src="/svg/toc.svg" class="article-icon" alt="Table of Contents" />
-                    </label>
-                </div>
-                
-
                 <ul class="nav-links">
                     
                     <li><a href="/tags/"></a></li>
@@ -116,102 +115,11 @@ if (!doNotTrack) {
                     
                     <li>
                 </ul>
-
-                
-                <aside class="hidden clearfix mobile-toc">
-                    <nav id="TableOfContents">
-  <ul>
-    <li><a href="#1-最终成品">1. 最终成品</a></li>
-    <li><a href="#2-所见即所得">2. 所见即所得</a>
-      <ul>
-        <li><a href="#21-准备">2.1 准备</a></li>
-        <li><a href="#22-插件管理">2.2 插件管理</a></li>
-        <li><a href="#23-开发">2.3 开发</a>
-          <ul>
-            <li><a href="#231-插件安装">2.3.1 插件安装</a></li>
-            <li><a href="#232-插件配置">2.3.2 插件配置</a></li>
-            <li><a href="#233-lsp安装">2.3.3 LSP安装</a></li>
-            <li><a href="#234-快捷键">2.3.4 快捷键</a></li>
-            <li><a href="#235-效果">2.3.5 效果</a></li>
-          </ul>
-        </li>
-        <li><a href="#24-辅助">2.4 辅助</a>
-          <ul>
-            <li><a href="#241-目录树和注释">2.4.1 目录树和注释</a></li>
-            <li><a href="#242-补全括号">2.4.2 补全括号</a></li>
-            <li><a href="#243-全局搜索">2.4.3 全局搜索</a></li>
-          </ul>
-        </li>
-        <li><a href="#25-美化">2.5 美化</a>
-          <ul>
-            <li><a href="#251-主题">2.5.1 主题</a></li>
-            <li><a href="#252-状态栏">2.5.2 状态栏</a></li>
-            <li><a href="#253-git信息和启动页">2.5.3 GIT信息和启动页</a></li>
-          </ul>
-        </li>
-      </ul>
-    </li>
-    <li><a href="#附录">附录</a>
-      <ul>
-        <li><a href="#完整配置">完整配置</a></li>
-      </ul>
-    </li>
-  </ul>
-</nav>
-                </aside>
-                
             </header>
         </div>
 
 
 <div class="content">
-    
-    <aside class="article-toc" id="article-toc">
-    <div class="article-toc-content">
-        <nav id="TableOfContents">
-  <ul>
-    <li><a href="#1-最终成品">1. 最终成品</a></li>
-    <li><a href="#2-所见即所得">2. 所见即所得</a>
-      <ul>
-        <li><a href="#21-准备">2.1 准备</a></li>
-        <li><a href="#22-插件管理">2.2 插件管理</a></li>
-        <li><a href="#23-开发">2.3 开发</a>
-          <ul>
-            <li><a href="#231-插件安装">2.3.1 插件安装</a></li>
-            <li><a href="#232-插件配置">2.3.2 插件配置</a></li>
-            <li><a href="#233-lsp安装">2.3.3 LSP安装</a></li>
-            <li><a href="#234-快捷键">2.3.4 快捷键</a></li>
-            <li><a href="#235-效果">2.3.5 效果</a></li>
-          </ul>
-        </li>
-        <li><a href="#24-辅助">2.4 辅助</a>
-          <ul>
-            <li><a href="#241-目录树和注释">2.4.1 目录树和注释</a></li>
-            <li><a href="#242-补全括号">2.4.2 补全括号</a></li>
-            <li><a href="#243-全局搜索">2.4.3 全局搜索</a></li>
-          </ul>
-        </li>
-        <li><a href="#25-美化">2.5 美化</a>
-          <ul>
-            <li><a href="#251-主题">2.5.1 主题</a></li>
-            <li><a href="#252-状态栏">2.5.2 状态栏</a></li>
-            <li><a href="#253-git信息和启动页">2.5.3 GIT信息和启动页</a></li>
-          </ul>
-        </li>
-      </ul>
-    </li>
-    <li><a href="#附录">附录</a>
-      <ul>
-        <li><a href="#完整配置">完整配置</a></li>
-      </ul>
-    </li>
-  </ul>
-</nav>
-    </div>
-</aside>
-
-    
-
     <article class="article">
         
         <span class="article-duration">8 min read</span>
@@ -235,13 +143,85 @@ if (!doNotTrack) {
         
         
 
+        <div class="toc">
+    <details >
+        <summary>
+            <span class="details">Table Of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#1-%e6%9c%80%e7%bb%88%e6%88%90%e5%93%81" aria-label="1. 最终成品">1. 最终成品</a></li>
+                <li>
+                    <a href="#2-%e6%89%80%e8%a7%81%e5%8d%b3%e6%89%80%e5%be%97" aria-label="2. 所见即所得">2. 所见即所得</a><ul>
+                        
+                <li>
+                    <a href="#21-%e5%87%86%e5%a4%87" aria-label="2.1 准备">2.1 准备</a></li>
+                <li>
+                    <a href="#22-%e6%8f%92%e4%bb%b6%e7%ae%a1%e7%90%86" aria-label="2.2 插件管理">2.2 插件管理</a></li>
+                <li>
+                    <a href="#23-%e5%bc%80%e5%8f%91" aria-label="2.3 开发">2.3 开发</a><ul>
+                        
+                <li>
+                    <a href="#231-%e6%8f%92%e4%bb%b6%e5%ae%89%e8%a3%85" aria-label="2.3.1 插件安装">2.3.1 插件安装</a></li>
+                <li>
+                    <a href="#232-%e6%8f%92%e4%bb%b6%e9%85%8d%e7%bd%ae" aria-label="2.3.2 插件配置">2.3.2 插件配置</a></li>
+                <li>
+                    <a href="#233-lsp%e5%ae%89%e8%a3%85" aria-label="2.3.3 LSP安装">2.3.3 LSP安装</a></li>
+                <li>
+                    <a href="#234-%e5%bf%ab%e6%8d%b7%e9%94%ae" aria-label="2.3.4 快捷键">2.3.4 快捷键</a></li>
+                <li>
+                    <a href="#235-%e6%95%88%e6%9e%9c" aria-label="2.3.5 效果">2.3.5 效果</a></li></ul>
+                </li>
+                <li>
+                    <a href="#24-%e8%be%85%e5%8a%a9" aria-label="2.4 辅助">2.4 辅助</a><ul>
+                        
+                <li>
+                    <a href="#241-%e7%9b%ae%e5%bd%95%e6%a0%91%e5%92%8c%e6%b3%a8%e9%87%8a" aria-label="2.4.1 目录树和注释">2.4.1 目录树和注释</a></li>
+                <li>
+                    <a href="#242-%e8%a1%a5%e5%85%a8%e6%8b%ac%e5%8f%b7" aria-label="2.4.2 补全括号">2.4.2 补全括号</a></li>
+                <li>
+                    <a href="#243-%e5%85%a8%e5%b1%80%e6%90%9c%e7%b4%a2" aria-label="2.4.3 全局搜索">2.4.3 全局搜索</a></li></ul>
+                </li>
+                <li>
+                    <a href="#25-%e7%be%8e%e5%8c%96" aria-label="2.5 美化">2.5 美化</a><ul>
+                        
+                <li>
+                    <a href="#251-%e4%b8%bb%e9%a2%98" aria-label="2.5.1 主题">2.5.1 主题</a></li>
+                <li>
+                    <a href="#252-%e7%8a%b6%e6%80%81%e6%a0%8f" aria-label="2.5.2 状态栏">2.5.2 状态栏</a></li>
+                <li>
+                    <a href="#253-git%e4%bf%a1%e6%81%af%e5%92%8c%e5%90%af%e5%8a%a8%e9%a1%b5" aria-label="2.5.3 GIT信息和启动页">2.5.3 GIT信息和启动页</a></li></ul>
+                </li></ul>
+                </li>
+                <li>
+                    <a href="#%e9%99%84%e5%bd%95" aria-label="附录">附录</a><ul>
+                        
+                <li>
+                    <a href="#%e5%ae%8c%e6%95%b4%e9%85%8d%e7%bd%ae" aria-label="完整配置">完整配置</a>
+                </li>
+            </ul>
+            </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+
         <div class="article-content">
             <blockquote>
 <p>作为一个初学者，很多同学的路子都是这样的：费劲心思装好windows和Linux双系统，看着Linux界面难看，开始找美化软件的工具；美化好了，安装好了g++，因为gedit不好用，sublimetext、atom好用但是不太方便编译，然后陷入vim还是emacs的抉择；最终决定用vim，打印了一张vim键盘图开始学习，略为抱怨门槛高；入门之后发现写代码确实快了很多，为了更快，更美观，开始折腾vim的插件，学习怎么打tag等等等等…感觉万事具备，只欠好好学c++了，发现需要学习g++的编译连接，库文件，多个源文件，大工程，然后开始学习makefile的写法…从此越跑越偏，后来突然发现python看起来简单，要不学python吧。后来又觉得python似乎找工作不占很大优势，转而学java。后来又觉得javascript更简单，所以搞前端吧。然后发现还需要学html、css、数据库、日新月异的新框架…一本书，《c++从入门到放弃》。</p>
 </blockquote>
 <h1 id="1-最终成品">1. 最终成品</h1>
 <p>先给大家看看成品的样子
-<img src="/images/vim_0.jpeg" alt="vim_0.jpg"></p>
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/vim_0.jpeg">
+<img src="/images/vim_0.jpeg" alt="vim_0.jpg"  />
+</a>
+</div>
+
+</p>
 <h1 id="2-所见即所得">2. 所见即所得</h1>
 <p>折腾vim大概有四五年的时间了，下面总结了想要将vim作为主开发工具需要的条件。</p>
 <table>
@@ -376,7 +356,14 @@ macOS version
 </span><span style="color:#960050;background-color:#1e0010"></span>    <span style="color:#a6e22e">Plug</span> <span style="color:#e6db74">&#39;mhinz/vim-startify&#39;</span>                           <span style="color:#75715e">&#34; 启动界面</span><span style="color:#960050;background-color:#1e0010">
 </span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#a6e22e">call</span> <span style="color:#a6e22e">plug</span>#<span style="color:#a6e22e">end</span>()<span style="color:#960050;background-color:#1e0010">
 </span></code></pre></div><p>然后在vim的NORMAL状态(按ESC)下执行<code>:PlugInstall</code>即可完成插件的安装。
-<img src="/images/vim_1.jpeg" alt="vim_1"></p>
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/vim_1.jpeg">
+<img src="/images/vim_1.jpeg" alt="vim_1"  />
+</a>
+</div>
+
+</p>
 <p>插件更新的命令为<code>:PlugUpdate</code>
 vim-plug更新的命令为<code>:PlugUpgrade</code></p>
 <h2 id="23-开发">2.3 开发</h2>
@@ -398,7 +385,14 @@ vim-plug更新的命令为<code>:PlugUpgrade</code></p>
 <li>
 <p>coc-nvim
 安装完需要到vim里用coc-nvim配置golang和cxx环境，<code>:CocInstall coc-go</code> <code>:CocInstall coc-clangd</code>
-<img src="/images/vim_3.jpeg" alt="vim_3"></p>
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/vim_3.jpeg">
+<img src="/images/vim_3.jpeg" alt="vim_3"  />
+</a>
+</div>
+
+</p>
 </li>
 </ul>
 <h3 id="232-插件配置">2.3.2 插件配置</h3>
@@ -500,7 +494,14 @@ export PATH<span style="color:#f92672">=</span>$PATH:$GOPATH/bin:$HOME/.vim/LSP/
 </tbody>
 </table>
 <h3 id="235-效果">2.3.5 效果</h3>
-<p><img src="/images/vim_5.jpeg" alt="vim_5"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/vim_5.jpeg">
+<img src="/images/vim_5.jpeg" alt="vim_5"  />
+</a>
+</div>
+
+</p>
 <h2 id="24-辅助">2.4 辅助</h2>
 <h3 id="241-目录树和注释">2.4.1 目录树和注释</h3>
 <p>目录插件: <a href="https://github.com/preservim/nerdtree">nerdtree</a>
@@ -608,7 +609,14 @@ export PATH<span style="color:#f92672">=</span>$PATH:$GOPATH/bin:$HOME/.vim/LSP/
 </table>
 <ul>
 <li>成品图
-<img src="/images/vim_2.jpeg" alt="vim_2"></li>
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/vim_2.jpeg">
+<img src="/images/vim_2.jpeg" alt="vim_2"  />
+</a>
+</div>
+
+</li>
 </ul>
 <h2 id="25-美化">2.5 美化</h2>
 <h3 id="251-主题">2.5.1 主题</h3>
@@ -696,7 +704,14 @@ export PATH<span style="color:#f92672">=</span>$PATH:$GOPATH/bin:$HOME/.vim/LSP/
 </span><span style="color:#960050;background-color:#1e0010"></span><span style="color:#a6e22e">call</span> <span style="color:#a6e22e">plug</span>#<span style="color:#a6e22e">end</span>()<span style="color:#960050;background-color:#1e0010">
 </span></code></pre></div><ul>
 <li>效果
-<img src="/images/vim_4.jpeg" alt="vim_4"></li>
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/vim_4.jpeg">
+<img src="/images/vim_4.jpeg" alt="vim_4"  />
+</a>
+</div>
+
+</li>
 </ul>
 <h1 id="附录">附录</h1>
 <h2 id="完整配置">完整配置</h2>

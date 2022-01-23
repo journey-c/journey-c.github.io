@@ -23,7 +23,14 @@
     <guid>https://journey-c.github.io/io-multiplexing/</guid>
     <description>&lt;h1 id=&#34;1-文件系统简介&#34;&gt;1. 文件系统简介&lt;/h1&gt;
 &lt;p&gt;Linux平台万物皆文件，这句话实际是在夸Linux出色的虚拟文件系统，Linux将所有设备抽象为文件，与设备的数据交互抽象为文件的I/O。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/file.png&#34; alt=&#34;file&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/file.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/file.png&#34; alt=&#34;file&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;Linux的虚拟文件系统大概分为四块：&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;超级块&lt;/li&gt;
@@ -59,28 +66,63 @@
 &lt;ul&gt;
 &lt;li&gt;传统的阻塞I/O，对一个文件描述符操作(FD)时，如果操作没有响应就会一直等待，直到内核有反馈。缺点就是单线程一次只能操作一个FD。&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/io_block.jpeg&#34; alt=&#34;io_block&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/io_block.jpeg&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/io_block.jpeg&#34; alt=&#34;io_block&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h2 id=&#34;22-nonblocking-io&#34;&gt;2.2 Nonblocking I/O&lt;/h2&gt;
 &lt;ul&gt;
 &lt;li&gt;非阻塞I/O，对FD操作时，如果内核没反馈不会一直等待。非阻塞I/O会将所有FD放入FD set，一直轮询所有FD，直到有反馈的。缺点就是每次轮询时没有事件的FD也会被操作，浪费CPU。&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/io_noblock.jpeg&#34; alt=&#34;io_noblock&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/io_noblock.jpeg&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/io_noblock.jpeg&#34; alt=&#34;io_noblock&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h2 id=&#34;23-signal-driven-io&#34;&gt;2.3 Signal Driven I/O&lt;/h2&gt;
 &lt;ul&gt;
 &lt;li&gt;信号驱动I/O的基本原理就是首先注册signal handler，当FD有事件到来时，内核会像进程发送信号，然后应用进程执行signal handler。缺点就是，编程难度高，信号处理起来复杂。&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/io_signal.jpeg&#34; alt=&#34;io_signal&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/io_signal.jpeg&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/io_signal.jpeg&#34; alt=&#34;io_signal&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h2 id=&#34;24-asynchronous-io&#34;&gt;2.4 Asynchronous I/O&lt;/h2&gt;
 &lt;ul&gt;
 &lt;li&gt;异步I/O和信号驱动I/O都是异步的，区别是:信号驱动I/O是FD满足条件时内核通知应用程序可以进行I/O了，而异步I/O是应用程序将I/O操作交给内核，当内核做完之后再通知应用程序I/O做完了。缺点是异步的并发量不好控制。&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/io_async.jpeg&#34; alt=&#34;io_async&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/io_async.jpeg&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/io_async.jpeg&#34; alt=&#34;io_async&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h2 id=&#34;25-io-multiplexing&#34;&gt;2.5 I/O Multiplexing&lt;/h2&gt;
 &lt;ul&gt;
 &lt;li&gt;多路复用实际不是一个技术而是一个理念，在I/O多路复用之前就有通讯线路的频分复用和时分复用，大概就是合理的安排每个单位使用资源的时间和位置，看起来所有单位一起在使用原本只能允许少量单位同时使用的资源。&lt;/li&gt;
 &lt;li&gt;Linux的I/O多路复用机制就是本文要讲的内容了。I/O多路复用就是将所有的FD注册到内核，然后当哪个FD可用时，那个会通知应用程序可用。&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/io_multi.jpeg&#34; alt=&#34;io_multi&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/io_multi.jpeg&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/io_multi.jpeg&#34; alt=&#34;io_multi&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;应用程序使用Linux提供的I/O多路复用机制都是通过&lt;a href=&#34;https://journey-c.github.io/2020/11/27/what-is-system-call&#34;&gt;系统调用&lt;/a&gt;使用的。最初Linux只提供了Select，在哪个服务端fd使用数量普遍不高的年代是够用的，后来随着网络的发展，1024个FD的限制已经不够用了，所以Linux提供了Poll，Poll只优化了存储结构，Select使用BitMap来存储FD，Poll使用数组来存储FD，不再限制数量，但是遍历时间复杂度还是$O(lg^N)$。终于在Linux 2.5.44版本，epoll闪亮登场，这是现在普遍使用的I/O多路复用机制。&lt;/p&gt;
 &lt;h1 id=&#34;3-select&#34;&gt;3. Select&lt;/h1&gt;
 &lt;h2 id=&#34;31-使用&#34;&gt;3.1 使用&lt;/h2&gt;
@@ -103,7 +145,14 @@
 &lt;li&gt;如果一直没有满足条件的fd，最多等多久(超时时间)&lt;/li&gt;
 &lt;/ol&gt;
 &lt;p&gt;select用一个&lt;code&gt;__FD_SETSIZE&lt;/code&gt;位的BitMap表示输入参数，&lt;code&gt;__FD_SETSIZE&lt;/code&gt;默认为1024。因为没有1024位那么长的数，所以用一个数组表示，因为数组元素地址连续，所以实际就是一个1024位的数，比如第1位为1，表示这次输入有fd1(标准输出fd)。这个地方也限制了&lt;code&gt;select最多支持1024个fd，并且fd的号码不能大于等于1024。&lt;/code&gt;&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/fd_set.png&#34; alt=&#34;fd_set&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/fd_set.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/fd_set.png&#34; alt=&#34;fd_set&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;解释完fd_set的构造，FD_SET、FD_CLR等操作也就明白了，FD_SET(d, s)就是d是几号fd就将s的第几位置1，其他的类似。&lt;/p&gt;
 &lt;h2 id=&#34;32-实现&#34;&gt;3.2 实现&lt;/h2&gt;
 &lt;p&gt;Linux的select函数是通过系统调用的机制提供给用户，我们来一起看一下Select的流程:&lt;/p&gt;
@@ -121,7 +170,14 @@
 &lt;ul&gt;
 &lt;li&gt;传入fd_set是long的数组，openfiles也是long的数组，因为之前n根据线程最大打开文件数修正过，所以通过(n/(long的位数))可以最高位可以比较的数组下表，然后fd_set数组的那一位根据(n % (long的位数))来去掉不满足条件的FD&lt;/li&gt;
 &lt;li&gt;然后就从最高位开始fd_set和open_file做AND操作，第一个匹配的就是最大FD。&lt;/li&gt;
-&lt;li&gt;&lt;img src=&#34;https://journey-c.github.io/images/max_select_fd.png&#34; alt=&#34;max_select_fd&#34;&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/max_select_fd.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/max_select_fd.png&#34; alt=&#34;max_select_fd&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
 &lt;li&gt;调用&lt;a href=&#34;https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L121&#34;&gt;poll_initwait&lt;/a&gt;初始化&lt;a href=&#34;https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/include/linux/poll.h#L103&#34;&gt;poll_wqueues&lt;/a&gt;(维护select/poll任务的主要struct)，并且将&lt;a href=&#34;https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/select.c#L221&#34;&gt;__pollwait&lt;/a&gt;注册为&lt;a href=&#34;https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/include/linux/poll.h#L43&#34;&gt;poll_table&lt;/a&gt;的proc函数，file_operations-&amp;gt;poll会调用&lt;a href=&#34;https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/include/linux/poll.h#L48&#34;&gt;poll_wait&lt;/a&gt;将此时所在线程(task)放入队列，poll_wait对调用__poll_wait，这个_poll_wait此时注册的函数。主要作用就是将任务放入队列，以及做一些其他任务。&lt;/li&gt;
@@ -156,7 +212,14 @@
 &lt;/ol&gt;
 &lt;h2 id=&#34;33-小结&#34;&gt;3.3 小结&lt;/h2&gt;
 &lt;p&gt;select的流程简单来讲就是，将FD通过BitsMap传入内核，轮询所有的FD通过调用file-&amp;gt;poll函数查询是否有对应事件，没有就将task加入FD对应file的待唤醒队列，等待事件来临被唤醒。(例如网卡来数据了)&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/select_process.png&#34; alt=&#34;select_process&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/select_process.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/select_process.png&#34; alt=&#34;select_process&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;select使用BitsMap来传入和接受FD，每次调用都会在用户空间和内核空间之间拷贝。&lt;/li&gt;
 &lt;li&gt;select的BitsMap限制只能监听FD 0~1023。&lt;/li&gt;
@@ -217,7 +280,14 @@
 &lt;/ol&gt;
 &lt;h2 id=&#34;43-小结&#34;&gt;4.3 小结&lt;/h2&gt;
 &lt;p&gt;poll和select差不多，区别就是BitsMap换成了链表，FD数量只受poll可用内核内存大小限制。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/poll_process.png&#34; alt=&#34;poll_process&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/poll_process.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/poll_process.png&#34; alt=&#34;poll_process&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;poll监听FD数量不再有限制(除线程本身限制外)，但是每次调用poll还是要将FD集合拷贝到内核态，完成后再拷贝回来。&lt;/li&gt;
 &lt;li&gt;监听所有FD的方式还是轮训，$O(n)$的复杂度。&lt;/li&gt;
@@ -279,7 +349,14 @@
 &lt;li&gt;调用&lt;a href=&#34;https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L1006&#34;&gt;ep_alloc&lt;/a&gt;申请一个&lt;a href=&#34;https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/eventpoll.c#L181&#34;&gt;eventpoll&lt;/a&gt;结构，这是存储epoll所有数据的数据结构。&lt;/li&gt;
 &lt;li&gt;调用&lt;a href=&#34;https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/file.c#L561&#34;&gt;get_unused_fd_flags&lt;/a&gt;根据flags申请一个本进程最小未使用的fd。&lt;/li&gt;
 &lt;li&gt;调用&lt;a href=&#34;https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/fs/anon_inodes.c#L74&#34;&gt;anon_inode_getfile&lt;/a&gt;创建一个对应匿名inode的file，file的私有数据存的是eventpoll结构体。inode在VFS中对应一个文件，记录了此文件在磁盘那些块以及文件各种信息，匿名inode就是将此文件的dentry(目录项)删掉了，在文件系统中一般是通过dentry(目录项)来查找使用文件，这样其他进程就用不了这个文件。相当于创建一个临时文件。&lt;/li&gt;
-&lt;li&gt;&lt;img src=&#34;https://journey-c.github.io/images/anonymous_inode.png&#34; alt=&#34;anonymous_inode&#34;&gt;&lt;/li&gt;
+&lt;li&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/anonymous_inode.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/anonymous_inode.png&#34; alt=&#34;anonymous_inode&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/li&gt;
 &lt;li&gt;现在file(由进程打开的文件)有了，fd有了，把file和fd的关系放入本进程的open_files中，就相当于本进程打开了这个文件。&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/li&gt;
@@ -366,7 +443,14 @@
 &lt;/ol&gt;
 &lt;h2 id=&#34;53-小结&#34;&gt;5.3 小结&lt;/h2&gt;
 &lt;p&gt;select和poll的模式都是，一次将参数拷贝到内核空间，等有结果了再一次拷贝出去，类似无状态服务。而epoll则只是在epoll_ctl(ADD)时将数据拷入，epoll_wait时在将数据拷出，多次复用没有其他数据拷贝，大大节省了数据拷贝。epoll采用&lt;a href=&#34;https://journey-c.github.io/2020/10/22/red-black-tree&#34;&gt;红黑树&lt;/a&gt;存储所有被监听的FD是的查找删除时间复杂度由$O(N)$缩短为$O(log^N)$。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/epoll_process.png&#34; alt=&#34;epoll_process&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/epoll_process.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/epoll_process.png&#34; alt=&#34;epoll_process&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;epoll_create创建eventpoll结构。&lt;/li&gt;
 &lt;li&gt;epoll_ctl:
@@ -449,7 +533,14 @@ schedule               rcu_read_lock();
 &lt;li&gt;设备给中断控制器引脚发送信号。&lt;/li&gt;
 &lt;li&gt;中断控制器收到后给CPU发送信号。&lt;/li&gt;
 &lt;li&gt;CPU收到信号后产生中断，根据中断号在中断向量表中执行内核实现的中断处理程序。(执行程序实际就是已经与内核通讯了)
-&lt;img src=&#34;https://journey-c.github.io/images/event_driver.png&#34; alt=&#34;event_driver&#34;&gt;&lt;/li&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/event_driver.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/event_driver.png&#34; alt=&#34;event_driver&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;以intel的ixgb网卡为例。&lt;/p&gt;
 &lt;ol&gt;
@@ -554,7 +645,14 @@ schedule               rcu_read_lock();
 &lt;li&gt;这就到了咱们最关心的问题了，&lt;a href=&#34;https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/net/ipv4/tcp_input.c#L4837&#34;&gt;tcp_data_ready&lt;/a&gt;唤醒的是哪些task。&lt;/li&gt;
 &lt;/ol&gt;
 &lt;h2 id=&#34;72-流程图&#34;&gt;7.2 流程图&lt;/h2&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/net_callback.png&#34; alt=&#34;net_callback&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/net_callback.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/net_callback.png&#34; alt=&#34;net_callback&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 </description>
   </item>
   

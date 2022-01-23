@@ -26,7 +26,14 @@
 &lt;/blockquote&gt;
 &lt;h1 id=&#34;1-最终成品&#34;&gt;1. 最终成品&lt;/h1&gt;
 &lt;p&gt;先给大家看看成品的样子
-&lt;img src=&#34;https://journey-c.github.io/images/vim_0.jpeg&#34; alt=&#34;vim_0.jpg&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/vim_0.jpeg&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/vim_0.jpeg&#34; alt=&#34;vim_0.jpg&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h1 id=&#34;2-所见即所得&#34;&gt;2. 所见即所得&lt;/h1&gt;
 &lt;p&gt;折腾vim大概有四五年的时间了，下面总结了想要将vim作为主开发工具需要的条件。&lt;/p&gt;
 &lt;table&gt;
@@ -161,7 +168,14 @@ macOS version
 &lt;/span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;&lt;/span&gt;    &lt;span style=&#34;color:#a6e22e&#34;&gt;Plug&lt;/span&gt; &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;mhinz/vim-startify&amp;#39;&lt;/span&gt;                           &lt;span style=&#34;color:#75715e&#34;&gt;&amp;#34; 启动界面&lt;/span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;
 &lt;/span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;call&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;plug&lt;/span&gt;#&lt;span style=&#34;color:#a6e22e&#34;&gt;end&lt;/span&gt;()&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;
 &lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;然后在vim的NORMAL状态(按ESC)下执行&lt;code&gt;:PlugInstall&lt;/code&gt;即可完成插件的安装。
-&lt;img src=&#34;https://journey-c.github.io/images/vim_1.jpeg&#34; alt=&#34;vim_1&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/vim_1.jpeg&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/vim_1.jpeg&#34; alt=&#34;vim_1&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;插件更新的命令为&lt;code&gt;:PlugUpdate&lt;/code&gt;
 vim-plug更新的命令为&lt;code&gt;:PlugUpgrade&lt;/code&gt;&lt;/p&gt;
 &lt;h2 id=&#34;23-开发&#34;&gt;2.3 开发&lt;/h2&gt;
@@ -183,7 +197,14 @@ vim-plug更新的命令为&lt;code&gt;:PlugUpgrade&lt;/code&gt;&lt;/p&gt;
 &lt;li&gt;
 &lt;p&gt;coc-nvim
 安装完需要到vim里用coc-nvim配置golang和cxx环境，&lt;code&gt;:CocInstall coc-go&lt;/code&gt; &lt;code&gt;:CocInstall coc-clangd&lt;/code&gt;
-&lt;img src=&#34;https://journey-c.github.io/images/vim_3.jpeg&#34; alt=&#34;vim_3&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/vim_3.jpeg&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/vim_3.jpeg&#34; alt=&#34;vim_3&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;/li&gt;
 &lt;/ul&gt;
 &lt;h3 id=&#34;232-插件配置&#34;&gt;2.3.2 插件配置&lt;/h3&gt;
@@ -285,7 +306,14 @@ export PATH&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;$PATH:$GOPATH
 &lt;/tbody&gt;
 &lt;/table&gt;
 &lt;h3 id=&#34;235-效果&#34;&gt;2.3.5 效果&lt;/h3&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/vim_5.jpeg&#34; alt=&#34;vim_5&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/vim_5.jpeg&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/vim_5.jpeg&#34; alt=&#34;vim_5&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h2 id=&#34;24-辅助&#34;&gt;2.4 辅助&lt;/h2&gt;
 &lt;h3 id=&#34;241-目录树和注释&#34;&gt;2.4.1 目录树和注释&lt;/h3&gt;
 &lt;p&gt;目录插件: &lt;a href=&#34;https://github.com/preservim/nerdtree&#34;&gt;nerdtree&lt;/a&gt;
@@ -393,7 +421,14 @@ export PATH&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;$PATH:$GOPATH
 &lt;/table&gt;
 &lt;ul&gt;
 &lt;li&gt;成品图
-&lt;img src=&#34;https://journey-c.github.io/images/vim_2.jpeg&#34; alt=&#34;vim_2&#34;&gt;&lt;/li&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/vim_2.jpeg&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/vim_2.jpeg&#34; alt=&#34;vim_2&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/li&gt;
 &lt;/ul&gt;
 &lt;h2 id=&#34;25-美化&#34;&gt;2.5 美化&lt;/h2&gt;
 &lt;h3 id=&#34;251-主题&#34;&gt;2.5.1 主题&lt;/h3&gt;
@@ -481,7 +516,14 @@ export PATH&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;$PATH:$GOPATH
 &lt;/span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;call&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;plug&lt;/span&gt;#&lt;span style=&#34;color:#a6e22e&#34;&gt;end&lt;/span&gt;()&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;
 &lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
 &lt;li&gt;效果
-&lt;img src=&#34;https://journey-c.github.io/images/vim_4.jpeg&#34; alt=&#34;vim_4&#34;&gt;&lt;/li&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/vim_4.jpeg&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/vim_4.jpeg&#34; alt=&#34;vim_4&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/li&gt;
 &lt;/ul&gt;
 &lt;h1 id=&#34;附录&#34;&gt;附录&lt;/h1&gt;
 &lt;h2 id=&#34;完整配置&#34;&gt;完整配置&lt;/h2&gt;

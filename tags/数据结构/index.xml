@@ -24,7 +24,14 @@
     <description>&lt;p&gt;红黑树是一种自平衡二叉搜索树。二叉搜索树就是插入的时候，比当前节点小的放到左子树，大的放到右子树。这样查找的时候可以沿着树的一条路径找到想要的值，所以时间复杂度是树的深度，最坏$O(N)$，平均$O(lg^N)$。&lt;/p&gt;
 &lt;p&gt;正因为二叉搜索树由于数据的不确定性可能造成树建的不平衡，导致树过深，时间复杂度过高。所以出现了自平衡二叉搜索树像红黑树。&lt;/p&gt;
 &lt;p&gt;红黑树所有的性质和特点都是想让树尽可能的平衡。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/rbtree.jpg&#34; alt=&#34;rbtree&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/rbtree.jpg&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/rbtree.jpg&#34; alt=&#34;rbtree&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;div&gt;
 	&lt;center&gt;图片引自《算法导论》第三版&lt;/center&gt;
 &lt;/div&gt;
@@ -70,7 +77,14 @@
 &lt;h2 id=&#34;31-旋转&#34;&gt;3.1 旋转&lt;/h2&gt;
 &lt;p&gt;由于插入和删除操作会对红黑树修改，有可能会不符合红黑树的性质，所以必须通过调整节点的颜色和指针结构来重新满足性质，而调整指针结构的操作是旋转，有左旋、右旋。
 &lt;strong&gt;下图α,β,γ代表一棵子树(可能为空)&lt;/strong&gt;&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/rotate.png&#34; alt=&#34;rotate&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/rotate.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/rotate.png&#34; alt=&#34;rotate&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h3 id=&#34;311-左旋&#34;&gt;3.1.1 左旋&lt;/h3&gt;
 &lt;p&gt;上图为例，左旋就是从右边树结构变成左边树结构的操作。
 当在某点例如x点做左旋时:&lt;/p&gt;
@@ -143,11 +157,25 @@
 2.入节点叔节点是红色
 &lt;strong&gt;(z是插入节点，p是父节点，u是叔节点，g是祖父节点)&lt;/strong&gt;&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/insert_case1.png&#34; alt=&#34;insert_case1&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/insert_case1.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/insert_case1.png&#34; alt=&#34;insert_case1&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;blockquote&gt;
 &lt;p&gt;这种情况将父节点和叔节点变为黑色，祖父节点变为红色，指针指向祖父节点(上移两层)然后继续判断。&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/insert_case1_fix.png&#34; alt=&#34;insert_case1_fix&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/insert_case1_fix.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/insert_case1_fix.png&#34; alt=&#34;insert_case1_fix&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;&lt;em&gt;这一步祖父节点可能是根结点，所以在修复完违反性质4的情况之后，再把根结点设置为黑色，避免再违反性质1&lt;/em&gt;&lt;/p&gt;
 &lt;h4 id=&#34;3212-case-2&#34;&gt;3.2.1.2 case 2&lt;/h4&gt;
 &lt;blockquote&gt;
@@ -156,7 +184,14 @@
 3.插入节点是父节点右儿子
 &lt;strong&gt;(z是插入节点，b是兄弟节点，p是父节点，u是叔节点，g是祖父节点)&lt;/strong&gt;&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/insert_case2.png&#34; alt=&#34;insert_case2&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/insert_case2.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/insert_case2.png&#34; alt=&#34;insert_case2&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;blockquote&gt;
 &lt;p&gt;关于父节点做左旋，就可以变为case 3。&lt;/p&gt;
 &lt;/blockquote&gt;
@@ -167,11 +202,25 @@
 3.插入节点是父节点左儿子
 &lt;strong&gt;(z是插入节点，b是兄弟节点，p是父节点，u是叔节点，g是祖父节点)&lt;/strong&gt;&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/insert_case3.png&#34; alt=&#34;insert_case3&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/insert_case3.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/insert_case3.png&#34; alt=&#34;insert_case3&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;blockquote&gt;
 &lt;p&gt;将父节点变为黑色，祖父节点变为红色，然后关于祖父节点做右旋得到下图(关系还是按照旋转前定的)&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/insert_case3_fix.png&#34; alt=&#34;insert_case3_fix&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/insert_case3_fix.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/insert_case3_fix.png&#34; alt=&#34;insert_case3_fix&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;blockquote&gt;
 &lt;p&gt;case3修复之后，看上图，就没有可能违反性质的地方了，修复结束。&lt;/p&gt;
 &lt;/blockquote&gt;
@@ -203,35 +252,91 @@
 &lt;ol&gt;
 &lt;li&gt;z没有子节点&lt;/li&gt;
 &lt;/ol&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/delete_case1.png&#34; alt=&#34;delete_case1&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/delete_case1.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/delete_case1.png&#34; alt=&#34;delete_case1&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;blockquote&gt;
 &lt;p&gt;直接删除z，z的父节点的儿子指向T.nil。&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/delete_case1_op.png&#34; alt=&#34;delete_case1_op&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/delete_case1_op.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/delete_case1_op.png&#34; alt=&#34;delete_case1_op&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;ol start=&#34;2&#34;&gt;
 &lt;li&gt;z只有右儿子&lt;/li&gt;
 &lt;/ol&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/delete_case2.png&#34; alt=&#34;delete_case2&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/delete_case2.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/delete_case2.png&#34; alt=&#34;delete_case2&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;blockquote&gt;
 &lt;p&gt;将z的右子树提到z的位置。&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/delete_case2_op.png&#34; alt=&#34;delete_case2_op&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/delete_case2_op.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/delete_case2_op.png&#34; alt=&#34;delete_case2_op&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;ol start=&#34;3&#34;&gt;
 &lt;li&gt;z只有左儿子&lt;/li&gt;
 &lt;/ol&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/delete_case3.png&#34; alt=&#34;delete_case3&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/delete_case3.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/delete_case3.png&#34; alt=&#34;delete_case3&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;blockquote&gt;
 &lt;p&gt;将z的左子树提到z的位置。&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/delete_case3_op.png&#34; alt=&#34;delete_case3_op&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/delete_case3_op.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/delete_case3_op.png&#34; alt=&#34;delete_case3_op&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;ol start=&#34;4&#34;&gt;
 &lt;li&gt;z有两个儿子&lt;/li&gt;
 &lt;/ol&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/delete_case4.png&#34; alt=&#34;delete_case4&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/delete_case4.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/delete_case4.png&#34; alt=&#34;delete_case4&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;blockquote&gt;
 &lt;p&gt;找到后继节点y(比z大的最小的那个)，用y替换z的位置，颜色设置为z的颜色，这样y原来的位置就空了，将y的右子树x(如果有)提到y原来的位置。&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/delete_case4_op.png&#34; alt=&#34;delete_case4_op&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/delete_case4_op.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/delete_case4_op.png&#34; alt=&#34;delete_case4_op&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h3 id=&#34;331-修复解析&#34;&gt;3.3.1 修复解析&lt;/h3&gt;
 &lt;blockquote&gt;
 &lt;p&gt;y: 代表要z或者z的后继节点(case 4)
@@ -296,7 +401,14 @@ case 4: x为z后继的右儿子&lt;/p&gt;
 &lt;blockquote&gt;
 &lt;p&gt;x的兄弟节点w是红色&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/delete_fix_case1.png&#34; alt=&#34;delete_fix_case1&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/delete_fix_case1.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/delete_fix_case1.png&#34; alt=&#34;delete_fix_case1&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;blockquote&gt;
 &lt;p&gt;此时: 1) 因为w是红色，所以p是黑色。 2) 因为x是双重黑色，所以w一定有儿子且w的子节点是黑色。如果没有，那么从p到叶子各路径上的黑节点数量就不一样了。
 措施:&lt;/p&gt;
@@ -305,12 +417,26 @@ case 4: x为z后继的右儿子&lt;/p&gt;
 &lt;li&gt;操作前l，r，x到p的父节点之前的路径有1个黑色节点(p)，操作后还是1个(w)，所以没改变黑色个数的性质。且x有黑色性质，所以p为红色也没违反性质。&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/delete_fix_case1_fix.png&#34; alt=&#34;delete_fix_case1_fix&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/delete_fix_case1_fix.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/delete_fix_case1_fix.png&#34; alt=&#34;delete_fix_case1_fix&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h4 id=&#34;3322-case-2&#34;&gt;3.3.2.2 case 2&lt;/h4&gt;
 &lt;blockquote&gt;
 &lt;p&gt;x的兄弟节点w是黑色，且w的两个子节点是黑色&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/delete_fix_case2.png&#34; alt=&#34;delete_fix_case2&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/delete_fix_case2.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/delete_fix_case2.png&#34; alt=&#34;delete_fix_case2&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;div&gt;
 &lt;center&gt;因为w是黑色，所以p不确定是什么颜色，用白色表示&lt;center&gt;
 &lt;/div&gt;
@@ -322,19 +448,40 @@ case 4: x为z后继的右儿子&lt;/p&gt;
 &lt;li&gt;x的父节点原来是黑色，那么继续遍历，一直将双重黑色传递至根，这样去掉一重黑色，相当于所有路径都去了一个黑节点，依然满足性质。&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/delete_fix_case2_fix.png&#34; alt=&#34;delete_fix_case2_fix&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/delete_fix_case2_fix.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/delete_fix_case2_fix.png&#34; alt=&#34;delete_fix_case2_fix&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h4 id=&#34;3323-case-3&#34;&gt;3.3.2.3 case 3&lt;/h4&gt;
 &lt;blockquote&gt;
 &lt;p&gt;x的兄弟节点w是黑色，且w的左儿子是红色，右儿子是黑色&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/delete_fix_case3.png&#34; alt=&#34;delete_fix_case3&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/delete_fix_case3.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/delete_fix_case3.png&#34; alt=&#34;delete_fix_case3&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;div&gt;
 &lt;center&gt;因为w是黑色，所以p不确定是什么颜色，用白色表示&lt;center&gt;
 &lt;/div&gt;
 &lt;blockquote&gt;
 &lt;p&gt;交换w和左儿子的颜色，然后关于w做一次右旋，变成case 4。黑色节点的个数都没有变，所以没改变性质。&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/delete_fix_case3_fix.png&#34; alt=&#34;delete_fix_case3_fix&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/delete_fix_case3_fix.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/delete_fix_case3_fix.png&#34; alt=&#34;delete_fix_case3_fix&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;div&gt;
 &lt;center&gt;因为w是黑色，所以p不确定是什么颜色，用白色表示&lt;center&gt;
 &lt;/div&gt;
@@ -342,7 +489,14 @@ case 4: x为z后继的右儿子&lt;/p&gt;
 &lt;blockquote&gt;
 &lt;p&gt;x的兄弟节点w是黑色，且w的右儿子是红色&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/delete_fix_case4.png&#34; alt=&#34;delete_fix_case4&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/delete_fix_case4.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/delete_fix_case4.png&#34; alt=&#34;delete_fix_case4&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;div&gt;
 &lt;center&gt;p的颜色未知，l的颜色随便，用白色表示&lt;center&gt;
 &lt;/div&gt;
@@ -353,7 +507,14 @@ case 4: x为z后继的右儿子&lt;/p&gt;
 &lt;li&gt;l到原p的父亲中间有1个黑(原w)+1个可能黑(原p)，操作后1个黑(p)+1个可能黑(w)所以刚好也不违反性质，操作后x的双重颜色成功被去掉，结束修复。&lt;/li&gt;
 &lt;/ol&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/delete_fix_case4_fix.png&#34; alt=&#34;delete_fix_case4&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/delete_fix_case4_fix.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/delete_fix_case4_fix.png&#34; alt=&#34;delete_fix_case4&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;div&gt;
 &lt;center&gt;w为p之前的颜色(未知)，l颜色随便，用白色表示&lt;center&gt;
 &lt;/div&gt;

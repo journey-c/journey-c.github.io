@@ -24,18 +24,53 @@
     <description>&lt;p&gt;今天大多数的web服务都是基于TCP协议对外提供交互，TCP协议是诞生在网络环境普遍很差的年代。传输时延由客户端和服务端之间往返时间(RTT)以及数据传输需要的往返次数决定。过去的几十年网络带宽有大幅增长，但传输时延还是受到光速的限制，所以谷歌公司在2011年的&lt;a href=&#34;https://conferences.sigcomm.org/co-next/2011/papers/1569470463.pdf&#34;&gt;TCP FAST OPEN&lt;/a&gt;论文中介绍TCP协议的扩展——TCP FAST OPEN。&lt;/p&gt;
 &lt;h1 id=&#34;背景&#34;&gt;背景&lt;/h1&gt;
 &lt;p&gt;&lt;a href=&#34;https://www.rfc-editor.org/pdfrfc/rfc793.txt.pdf&#34;&gt;TCP标准&lt;/a&gt;中只允许握手建立连接后进行数据传输，这就意味着在应用层数据交互之前有一个额外的RTT。
-&lt;img src=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-tcp-handshake.png&#34; alt=&#34;TCP Handshake&#34;&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-tcp-handshake.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-tcp-handshake.png&#34; alt=&#34;TCP Handshake&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+
 而这个额外RTT是传播时延的一部分。下图是谷歌公司统计的google.com请求中TCP握手占总请求时延的百分比。可以看到cold request(新TCP连接)的握手时延占比明显高出很多。
-&lt;img src=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-tcp-handshake-cast.png&#34; alt=&#34;TCP Handshake Cast&#34;&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-tcp-handshake-cast.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-tcp-handshake-cast.png&#34; alt=&#34;TCP Handshake Cast&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+
 这个问题的解决方案一个是应用层协议复用TCP，请求结束后连接不关闭，缓存给下次使用。但实际效果不理想，谷歌公司对一些大型CDN的研究表明，实际生产中每个TCP连接平均只有2.4个HTTP请求。&lt;/p&gt;
 &lt;p&gt;而另外一种解决方式就是在握手时期就进行数据传输，直接消除了额外的RTT。TCP标准中也是在握手第三阶段将数据包放入了SYN包中，所以应用层数据放入第一、二阶段SYN包中的设计理论上也是可行的。然而，这个想法的直接实现容易受到拒绝服务 (DoS) 攻击，并且可能面临重复或陈旧 SYN 的困难。谷歌的论文中提出了一种称为 TCP 快速打开 (TFO) 的新 TCP 机制，它可以在 TCP 的初始握手期间安全地交换数据。 TFO 的核心是一个安全 cookie，服务器使用它来验证启动 TFO 连接的客户端。
-&lt;img src=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-tcp-fast-open.png&#34; alt=&#34;TCP Fast Open&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-tcp-fast-open.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-tcp-fast-open.png&#34; alt=&#34;TCP Fast Open&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h1 id=&#34;实现&#34;&gt;实现&lt;/h1&gt;
 &lt;p&gt;&lt;strong&gt;(被抓包程序代码在最后)&lt;/strong&gt;&lt;/p&gt;
 &lt;p&gt;新TCP连接时，客户端发送带有 Fast Open Cookie Request TCP 选项的 SYN 数据包。
-&lt;img src=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-tfo1.png&#34; alt=&#34;1&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-tfo1.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-tfo1.png&#34; alt=&#34;1&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;服务器通过在密钥下加密客户端的 IP 地址来生成 cookie。服务器使用 SYN-ACK 响应客户端，该 SYN-ACK 在 TCP 选项字段中包含生成的 Fast Open Cookie。
-&lt;img src=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-tfo2.png&#34; alt=&#34;2&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-tfo2.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-tfo2.png&#34; alt=&#34;2&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;客户端缓存 cookie，以便将来 TFO 连接到同一服务器。&lt;/p&gt;
 &lt;p&gt;要使用从服务器接收到的TFO cookie，客户端执行以下步骤：&lt;/p&gt;
 &lt;ol&gt;
@@ -50,7 +85,14 @@
 &lt;li&gt;客户端发送确认服务器 SYN 的 ACK。如果客户端的数据未被确认，则使用 ACK 重新传输。&lt;/li&gt;
 &lt;li&gt;然后连接像正常的 TCP 连接一样进行。&lt;/li&gt;
 &lt;/ol&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-tfo3.png&#34; alt=&#34;3&#34;&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-tfo3.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-tfo3.png&#34; alt=&#34;3&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+
 可以看到第二次TCP连接的握手第一步携带了上次服务端返回的cookie，并且携带了数据的。&lt;/p&gt;
 &lt;p&gt;TFO是TCP协议的experimental update，所以协议要求TCP实现默认必须禁止TFO，Linux中打开方式如下：（确保内核版本在3.17及以上）&lt;/p&gt;
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;在/etc/sysctl.conf文件中添加
@@ -61,11 +103,25 @@ net.ipv4.tcp_fastopen&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt
 &lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define	TFO_CLIENT_NO_COOKIE	4	&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* Data in SYN w/o cookie option */&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
 &lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;设置为3，则客户端服务端均开启TFO功能。&lt;/p&gt;
 &lt;p&gt;最后是谷歌公司针对TFO做的对比数据，可以看到TFO机制明显缩短了传输时延，并且RTT越大的情况下越明显。
-&lt;img src=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-result.png&#34; alt=&#34;result&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-result.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-result.png&#34; alt=&#34;result&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h1 id=&#34;广域网tfo可用性&#34;&gt;广域网TFO可用性&lt;/h1&gt;
 &lt;p&gt;由于中间路由器、交换机等设备可能不支持，导致TFO在互联网环境下可能失败，从而弱化到标准的TCP握手，甚至导致更恶劣的重传，不过从Anna Maria Mandalari博士的测试数据来看，只有2.18%的SYN数据包会被直接丢弃，引起重传。
 下面是博士团队在2015年对18个国家、22个ISP环境下进行TFO的测试数据&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-result-data.png&#34; alt=&#34;result&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-result-data.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-tcp-fast-open-result-data.png&#34; alt=&#34;result&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h1 id=&#34;附录&#34;&gt;附录&lt;/h1&gt;
 &lt;h2 id=&#34;serverc&#34;&gt;server.c&lt;/h2&gt;
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#include&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;&amp;lt;arpa/inet.h&amp;gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
@@ -228,18 +284,53 @@ net.ipv4.tcp_fastopen&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt
 &lt;p&gt;服务端程序几乎都会有网络交互的功能，一个优秀网络模型可以合理配合使用计算机的各资源。&lt;/p&gt;
 &lt;/blockquote&gt;
 &lt;p&gt;Redis作为广为人知的内存数据库，从玩具级项目到工业级项目中都可以看到它的身影，而Redis在最初的几个版本中一直是单线程，却能扛住&lt;a href=&#34;https://redis.io/topics/faq#what39s-the-redis-memory-footprint&#34;&gt;1 million requests per second&lt;/a&gt;的请求量（非单点）。其实现的单线程网络模型必然十分优秀。
-&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-share.png&#34; alt=&#34;redis-network-model-share&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/redis-network-model-share.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-share.png&#34; alt=&#34;redis-network-model-share&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h1 id=&#34;设计原理&#34;&gt;设计原理&lt;/h1&gt;
 &lt;p&gt;在分析网络模型之前先分析一下Redis中网络交互的场景。一般来说我们在使用Redis时，一般会和Redis-Server建若干个连接，然后并发的给Redis-Server发送指令并得到回复。而Redis-Server就需要同时维护若干个与Redis-Client的连接，并且随时处理每个连接发来的请求。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-connecttion-per-thread.png&#34; alt=&#34;redis-network-model-connecttion-per-thread&#34;&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/redis-network-model-connecttion-per-thread.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-connecttion-per-thread.png&#34; alt=&#34;redis-network-model-connecttion-per-thread&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+
 一种方式是起一个线程监听一个端口，当新连接到来时，创建一个新线程处理这个连接。这样做的缺点是，当连接过多时线程数也随之增多，线程栈大小一般8MB，大量的线程会占用大量内存和CPU资源。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-connecttion-worker-pool.png&#34; alt=&#34;redis-network-model-connecttion-worker-pool&#34;&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/redis-network-model-connecttion-worker-pool.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-connecttion-worker-pool.png&#34; alt=&#34;redis-network-model-connecttion-worker-pool&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+
 另一种方式是起一个线程监听端口，新连接交给线程池来处理，这样做的优点是连接数不再会压垮计算机，而缺点就是服务器的处理能力受限与线程池的大小，并且空闲连接也会占用线程池的资源。&lt;/p&gt;
 &lt;p&gt;上边两种网络模型的问题就在于一个线程只处理一个连接，而操作系统提供的&lt;a href=&#34;https://journey-c.github.io/io-multiplexing&#34;&gt;IO多路复用技术&lt;/a&gt;可以解决这一问题。一个线程监听多个连接，每个连接只有在活跃时才会使用CPU，从而达到节省资源的目录。&lt;/p&gt;
 &lt;p&gt;Redis采用Reactor模式实现的网络模型。主要由事件收集器、事件发送器、事件处理器组成。事件收集器主要收集所有事件，包括来自硬件软件的事件。事件发送器负责将事件发送到实现注册的事件处理器。而事件处理器则负责处理事件。其中事件收集器就是通过&lt;a href=&#34;https://journey-c.github.io/io-multiplexing&#34;&gt;IO多路复用技术&lt;/a&gt;来实现的。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model.png&#34; alt=&#34;redis-network-model&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/redis-network-model.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model.png&#34; alt=&#34;redis-network-model&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h1 id=&#34;数据结构&#34;&gt;数据结构&lt;/h1&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-data-structure.png&#34; alt=&#34;redis-network-model-data-structure&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/redis-network-model-data-structure.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-data-structure.png&#34; alt=&#34;redis-network-model-data-structure&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;结构体&lt;a href=&#34;https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.h#L99&#34;&gt;aeEventLoop&lt;/a&gt;封装了事件循环相关的变量，包括两种事件的链表(时间事件、文件事件)。然后文件事件（&lt;a href=&#34;https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.h#L72&#34;&gt;aeFileEvent&lt;/a&gt;）中封装了读写事件接口充当事件处理器，时间事件（&lt;a href=&#34;https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.h#L80&#34;&gt;aeTimeEvent&lt;/a&gt;）中也封装了相应接口作为事件处理器。&lt;/p&gt;
 &lt;h1 id=&#34;事件&#34;&gt;事件&lt;/h1&gt;
 &lt;p&gt;默认有两种事件：&lt;code&gt;文件事件&lt;/code&gt;, &lt;code&gt;时间事件&lt;/code&gt;。&lt;/p&gt;
@@ -299,7 +390,14 @@ net.ipv4.tcp_fastopen&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt
 &lt;p&gt;根据配置文件监听端口之后，会调用&lt;a href=&#34;https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/server.c#L3000&#34;&gt;createSocketAcceptHandler&lt;/a&gt;将&lt;code&gt;Listen FD&lt;/code&gt;封装成文件事件加入&lt;a href=&#34;https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.h#L99&#34;&gt;aeEventLoop&lt;/a&gt;。&lt;/p&gt;
 &lt;p&gt;此时服务端准备工作基本完成了，端口监听了，&lt;code&gt;Listen FD&lt;/code&gt;的&lt;code&gt;accept&lt;/code&gt;动作也监听了。&lt;/p&gt;
 &lt;p&gt;然后就会调用&lt;a href=&#34;https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.c#L484&#34;&gt;aeMain&lt;/a&gt;进入事件循环了。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-eventloop.png&#34; alt=&#34;redis-network-model-eventloop&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/redis-network-model-eventloop.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-eventloop.png&#34; alt=&#34;redis-network-model-eventloop&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.c#L484&#34;&gt;aeMain&lt;/a&gt;函数中是一个循环，不断判断是否停止，不停止就执行&lt;a href=&#34;https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.c#L348&#34;&gt;aeProcessEvents&lt;/a&gt;函数。&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.c#L348&#34;&gt;aeProcessEvents&lt;/a&gt;中：&lt;/p&gt;
 &lt;ol&gt;
@@ -316,9 +414,23 @@ net.ipv4.tcp_fastopen&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt
 &lt;h1 id=&#34;总结&#34;&gt;总结&lt;/h1&gt;
 &lt;p&gt;上面分析的网络模型在Redis中都是在单线程中实现的，所有事件执行也是串行的，这也是很多人使用Redis实现分布式锁而不用考虑并发原因了。Redis采用单线程实现网络模型也能扛住大量请求，一方面是网络模型足够优秀，另一方面就是所有操作都在内存中，单事物处理时间短，并且Redis数据库中数据结构实现优化到了极致，比如同种数据结构根据数据量大小选择不同底层实现，通用回复字符串共享，秒级时间戳缓存等等。&lt;/p&gt;
 &lt;p&gt;事件驱动实现并非只能单线程实现，Redis之所以使用单线程实现一方面是为了方便开发者，另一方面是Redis的瓶颈并不在网络请求。而多线程实现的代表就是&lt;a href=&#34;https://nginx.org/&#34;&gt;Nginx&lt;/a&gt;了。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-nginx.png&#34; alt=&#34;redis-network-model-nginx&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/redis-network-model-nginx.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-nginx.png&#34; alt=&#34;redis-network-model-nginx&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;nginx实现时，Master监听，将连接分发给若干个Worker线程处理，每个Worker线程有自己的事件循环。为了避免调度对网络响应的损耗，nginx会调用&lt;a href=&#34;https://man7.org/linux/man-pages/man2/sched_setaffinity.2.html&#34;&gt;SCHED_SETAFFINITY&lt;/a&gt;将每个Worker分散绑定到不同CPU上。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-golang.png&#34; alt=&#34;redis-network-model-golang&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/redis-network-model-golang.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-golang.png&#34; alt=&#34;redis-network-model-golang&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;而以高并发著称的golang语言却不适合采用事件驱动编程。golang标准库中的网络模型都是&lt;code&gt;connection-per-goroutine&lt;/code&gt;，这样做的原因是go无法将goroutine固定到指定&lt;code&gt;P&lt;/code&gt;上，如果采用事件驱动模型，最坏的情况下所有Worker被调度到同一个&lt;code&gt;P&lt;/code&gt;上，就变成单线程模型了。从上面golang事件驱动模型的尖刺非常明显（蓝色为 netpoll + 多路复用，绿色为 netpoll + 长连接，黄色为 net 库 + 长连接）。&lt;/p&gt;
 </description>
   </item>
@@ -357,10 +469,24 @@ net.ipv4.tcp_fastopen&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt
 &lt;li&gt;我们关心的是未处于ESTABLISHED状态的socket，会调用&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/net/ipv4/tcp_input.c#L6303&#34;&gt;tcp_rcv_state_process&lt;/a&gt;，这个函数中，当socket状态是LISTEN时（因为客户端的连接包是发给listen fd的），会调用&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/net/inet_connection_sock.h#L80&#34;&gt;struct inet_connection_sock&lt;/a&gt;(listen系统调用时创建的)icsk_af_ops对象的conn_request接口，对应&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/net/ipv4/tcp_input.c#L6743&#34;&gt;tcp_conn_request&lt;/a&gt;函数。&lt;/li&gt;
 &lt;li&gt;&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/net/ipv4/tcp_input.c#L6743&#34;&gt;tcp_conn_request&lt;/a&gt;会调用&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/net/inet_connection_sock.h#L279&#34;&gt;inet_csk_reqsk_queue_is_full&lt;/a&gt;函数判断当前icsk_accept_queue长度是否超过sk_max_ack_backlog，如果超过就给客户端发一个RST包，客户端就当SYN包丢了，然后一直重试，第一次6s超时，然后24s，直到75s还没收到SYNACK就返回用户连接超时。&lt;/li&gt;
 &lt;/ol&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/backlog.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/backlog.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/backlog.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;到目前为止得出结论，backlog是指&lt;strong&gt;用户&lt;/strong&gt;未处理的连接数量，例如backlog为1，有三个客户端在同时连接，第一个连接可以正常三次握手，第二个连接SYN包到来时内核只会回一个RST包，客户端就当SYN包丢了不停重试，当用户调用accept获取了第一个连接之后，第二个内核才会给第二个连接回复SYNACK继续握手。&lt;/p&gt;
 &lt;p&gt;当然icsk_accept_queue最大长度不是绝对为backlog，而是backlog*模糊因子，下面是不同操作系统的backlog的设置。
-&lt;img src=&#34;https://journey-c.github.io/images/backlog_1.jpeg&#34; alt=&#34;&#34;&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/backlog_1.jpeg&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/backlog_1.jpeg&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+
 图片转自《UNIX网络编程卷一》&lt;/p&gt;
 </description>
   </item>

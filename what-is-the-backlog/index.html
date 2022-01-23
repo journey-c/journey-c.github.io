@@ -7,6 +7,7 @@
 <meta name="generator" content="Hugo 0.74.3" />
 
 
+
 <title>backlog参数指的是什么？ - Journey-C</title>
 <meta property="og:title" content="backlog参数指的是什么？ - Journey-C">
 
@@ -54,10 +55,17 @@ if (!doNotTrack) {
 
 
 
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+
+
 </head>
 
 <body>
     <input type="checkbox" class="hidden toggle" id="toc-control" />
+
     <main class="wrapper">
         <div>
             <header class="header">
@@ -93,15 +101,6 @@ if (!doNotTrack) {
                         width="50" height="50"
                         alt="Logo">
                 </a>
-
-                
-                <div style="float:right">
-                    <label for="toc-control">
-                        <img src="/svg/toc.svg" class="article-icon" alt="Table of Contents" />
-                    </label>
-                </div>
-                
-
                 <ul class="nav-links">
                     
                     <li><a href="/tags/"></a></li>
@@ -116,36 +115,11 @@ if (!doNotTrack) {
                     
                     <li>
                 </ul>
-
-                
-                <aside class="hidden clearfix mobile-toc">
-                    <nav id="TableOfContents">
-  <ul>
-    <li><a href="#背景介绍">背景介绍</a></li>
-    <li><a href="#linux中的backlog是如何实现">Linux中的backlog是如何实现</a></li>
-  </ul>
-</nav>
-                </aside>
-                
             </header>
         </div>
 
 
 <div class="content">
-    
-    <aside class="article-toc" id="article-toc">
-    <div class="article-toc-content">
-        <nav id="TableOfContents">
-  <ul>
-    <li><a href="#背景介绍">背景介绍</a></li>
-    <li><a href="#linux中的backlog是如何实现">Linux中的backlog是如何实现</a></li>
-  </ul>
-</nav>
-    </div>
-</aside>
-
-    
-
     <article class="article">
         
         <span class="article-duration">1 min read</span>
@@ -166,6 +140,24 @@ if (!doNotTrack) {
         
         
         
+
+        <div class="toc">
+    <details >
+        <summary>
+            <span class="details">Table Of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%e8%83%8c%e6%99%af%e4%bb%8b%e7%bb%8d" aria-label="背景介绍">背景介绍</a></li>
+                <li>
+                    <a href="#linux%e4%b8%ad%e7%9a%84backlog%e6%98%af%e5%a6%82%e4%bd%95%e5%ae%9e%e7%8e%b0" aria-label="Linux中的backlog是如何实现">Linux中的backlog是如何实现</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
 
         <div class="article-content">
             <h1 id="背景介绍">背景介绍</h1>
@@ -196,10 +188,24 @@ if (!doNotTrack) {
 <li>我们关心的是未处于ESTABLISHED状态的socket，会调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/net/ipv4/tcp_input.c#L6303">tcp_rcv_state_process</a>，这个函数中，当socket状态是LISTEN时（因为客户端的连接包是发给listen fd的），会调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/net/inet_connection_sock.h#L80">struct inet_connection_sock</a>(listen系统调用时创建的)icsk_af_ops对象的conn_request接口，对应<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/net/ipv4/tcp_input.c#L6743">tcp_conn_request</a>函数。</li>
 <li><a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/net/ipv4/tcp_input.c#L6743">tcp_conn_request</a>会调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/net/inet_connection_sock.h#L279">inet_csk_reqsk_queue_is_full</a>函数判断当前icsk_accept_queue长度是否超过sk_max_ack_backlog，如果超过就给客户端发一个RST包，客户端就当SYN包丢了，然后一直重试，第一次6s超时，然后24s，直到75s还没收到SYNACK就返回用户连接超时。</li>
 </ol>
-<p><img src="/images/backlog.png" alt=""></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/backlog.png">
+<img src="/images/backlog.png" alt=""  />
+</a>
+</div>
+
+</p>
 <p>到目前为止得出结论，backlog是指<strong>用户</strong>未处理的连接数量，例如backlog为1，有三个客户端在同时连接，第一个连接可以正常三次握手，第二个连接SYN包到来时内核只会回一个RST包，客户端就当SYN包丢了不停重试，当用户调用accept获取了第一个连接之后，第二个内核才会给第二个连接回复SYNACK继续握手。</p>
 <p>当然icsk_accept_queue最大长度不是绝对为backlog，而是backlog*模糊因子，下面是不同操作系统的backlog的设置。
-<img src="/images/backlog_1.jpeg" alt="">
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/backlog_1.jpeg">
+<img src="/images/backlog_1.jpeg" alt=""  />
+</a>
+</div>
+
+
 图片转自《UNIX网络编程卷一》</p>
 
         </div>

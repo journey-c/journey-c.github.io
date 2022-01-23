@@ -7,6 +7,7 @@
 <meta name="generator" content="Hugo 0.74.3" />
 
 
+
 <title>sync.pool 源码阅读 - Journey-C</title>
 <meta property="og:title" content="sync.pool 源码阅读 - Journey-C">
 
@@ -54,10 +55,17 @@ if (!doNotTrack) {
 
 
 
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+
+
 </head>
 
 <body>
     <input type="checkbox" class="hidden toggle" id="toc-control" />
+
     <main class="wrapper">
         <div>
             <header class="header">
@@ -93,15 +101,6 @@ if (!doNotTrack) {
                         width="50" height="50"
                         alt="Logo">
                 </a>
-
-                
-                <div style="float:right">
-                    <label for="toc-control">
-                        <img src="/svg/toc.svg" class="article-icon" alt="Table of Contents" />
-                    </label>
-                </div>
-                
-
                 <ul class="nav-links">
                     
                     <li><a href="/tags/"></a></li>
@@ -116,48 +115,11 @@ if (!doNotTrack) {
                     
                     <li>
                 </ul>
-
-                
-                <aside class="hidden clearfix mobile-toc">
-                    <nav id="TableOfContents">
-  <ul>
-    <li><a href="#1-设计原理">1. 设计原理</a></li>
-    <li><a href="#2-数据结构">2. 数据结构</a></li>
-    <li><a href="#3-读写操作">3. 读写操作</a>
-      <ul>
-        <li><a href="#31-get">3.1 GET</a></li>
-        <li><a href="#32-put">3.2 PUT</a></li>
-      </ul>
-    </li>
-  </ul>
-</nav>
-                </aside>
-                
             </header>
         </div>
 
 
 <div class="content">
-    
-    <aside class="article-toc" id="article-toc">
-    <div class="article-toc-content">
-        <nav id="TableOfContents">
-  <ul>
-    <li><a href="#1-设计原理">1. 设计原理</a></li>
-    <li><a href="#2-数据结构">2. 数据结构</a></li>
-    <li><a href="#3-读写操作">3. 读写操作</a>
-      <ul>
-        <li><a href="#31-get">3.1 GET</a></li>
-        <li><a href="#32-put">3.2 PUT</a></li>
-      </ul>
-    </li>
-  </ul>
-</nav>
-    </div>
-</aside>
-
-    
-
     <article class="article">
         
         <span class="article-duration">2 min read</span>
@@ -179,6 +141,33 @@ if (!doNotTrack) {
         
         
 
+        <div class="toc">
+    <details >
+        <summary>
+            <span class="details">Table Of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#1-%e8%ae%be%e8%ae%a1%e5%8e%9f%e7%90%86" aria-label="1. 设计原理">1. 设计原理</a></li>
+                <li>
+                    <a href="#2-%e6%95%b0%e6%8d%ae%e7%bb%93%e6%9e%84" aria-label="2. 数据结构">2. 数据结构</a></li>
+                <li>
+                    <a href="#3-%e8%af%bb%e5%86%99%e6%93%8d%e4%bd%9c" aria-label="3. 读写操作">3. 读写操作</a><ul>
+                        
+                <li>
+                    <a href="#31-get" aria-label="3.1 GET">3.1 GET</a></li>
+                <li>
+                    <a href="#32-put" aria-label="3.2 PUT">3.2 PUT</a>
+                </li>
+            </ul>
+            </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+
         <div class="article-content">
             <blockquote>
 <p>阅读项目代码的时候发现很多地方用到了golang的sync.pool，所以好奇golang的sync.pool底层实现是什么样的，有哪些优化。
@@ -193,7 +182,14 @@ if (!doNotTrack) {
 <li>PUT
 对象放回池子时，先判断当前P的私有空间是否为空，为空就放入，不为空就放入共享空间。</li>
 </ul>
-<p><img src="/images/design.png" alt=""></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/design.png">
+<img src="/images/design.png" alt=""  />
+</a>
+</div>
+
+</p>
 <p>当GET/PUT非常频繁的时候，一般都只访问当前P的空间就可以完成操作。 GET/PUT不频繁时，即使访问到其他P的空间(有锁)，由于操作不频繁所以锁是可以接受的。</p>
 <h1 id="2-数据结构">2. 数据结构</h1>
 <p><a href="https://github.com/golang/go/blob/9b955d2d3fcff6a5bc8bce7bafdc4c634a28e95b/src/sync/pool.go#L44">Pool</a>是sync.Pool的核心数据结构。先了解一下该结构体的内部字段。</p>
@@ -224,7 +220,14 @@ GC时回调用 <a href="https://github.com/golang/go/blob/a57f07aac237d366630e85
 <li>将victim指向local指向的数组，并且将local指针置空。</li>
 </ol>
 <p>所以Pool中的Object存活时间为两次GC间隔。</p>
-<p><img src="/images/design_1.png" alt=""></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/design_1.png">
+<img src="/images/design_1.png" alt=""  />
+</a>
+</div>
+
+</p>
 <p>如上图所示，每个P都有一个<a href="https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/pool.go#L65">poolLocal</a>用来存储对象。再来看下<a href="https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/pool.go#L65">poolLocal</a>的内部字段。</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">poolLocal</span> <span style="color:#66d9ef">struct</span> {
 	<span style="color:#a6e22e">poolLocalInternal</span>
@@ -250,12 +253,26 @@ GC时回调用 <a href="https://github.com/golang/go/blob/a57f07aac237d366630e85
 <li>shared是所有调度器公有的存储位置。</li>
 </ol>
 <p><a href="https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/pool.go#L62">shared</a>是一个双向链表实现的队列<a href="https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/poolqueue.go#L194">poolChain</a>，而队列中每个元素<a href="https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/poolqueue.go#L204">poolChainElt</a>，又是一个静态环形队列<a href="https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/poolqueue.go#L19">poolDequeue</a>。环形队列的节点元素是<a href="https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/poolqueue.go#L47">eface</a>结构如下：
-<img src="/images/design_2.png" alt=""></p>
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/design_2.png">
+<img src="/images/design_2.png" alt=""  />
+</a>
+</div>
+
+</p>
 <p><a href="https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/pool.go#L62">shared</a>队列是一个生产消费模型的队列，<code>head</code>只用于生产，<code>tail</code>只用于消费：</p>
 <ol>
 <li>GET操作通常是从队列<code>tail</code>端取对象。</li>
 <li>PUT操作通常是将对象从<code>head</code>端放入。
-<img src="/images/design_3.png" alt=""></li>
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/design_3.png">
+<img src="/images/design_3.png" alt=""  />
+</a>
+</div>
+
+</li>
 </ol>
 <p>其中环形队列<a href="https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/poolqueue.go#L19">poolDequeue</a>实现挺巧妙。是一个无锁、固定大小的单生产端多消费端的环形队列，单一producer可以在头部push和pop(可能和传统队列头部只能push的定义不同)，多consumer可以在尾部pop。</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">poolDequeue</span> <span style="color:#66d9ef">struct</span> {

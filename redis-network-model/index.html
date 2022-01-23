@@ -7,6 +7,7 @@
 <meta name="generator" content="Hugo 0.74.3" />
 
 
+
 <title>Redis的网络模型 - Journey-C</title>
 <meta property="og:title" content="Redis的网络模型 - Journey-C">
 
@@ -54,10 +55,17 @@ if (!doNotTrack) {
 
 
 
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+
+
 </head>
 
 <body>
     <input type="checkbox" class="hidden toggle" id="toc-control" />
+
     <main class="wrapper">
         <div>
             <header class="header">
@@ -93,15 +101,6 @@ if (!doNotTrack) {
                         width="50" height="50"
                         alt="Logo">
                 </a>
-
-                
-                <div style="float:right">
-                    <label for="toc-control">
-                        <img src="/svg/toc.svg" class="article-icon" alt="Table of Contents" />
-                    </label>
-                </div>
-                
-
                 <ul class="nav-links">
                     
                     <li><a href="/tags/"></a></li>
@@ -116,42 +115,11 @@ if (!doNotTrack) {
                     
                     <li>
                 </ul>
-
-                
-                <aside class="hidden clearfix mobile-toc">
-                    <nav id="TableOfContents">
-  <ul>
-    <li><a href="#设计原理">设计原理</a></li>
-    <li><a href="#数据结构">数据结构</a></li>
-    <li><a href="#事件">事件</a></li>
-    <li><a href="#事件循环">事件循环</a></li>
-    <li><a href="#总结">总结</a></li>
-  </ul>
-</nav>
-                </aside>
-                
             </header>
         </div>
 
 
 <div class="content">
-    
-    <aside class="article-toc" id="article-toc">
-    <div class="article-toc-content">
-        <nav id="TableOfContents">
-  <ul>
-    <li><a href="#设计原理">设计原理</a></li>
-    <li><a href="#数据结构">数据结构</a></li>
-    <li><a href="#事件">事件</a></li>
-    <li><a href="#事件循环">事件循环</a></li>
-    <li><a href="#总结">总结</a></li>
-  </ul>
-</nav>
-    </div>
-</aside>
-
-    
-
     <article class="article">
         
         <span class="article-duration">2 min read</span>
@@ -175,23 +143,82 @@ if (!doNotTrack) {
         
         
 
+        <div class="toc">
+    <details >
+        <summary>
+            <span class="details">Table Of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%e8%ae%be%e8%ae%a1%e5%8e%9f%e7%90%86" aria-label="设计原理">设计原理</a></li>
+                <li>
+                    <a href="#%e6%95%b0%e6%8d%ae%e7%bb%93%e6%9e%84" aria-label="数据结构">数据结构</a></li>
+                <li>
+                    <a href="#%e4%ba%8b%e4%bb%b6" aria-label="事件">事件</a></li>
+                <li>
+                    <a href="#%e4%ba%8b%e4%bb%b6%e5%be%aa%e7%8e%af" aria-label="事件循环">事件循环</a></li>
+                <li>
+                    <a href="#%e6%80%bb%e7%bb%93" aria-label="总结">总结</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+
         <div class="article-content">
             <blockquote>
 <p>服务端程序几乎都会有网络交互的功能，一个优秀网络模型可以合理配合使用计算机的各资源。</p>
 </blockquote>
 <p>Redis作为广为人知的内存数据库，从玩具级项目到工业级项目中都可以看到它的身影，而Redis在最初的几个版本中一直是单线程，却能扛住<a href="https://redis.io/topics/faq#what39s-the-redis-memory-footprint">1 million requests per second</a>的请求量（非单点）。其实现的单线程网络模型必然十分优秀。
-<img src="/images/redis-network-model-share.png" alt="redis-network-model-share"></p>
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/redis-network-model-share.png">
+<img src="/images/redis-network-model-share.png" alt="redis-network-model-share"  />
+</a>
+</div>
+
+</p>
 <h1 id="设计原理">设计原理</h1>
 <p>在分析网络模型之前先分析一下Redis中网络交互的场景。一般来说我们在使用Redis时，一般会和Redis-Server建若干个连接，然后并发的给Redis-Server发送指令并得到回复。而Redis-Server就需要同时维护若干个与Redis-Client的连接，并且随时处理每个连接发来的请求。</p>
-<p><img src="/images/redis-network-model-connecttion-per-thread.png" alt="redis-network-model-connecttion-per-thread">
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/redis-network-model-connecttion-per-thread.png">
+<img src="/images/redis-network-model-connecttion-per-thread.png" alt="redis-network-model-connecttion-per-thread"  />
+</a>
+</div>
+
+
 一种方式是起一个线程监听一个端口，当新连接到来时，创建一个新线程处理这个连接。这样做的缺点是，当连接过多时线程数也随之增多，线程栈大小一般8MB，大量的线程会占用大量内存和CPU资源。</p>
-<p><img src="/images/redis-network-model-connecttion-worker-pool.png" alt="redis-network-model-connecttion-worker-pool">
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/redis-network-model-connecttion-worker-pool.png">
+<img src="/images/redis-network-model-connecttion-worker-pool.png" alt="redis-network-model-connecttion-worker-pool"  />
+</a>
+</div>
+
+
 另一种方式是起一个线程监听端口，新连接交给线程池来处理，这样做的优点是连接数不再会压垮计算机，而缺点就是服务器的处理能力受限与线程池的大小，并且空闲连接也会占用线程池的资源。</p>
 <p>上边两种网络模型的问题就在于一个线程只处理一个连接，而操作系统提供的<a href="/io-multiplexing">IO多路复用技术</a>可以解决这一问题。一个线程监听多个连接，每个连接只有在活跃时才会使用CPU，从而达到节省资源的目录。</p>
 <p>Redis采用Reactor模式实现的网络模型。主要由事件收集器、事件发送器、事件处理器组成。事件收集器主要收集所有事件，包括来自硬件软件的事件。事件发送器负责将事件发送到实现注册的事件处理器。而事件处理器则负责处理事件。其中事件收集器就是通过<a href="/io-multiplexing">IO多路复用技术</a>来实现的。</p>
-<p><img src="/images/redis-network-model.png" alt="redis-network-model"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/redis-network-model.png">
+<img src="/images/redis-network-model.png" alt="redis-network-model"  />
+</a>
+</div>
+
+</p>
 <h1 id="数据结构">数据结构</h1>
-<p><img src="/images/redis-network-model-data-structure.png" alt="redis-network-model-data-structure"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/redis-network-model-data-structure.png">
+<img src="/images/redis-network-model-data-structure.png" alt="redis-network-model-data-structure"  />
+</a>
+</div>
+
+</p>
 <p>结构体<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.h#L99">aeEventLoop</a>封装了事件循环相关的变量，包括两种事件的链表(时间事件、文件事件)。然后文件事件（<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.h#L72">aeFileEvent</a>）中封装了读写事件接口充当事件处理器，时间事件（<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.h#L80">aeTimeEvent</a>）中也封装了相应接口作为事件处理器。</p>
 <h1 id="事件">事件</h1>
 <p>默认有两种事件：<code>文件事件</code>, <code>时间事件</code>。</p>
@@ -251,7 +278,14 @@ if (!doNotTrack) {
 <p>根据配置文件监听端口之后，会调用<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/server.c#L3000">createSocketAcceptHandler</a>将<code>Listen FD</code>封装成文件事件加入<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.h#L99">aeEventLoop</a>。</p>
 <p>此时服务端准备工作基本完成了，端口监听了，<code>Listen FD</code>的<code>accept</code>动作也监听了。</p>
 <p>然后就会调用<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.c#L484">aeMain</a>进入事件循环了。</p>
-<p><img src="/images/redis-network-model-eventloop.png" alt="redis-network-model-eventloop"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/redis-network-model-eventloop.png">
+<img src="/images/redis-network-model-eventloop.png" alt="redis-network-model-eventloop"  />
+</a>
+</div>
+
+</p>
 <p><a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.c#L484">aeMain</a>函数中是一个循环，不断判断是否停止，不停止就执行<a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.c#L348">aeProcessEvents</a>函数。</p>
 <p><a href="https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.c#L348">aeProcessEvents</a>中：</p>
 <ol>
@@ -268,9 +302,23 @@ if (!doNotTrack) {
 <h1 id="总结">总结</h1>
 <p>上面分析的网络模型在Redis中都是在单线程中实现的，所有事件执行也是串行的，这也是很多人使用Redis实现分布式锁而不用考虑并发原因了。Redis采用单线程实现网络模型也能扛住大量请求，一方面是网络模型足够优秀，另一方面就是所有操作都在内存中，单事物处理时间短，并且Redis数据库中数据结构实现优化到了极致，比如同种数据结构根据数据量大小选择不同底层实现，通用回复字符串共享，秒级时间戳缓存等等。</p>
 <p>事件驱动实现并非只能单线程实现，Redis之所以使用单线程实现一方面是为了方便开发者，另一方面是Redis的瓶颈并不在网络请求。而多线程实现的代表就是<a href="https://nginx.org/">Nginx</a>了。</p>
-<p><img src="/images/redis-network-model-nginx.png" alt="redis-network-model-nginx"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/redis-network-model-nginx.png">
+<img src="/images/redis-network-model-nginx.png" alt="redis-network-model-nginx"  />
+</a>
+</div>
+
+</p>
 <p>nginx实现时，Master监听，将连接分发给若干个Worker线程处理，每个Worker线程有自己的事件循环。为了避免调度对网络响应的损耗，nginx会调用<a href="https://man7.org/linux/man-pages/man2/sched_setaffinity.2.html">SCHED_SETAFFINITY</a>将每个Worker分散绑定到不同CPU上。</p>
-<p><img src="/images/redis-network-model-golang.png" alt="redis-network-model-golang"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/redis-network-model-golang.png">
+<img src="/images/redis-network-model-golang.png" alt="redis-network-model-golang"  />
+</a>
+</div>
+
+</p>
 <p>而以高并发著称的golang语言却不适合采用事件驱动编程。golang标准库中的网络模型都是<code>connection-per-goroutine</code>，这样做的原因是go无法将goroutine固定到指定<code>P</code>上，如果采用事件驱动模型，最坏的情况下所有Worker被调度到同一个<code>P</code>上，就变成单线程模型了。从上面golang事件驱动模型的尖刺非常明显（蓝色为 netpoll + 多路复用，绿色为 netpoll + 长连接，黄色为 net 库 + 长连接）。</p>
 
         </div>

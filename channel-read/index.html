@@ -7,6 +7,7 @@
 <meta name="generator" content="Hugo 0.74.3" />
 
 
+
 <title>channel 源码阅读 - Journey-C</title>
 <meta property="og:title" content="channel 源码阅读 - Journey-C">
 
@@ -54,10 +55,17 @@ if (!doNotTrack) {
 
 
 
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+
+
 </head>
 
 <body>
     <input type="checkbox" class="hidden toggle" id="toc-control" />
+
     <main class="wrapper">
         <div>
             <header class="header">
@@ -93,15 +101,6 @@ if (!doNotTrack) {
                         width="50" height="50"
                         alt="Logo">
                 </a>
-
-                
-                <div style="float:right">
-                    <label for="toc-control">
-                        <img src="/svg/toc.svg" class="article-icon" alt="Table of Contents" />
-                    </label>
-                </div>
-                
-
                 <ul class="nav-links">
                     
                     <li><a href="/tags/"></a></li>
@@ -116,148 +115,11 @@ if (!doNotTrack) {
                     
                     <li>
                 </ul>
-
-                
-                <aside class="hidden clearfix mobile-toc">
-                    <nav id="TableOfContents">
-  <ul>
-    <li><a href="#1-简介">1. 简介</a></li>
-    <li><a href="#2-数据部分">2. 数据部分</a>
-      <ul>
-        <li><a href="#21--hchan">2.1  hchan</a>
-          <ul>
-            <li><a href="#211-参数意义">2.1.1 参数意义</a></li>
-          </ul>
-        </li>
-        <li><a href="#22-waitq">2.2 waitq</a>
-          <ul>
-            <li><a href="#221-参数意义">2.2.1 参数意义</a></li>
-            <li><a href="#222-函数">2.2.2 函数</a>
-              <ul>
-                <li><a href="#2221-enqueue">2.2.2.1 enqueue</a></li>
-                <li><a href="#2222-dequeue">2.2.2.2 dequeue</a></li>
-              </ul>
-            </li>
-          </ul>
-        </li>
-        <li><a href="#23-sudog">2.3 sudog</a>
-          <ul>
-            <li><a href="#231-创建sudogacquiresudog">2.3.1 创建sudog——acquireSudog</a></li>
-            <li><a href="#232-销毁sudogreleasesudog">2.3.2 销毁sudog——releaseSudog</a></li>
-          </ul>
-        </li>
-      </ul>
-    </li>
-    <li><a href="#3-实现细节">3. 实现细节</a>
-      <ul>
-        <li><a href="#31-创建channel">3.1 创建channel</a>
-          <ul>
-            <li><a href="#311-makechan64">3.1.1 makechan64</a></li>
-            <li><a href="#312-makechan">3.1.2 makechan</a></li>
-          </ul>
-        </li>
-        <li><a href="#32-发送">3.2 发送</a>
-          <ul>
-            <li><a href="#321-chansend">3.2.1 chansend</a>
-              <ul>
-                <li><a href="#3211-racereadpc">3.2.1.1 racereadpc</a></li>
-                <li><a href="#3212-send">3.2.1.2 send</a></li>
-              </ul>
-            </li>
-          </ul>
-        </li>
-        <li><a href="#33-接收">3.3 接收</a>
-          <ul>
-            <li><a href="#331-chanrecv">3.3.1 chanrecv</a></li>
-          </ul>
-        </li>
-        <li><a href="#33-关闭channel">3.3 关闭channel</a></li>
-      </ul>
-    </li>
-    <li><a href="#附录">附录</a>
-      <ul>
-        <li><a href="#chandot">chan.dot</a></li>
-      </ul>
-    </li>
-  </ul>
-</nav>
-                </aside>
-                
             </header>
         </div>
 
 
 <div class="content">
-    
-    <aside class="article-toc" id="article-toc">
-    <div class="article-toc-content">
-        <nav id="TableOfContents">
-  <ul>
-    <li><a href="#1-简介">1. 简介</a></li>
-    <li><a href="#2-数据部分">2. 数据部分</a>
-      <ul>
-        <li><a href="#21--hchan">2.1  hchan</a>
-          <ul>
-            <li><a href="#211-参数意义">2.1.1 参数意义</a></li>
-          </ul>
-        </li>
-        <li><a href="#22-waitq">2.2 waitq</a>
-          <ul>
-            <li><a href="#221-参数意义">2.2.1 参数意义</a></li>
-            <li><a href="#222-函数">2.2.2 函数</a>
-              <ul>
-                <li><a href="#2221-enqueue">2.2.2.1 enqueue</a></li>
-                <li><a href="#2222-dequeue">2.2.2.2 dequeue</a></li>
-              </ul>
-            </li>
-          </ul>
-        </li>
-        <li><a href="#23-sudog">2.3 sudog</a>
-          <ul>
-            <li><a href="#231-创建sudogacquiresudog">2.3.1 创建sudog——acquireSudog</a></li>
-            <li><a href="#232-销毁sudogreleasesudog">2.3.2 销毁sudog——releaseSudog</a></li>
-          </ul>
-        </li>
-      </ul>
-    </li>
-    <li><a href="#3-实现细节">3. 实现细节</a>
-      <ul>
-        <li><a href="#31-创建channel">3.1 创建channel</a>
-          <ul>
-            <li><a href="#311-makechan64">3.1.1 makechan64</a></li>
-            <li><a href="#312-makechan">3.1.2 makechan</a></li>
-          </ul>
-        </li>
-        <li><a href="#32-发送">3.2 发送</a>
-          <ul>
-            <li><a href="#321-chansend">3.2.1 chansend</a>
-              <ul>
-                <li><a href="#3211-racereadpc">3.2.1.1 racereadpc</a></li>
-                <li><a href="#3212-send">3.2.1.2 send</a></li>
-              </ul>
-            </li>
-          </ul>
-        </li>
-        <li><a href="#33-接收">3.3 接收</a>
-          <ul>
-            <li><a href="#331-chanrecv">3.3.1 chanrecv</a></li>
-          </ul>
-        </li>
-        <li><a href="#33-关闭channel">3.3 关闭channel</a></li>
-      </ul>
-    </li>
-    <li><a href="#附录">附录</a>
-      <ul>
-        <li><a href="#chandot">chan.dot</a></li>
-      </ul>
-    </li>
-  </ul>
-</nav>
-    </div>
-</aside>
-
-    
-
     <article class="article">
         
         <span class="article-duration">11 min read</span>
@@ -279,6 +141,93 @@ if (!doNotTrack) {
         
         
 
+        <div class="toc">
+    <details >
+        <summary>
+            <span class="details">Table Of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#1-%e7%ae%80%e4%bb%8b" aria-label="1. 简介">1. 简介</a></li>
+                <li>
+                    <a href="#2-%e6%95%b0%e6%8d%ae%e9%83%a8%e5%88%86" aria-label="2. 数据部分">2. 数据部分</a><ul>
+                        
+                <li>
+                    <a href="#21--hchan" aria-label="2.1  hchan">2.1  hchan</a><ul>
+                        
+                <li>
+                    <a href="#211-%e5%8f%82%e6%95%b0%e6%84%8f%e4%b9%89" aria-label="2.1.1 参数意义">2.1.1 参数意义</a></li></ul>
+                </li>
+                <li>
+                    <a href="#22-waitq" aria-label="2.2 waitq">2.2 waitq</a><ul>
+                        
+                <li>
+                    <a href="#221-%e5%8f%82%e6%95%b0%e6%84%8f%e4%b9%89" aria-label="2.2.1 参数意义">2.2.1 参数意义</a></li>
+                <li>
+                    <a href="#222-%e5%87%bd%e6%95%b0" aria-label="2.2.2 函数">2.2.2 函数</a><ul>
+                        
+                <li>
+                    <a href="#2221-enqueue" aria-label="2.2.2.1 enqueue">2.2.2.1 enqueue</a></li>
+                <li>
+                    <a href="#2222-dequeue" aria-label="2.2.2.2 dequeue">2.2.2.2 dequeue</a></li></ul>
+                </li></ul>
+                </li>
+                <li>
+                    <a href="#23-sudog" aria-label="2.3 sudog">2.3 sudog</a><ul>
+                        
+                <li>
+                    <a href="#231-%e5%88%9b%e5%bb%basudogacquiresudog" aria-label="2.3.1 创建sudog——acquireSudog">2.3.1 创建sudog——acquireSudog</a></li>
+                <li>
+                    <a href="#232-%e9%94%80%e6%af%81sudogreleasesudog" aria-label="2.3.2 销毁sudog——releaseSudog">2.3.2 销毁sudog——releaseSudog</a></li></ul>
+                </li></ul>
+                </li>
+                <li>
+                    <a href="#3-%e5%ae%9e%e7%8e%b0%e7%bb%86%e8%8a%82" aria-label="3. 实现细节">3. 实现细节</a><ul>
+                        
+                <li>
+                    <a href="#31-%e5%88%9b%e5%bb%bachannel" aria-label="3.1 创建channel">3.1 创建channel</a><ul>
+                        
+                <li>
+                    <a href="#311-makechan64" aria-label="3.1.1 makechan64">3.1.1 makechan64</a></li>
+                <li>
+                    <a href="#312-makechan" aria-label="3.1.2 makechan">3.1.2 makechan</a></li></ul>
+                </li>
+                <li>
+                    <a href="#32-%e5%8f%91%e9%80%81" aria-label="3.2 发送">3.2 发送</a><ul>
+                        
+                <li>
+                    <a href="#321-chansend" aria-label="3.2.1 chansend">3.2.1 chansend</a><ul>
+                        
+                <li>
+                    <a href="#3211-racereadpc" aria-label="3.2.1.1 racereadpc">3.2.1.1 racereadpc</a></li>
+                <li>
+                    <a href="#3212-send" aria-label="3.2.1.2 send">3.2.1.2 send</a></li></ul>
+                </li></ul>
+                </li>
+                <li>
+                    <a href="#33-%e6%8e%a5%e6%94%b6" aria-label="3.3 接收">3.3 接收</a><ul>
+                        
+                <li>
+                    <a href="#331-chanrecv" aria-label="3.3.1 chanrecv">3.3.1 chanrecv</a></li></ul>
+                </li>
+                <li>
+                    <a href="#33-%e5%85%b3%e9%97%adchannel" aria-label="3.3 关闭channel">3.3 关闭channel</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e9%99%84%e5%bd%95" aria-label="附录">附录</a><ul>
+                        
+                <li>
+                    <a href="#chandot" aria-label="chan.dot">chan.dot</a>
+                </li>
+            </ul>
+            </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+
         <div class="article-content">
             <blockquote>
 <p>年初的时候go语言的学习提上了日程，前一篇sync.pool阅读之后，阅读代码进度本该更快些，奈何身体被掏空，所以这篇文章断断续续一个月终于攒起来了。</p>
@@ -291,7 +240,14 @@ if (!doNotTrack) {
 <li>顺序通讯，写入和读出的顺序一致</li>
 </ol>
 <h1 id="2-数据部分">2. 数据部分</h1>
-<p><img src="/images/chan.png" alt=""></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/chan.png">
+<img src="/images/chan.png" alt=""  />
+</a>
+</div>
+
+</p>
 <p><strong>源码位置go/src/runtime/chan.go</strong></p>
 <h2 id="21--hchan">2.1  hchan</h2>
 <p>channel对应的数据结构</p>

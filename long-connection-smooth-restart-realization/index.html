@@ -7,6 +7,7 @@
 <meta name="generator" content="Hugo 0.74.3" />
 
 
+
 <title>长连接平滑重启 - Journey-C</title>
 <meta property="og:title" content="长连接平滑重启 - Journey-C">
 
@@ -54,10 +55,17 @@ if (!doNotTrack) {
 
 
 
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+
+
 </head>
 
 <body>
     <input type="checkbox" class="hidden toggle" id="toc-control" />
+
     <main class="wrapper">
         <div>
             <header class="header">
@@ -93,15 +101,6 @@ if (!doNotTrack) {
                         width="50" height="50"
                         alt="Logo">
                 </a>
-
-                
-                <div style="float:right">
-                    <label for="toc-control">
-                        <img src="/svg/toc.svg" class="article-icon" alt="Table of Contents" />
-                    </label>
-                </div>
-                
-
                 <ul class="nav-links">
                     
                     <li><a href="/tags/"></a></li>
@@ -116,48 +115,11 @@ if (!doNotTrack) {
                     
                     <li>
                 </ul>
-
-                
-                <aside class="hidden clearfix mobile-toc">
-                    <nav id="TableOfContents">
-  <ul>
-    <li><a href="#1难点">1.难点</a></li>
-    <li><a href="#2解决">2.解决</a>
-      <ul>
-        <li><a href="#21-如何做到不中断接受连接">2.1 如何做到不中断接受连接</a></li>
-        <li><a href="#22-如何做到已有连接不中断">2.2 如何做到已有连接不中断</a></li>
-      </ul>
-    </li>
-    <li><a href="#3-demo实现">3. Demo实现</a></li>
-  </ul>
-</nav>
-                </aside>
-                
             </header>
         </div>
 
 
 <div class="content">
-    
-    <aside class="article-toc" id="article-toc">
-    <div class="article-toc-content">
-        <nav id="TableOfContents">
-  <ul>
-    <li><a href="#1难点">1.难点</a></li>
-    <li><a href="#2解决">2.解决</a>
-      <ul>
-        <li><a href="#21-如何做到不中断接受连接">2.1 如何做到不中断接受连接</a></li>
-        <li><a href="#22-如何做到已有连接不中断">2.2 如何做到已有连接不中断</a></li>
-      </ul>
-    </li>
-    <li><a href="#3-demo实现">3. Demo实现</a></li>
-  </ul>
-</nav>
-    </div>
-</aside>
-
-    
-
     <article class="article">
         
         <span class="article-duration">5 min read</span>
@@ -178,6 +140,32 @@ if (!doNotTrack) {
         
         
         
+
+        <div class="toc">
+    <details >
+        <summary>
+            <span class="details">Table Of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#1%e9%9a%be%e7%82%b9" aria-label="1.难点">1.难点</a></li>
+                <li>
+                    <a href="#2%e8%a7%a3%e5%86%b3" aria-label="2.解决">2.解决</a><ul>
+                        
+                <li>
+                    <a href="#21-%e5%a6%82%e4%bd%95%e5%81%9a%e5%88%b0%e4%b8%8d%e4%b8%ad%e6%96%ad%e6%8e%a5%e5%8f%97%e8%bf%9e%e6%8e%a5" aria-label="2.1 如何做到不中断接受连接">2.1 如何做到不中断接受连接</a></li>
+                <li>
+                    <a href="#22-%e5%a6%82%e4%bd%95%e5%81%9a%e5%88%b0%e5%b7%b2%e6%9c%89%e8%bf%9e%e6%8e%a5%e4%b8%8d%e4%b8%ad%e6%96%ad" aria-label="2.2 如何做到已有连接不中断">2.2 如何做到已有连接不中断</a></li></ul>
+                </li>
+                <li>
+                    <a href="#3-demo%e5%ae%9e%e7%8e%b0" aria-label="3. Demo实现">3. Demo实现</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
 
         <div class="article-content">
             <blockquote>

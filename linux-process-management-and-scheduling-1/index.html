@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.74.3" />
+
+
+
+<title>Linux进程管理和调度（一） - Journey-C</title>
+<meta property="og:title" content="Linux进程管理和调度（一） - Journey-C">
+
+
+<link href='https://journey-c.github.io/favicon.png' rel='icon' type='image/x-icon' />
+
+
+
+
+
+
+
+
+<link rel="icon" href="https://journey-c.github.io/images/" type="image/x-icon" />
+<link rel="stylesheet" href="https://journey-c.github.io/css/main.css" media="all">
+<link rel="stylesheet" href="https://journey-c.github.io/css/fonts.css" media="all">
+<link rel="stylesheet" href="https://journey-c.github.io/css/prism.css" media="all">
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Merriweather:400|Lato:400,400italic,700">
+<script type="text/javascript" src="https://journey-c.github.io/js/main.js"></script>
+<script type="text/javascript" src="https://journey-c.github.io/js/prism.js"></script>
+
+
+
+<script type="application/javascript">
+var doNotTrack = false;
+if (!doNotTrack) {
+	window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	ga('create', 'UA-181048644-1', 'auto');
+	
+	ga('send', 'pageview');
+}
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-181048644-1"></script>
+<script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() {dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-181048644-1');
+</script>
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+
+
+</head>
+
+<body>
+    <input type="checkbox" class="hidden toggle" id="toc-control" />
+
+    <main class="wrapper">
+        <div>
+            <header class="header">
+                <nav class="nav">
+    <a href="https://journey-c.github.io/" class="nav-logo">
+        <img src="https://journey-c.github.io/images/yangguo.png" width="50"
+            height="50" alt="Logo">
+    </a>
+
+    <ul class="nav-links">
+        
+        <li><a href="/tags/"></a></li>
+        
+        <li><a href="/about/">About</a></li>
+        
+        <li><a href="https://github.com/journey-c">Github</a></li>
+        
+        <li><a href="/index.xml">RSS</a></li>
+        
+        <li><a href="https://www.cnblogs.com/wuwangchuxin0924/">博客园</a></li>
+        
+        <li>
+    </ul>
+</nav>
+
+            </header>
+        </div>
+
+        <div>
+            <header class="mobile-header">
+                <a href="https://journey-c.github.io/" class="nav-logo">
+                    <img src="https://journey-c.github.io/images/yangguo.png"
+                        width="50" height="50"
+                        alt="Logo">
+                </a>
+                <ul class="nav-links">
+                    
+                    <li><a href="/tags/"></a></li>
+                    
+                    <li><a href="/about/">About</a></li>
+                    
+                    <li><a href="https://github.com/journey-c">Github</a></li>
+                    
+                    <li><a href="/index.xml">RSS</a></li>
+                    
+                    <li><a href="https://www.cnblogs.com/wuwangchuxin0924/">博客园</a></li>
+                    
+                    <li>
+                </ul>
+            </header>
+        </div>
+
+
+<div class="content">
+    <article class="article">
+        
+        <span class="article-duration">2 min read</span>
+        
+
+        <h1 class="article-title">Linux进程管理和调度（一）</h1>
+
+        
+        <span class="article-date">2022-01-23</span>
+        
+
+        
+        
+        
+        <a class="article-tag" href="https://journey-c.github.io/tags/linux">Linux</a>
+        
+        <a class="article-tag" href="https://journey-c.github.io/tags/%E6%BA%90%E7%A0%81">源码</a>
+        
+        
+        
+
+        <div class="toc">
+    <details >
+        <summary>
+            <span class="details">Table Of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%e8%bf%9b%e7%a8%8b%e8%a1%a8%e7%a4%ba" aria-label="进程表示">进程表示</a><ul>
+                        
+                <li>
+                    <a href="#%e5%91%bd%e5%90%8d%e7%a9%ba%e9%97%b4" aria-label="命名空间">命名空间</a><ul>
+                        
+                <li>
+                    <a href="#%e6%a6%82%e5%bf%b5" aria-label="概念">概念</a></li>
+                <li>
+                    <a href="#%e5%ae%9e%e7%8e%b0" aria-label="实现">实现</a></li>
+                <li>
+                    <a href="#%e7%9b%b8%e5%85%b3%e6%93%8d%e4%bd%9c" aria-label="相关操作">相关操作</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e8%bf%9b%e7%a8%8bid" aria-label="进程ID">进程ID</a><ul>
+                        
+                <li>
+                    <a href="#%e5%85%a8%e5%b1%80id" aria-label="全局ID">全局ID</a></li>
+                <li>
+                    <a href="#%e5%b1%80%e9%83%a8id" aria-label="局部ID">局部ID</a><ul>
+                        
+                <li>
+                    <a href="#%e6%95%b0%e6%8d%ae%e7%bb%93%e6%9e%84" aria-label="数据结构">数据结构</a></li>
+                <li>
+                    <a href="#%e5%87%bd%e6%95%b0" aria-label="函数">函数</a>
+                </li>
+            </ul>
+            </li>
+            </ul>
+            </li>
+            </ul>
+            </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+
+        <div class="article-content">
+            <p>几乎所有现代操作系统都支持同时运行若干程序（至少在用户错觉是这样的）。这种错觉是由内核和处理器建立的，在很短的时间间隔内多任务不停切换。由于用户无法注意到短时间内的停滞，所以就造成了感官上的多任务并行。本文就一起来探究一下Linux是如果管理多任务的。</p>
+<h1 id="进程表示">进程表示</h1>
+<p>既然要管理任务，就要有一个描述任务的数据结构，操作系统一般用<a href="https://en.wikipedia.org/wiki/Process_(computing)">进程</a>来表示任务，Linux中将进程线程抽象为<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched.h#L640">struct task_struct</a>，<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched.h#L640">struct task_struct</a>中涉及了若干个子系统，十分的复杂，我们一点点来分析。
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/linux-process-management-and-scheduling-process.png">
+<img src="/images/linux-process-management-and-scheduling-process.png" alt="linux-process-management-and-scheduling-process"  />
+</a>
+</div>
+
+</p>
+<h2 id="命名空间">命名空间</h2>
+<p>在分析其他字段之前，先简单了解一下namespace的概念，因为后边讲的东西多多少少都会涉及这个特性。命名空间提供了虚拟化的一种轻量级形式，使得我们可以从不同的方面来查看运行系统的全局属性。该机制类似于Solaris中的zone或FreeBSD中的jail。</p>
+<h3 id="概念">概念</h3>
+<p>传统的类UNIX系统中许多资源都是全局管理的，内核统一维护所有进程的ID，以及用户ID等，调用者调用uname命令看到的内核信息都是相同的。</p>
+<p>全局管理可以有选择的允许或拒绝某些特权，0号进程几乎可以做任何事，但是其他用户的权限会被收敛，例如用户A不能杀死用户B的进程。虽然用户A不能杀死用户B的进程，但是能看到。Linux是多任务、多用户的的系统，没道理不让看其他用户的活动。</p>
+<p>但是在有些情况下，这种特性并不是十分友好，例如云厂商对外提供计算服务，当然要给予他机器所有的权利，最直白的方式是给用户提供物理机，但是用户需要的计算能力不一样，并且采购也需要时间的，运营成品极高。使用KVM或VMWare提供的虚拟化环境是另一种解决问题的方案。但是这种方案的弊端明显，需要先虚出来硬件，然后在此基础上运行操作系统，虽然随着虚拟化的发展，性能损耗可以讲到1%以下。但是创建计算节点的耗时高还是给使用上带来了不便。</p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/linux-process-management-and-scheduling-namespace_1.png">
+<img src="/images/linux-process-management-and-scheduling-namespace_1.png" alt="linux-process-management-and-scheduling-namespace_1"  />
+</a>
+</div>
+
+
+而命名空间则提供了一种新的解决方案，将所有全局资源通过命名空间抽象起来，将一组进程放入容器中，容器间隔离，但也允许一定程度上的共享，例如两个容器共享同一个文件系统。</p>
+<h3 id="实现">实现</h3>
+<p>资源隔离后所有资源不再是全局唯一，只有<code>资源+资源所在命名空间</code>的二元组全局唯一。
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/linux-process-management-and-scheduling-namespace_2.png">
+<img src="/images/linux-process-management-and-scheduling-namespace_2.png" alt="linux-process-management-and-scheduling-namespace_1"  />
+</a>
+</div>
+
+</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">/* Namespaces: */</span>
+<span style="color:#66d9ef">struct</span> nsproxy          <span style="color:#f92672">*</span>nsproxy;
+</code></pre></div><p><a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched.h#L640">struct task_struct</a>中使用<a href="https://github.com/torvalds/linux/blob/60a9483534ed0d99090a2ee1d4bb0b8179195f51/include/linux/nsproxy.h#L31">struct nsproxy</a>来维护namespace的信息。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">struct</span> nsproxy {
+    atomic_t count;
+    <span style="color:#66d9ef">struct</span> uts_namespace <span style="color:#f92672">*</span>uts_ns;
+    <span style="color:#66d9ef">struct</span> ipc_namespace <span style="color:#f92672">*</span>ipc_ns;
+    <span style="color:#66d9ef">struct</span> mnt_namespace <span style="color:#f92672">*</span>mnt_ns;
+    <span style="color:#66d9ef">struct</span> pid_namespace <span style="color:#f92672">*</span>pid_ns_for_children;
+    <span style="color:#66d9ef">struct</span> net       <span style="color:#f92672">*</span>net_ns;
+    <span style="color:#66d9ef">struct</span> time_namespace <span style="color:#f92672">*</span>time_ns;
+    <span style="color:#66d9ef">struct</span> time_namespace <span style="color:#f92672">*</span>time_ns_for_children;
+    <span style="color:#66d9ef">struct</span> cgroup_namespace <span style="color:#f92672">*</span>cgroup_ns;
+};
+</code></pre></div><p>当前内核可以感知以下命名空间</p>
+<ul>
+<li>uts_ns 记录了内核名称、版本、体系结构等信息，通过<code>uname</code>系统调用可以获取</li>
+<li>ipc_us 记录了进程间通信的信息</li>
+<li>mnt_ns 已经装载的文件系统的视图</li>
+<li>pid_ns_for_children 进程ID相关的信息</li>
+<li>net_ns 包含所有网络相关的命名空间参数</li>
+<li>time_ns和time_ns_for_children 维护了时间相关信息</li>
+<li>cgroup_ns 包含了计算资源分配相关的信息，例如CPU、内存、磁盘I/O等</li>
+<li>count是引用计数，各task通过指针指向相同的nsproxy，所以这里有一个引用计数</li>
+</ul>
+<p>相同namespace进程通过指针指向同一个nsproxy结构，反之的指向不同nsproxy，这样就做到改变只影响本namespace。</p>
+<h3 id="相关操作">相关操作</h3>
+<p>使用最频繁的操作就是获取当前进程所在的命名空间了。</p>
+<ol>
+<li>如果没有给定数字类型pid或者struct task_struct结构体，就使用get_current()获取当前进程。</li>
+<li>根据task_struct-&gt;thread_pid-&gt;level取出第几个struct upid</li>
+<li>struct upid中有对应的struct pid_namespace</li>
+</ol>
+<h2 id="进程id">进程ID</h2>
+<p>进程作为操作系统的一个核心概念，每个进程都有自己的ID：进程ID，也有自己的生命周期。
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/linux-process-management-and-scheduling-life-cycle.png">
+<img src="/images/linux-process-management-and-scheduling-life-cycle.png" alt="linux-process-management-and-scheduling-life-cycle"  />
+</a>
+</div>
+
+</p>
+<p>子进程有父进程，父进程也有父进程，这样就形成了以init进程为根的家族树。除了纵向的关系，还有横向的关系：进程组、会话组。</p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/linux-process-management-and-scheduling-process_groups_and_session_groups.png">
+<img src="/images/linux-process-management-and-scheduling-process_groups_and_session_groups.png" alt="linux-process-management-and-scheduling-process_groups_and_session_groups"  />
+</a>
+</div>
+
+</p>
+<p>进程组和会话组的之间又形成了两级的关系：进程组是一组进程的集合，而会话组则是一组相关进程组的集合。</p>
+<ul>
+<li>进程组组长，linux中直接在task_struct中用变量<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched.h#L859">task_struct-&gt;group_leader</a>指向进程组组长。</li>
+<li>会话组组长，进程组组成会话组，所以会话内某个进程组组长就是会话组组长，每个进程组组长都有一个变量<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched/signal.h#L162">task_struct-&gt;group_leader-&gt;signal-&gt;leader</a>来表示自己是不是会话组组长。</li>
+</ul>
+<p>由上边的描述，进程就需要三个ID来标识不同身份：</p>
+<ul>
+<li>进程ID（PID）进程的唯一标识。</li>
+<li>进程组ID（PGID）一般为进程组组长的PID，创建新进程是默认会继承父进程PGID。</li>
+<li>会话ID（SID）一般为会话组组长的PID，创建新进程是默认会继承父进程SID。</li>
+</ul>
+<p>再细分的话，进程内部的工作单位还有线程，几个线程也可以合并为一个线程组。这样就又需要两个ID来标识身份：</p>
+<ul>
+<li>线程ID（TID）Linux中当task_struct作为线程时、其TID的值为PID。</li>
+<li>线程组ID（TGID）为线程组组长的TID，而线程组组长的TID就是整个进程的ID，所以Linux中又以TID是否为PID来判断线程是否为主线程。</li>
+</ul>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/linux-process-management-and-scheduling-process-id.png">
+<img src="/images/linux-process-management-and-scheduling-process-id.png" alt="linux-process-management-and-scheduling-process-id"  />
+</a>
+</div>
+
+</p>
+<p>如果没有命名空间的特性的话，内核可以直接在struct task_struct使用五个数字类型的ID来表示上面定义的ID。但是命名空间的特性使得各种ID的维护变得更加的复杂。</p>
+<p>PID的命名空间类似树形的层次结构，创建一个新的命名空间时，该空间内所有的PID都是对父命名空间以及上层的命名空间可见的。往上多一层就要多一个ID表示。</p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/linux-process-management-and-scheduling-process-id-namespace_1.png">
+<img src="/images/linux-process-management-and-scheduling-process-id-namespace_1.png" alt="linux-process-management-and-scheduling-process-id-namespace_1"  />
+</a>
+</div>
+
+</p>
+<p>例如图中进程，对init命名空间、命名空间2、命名空间4可见，则PID就需要三个值来分别在三个命名空间表示唯一。</p>
+<p>根据命名空间的分层，可以将PID分成两类：全局ID、局部ID</p>
+<ol>
+<li>全局ID，是内核本身和初始命名空间(init进程所在namespace)的ID号。</li>
+<li>局部ID，属于某个特定namespace，不同namespace间可以相同，但namespace内部不同。</li>
+</ol>
+<h3 id="全局id">全局ID</h3>
+<p>首先全局的pid和tgid直接保存在struct task_struct中。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">struct</span> task_struct {
+    ...
+    pid_t pid;
+    pid_t tgid;
+    ...
+};
+</code></pre></div><p>其余全局ID都可以用这两个ID来表示：</p>
+<ul>
+<li>全局SID，为会话组组长的全局pid。</li>
+<li>全局PGID，为进程组组长的全局pid。</li>
+<li>全局TID，当task_struct为线程时，pid就是tid，则全局pid也就是全局tid</li>
+</ul>
+<h3 id="局部id">局部ID</h3>
+<p>除了全局ID这两个字段之外，内核还需要管理局部ID，因为增加了namespace的特性，所以这需要几个相互联系的数据结构，以及辅助函数。</p>
+<h4 id="数据结构">数据结构</h4>
+<p>先来看一下pid的<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/pid_namespace.h#L20">namespace</a>表示方式。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">struct</span> pid_namespace {
+    ...
+	<span style="color:#66d9ef">struct</span> task_struct <span style="color:#f92672">*</span>child_reaper;
+    ...
+	<span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">int</span> level;
+	<span style="color:#66d9ef">struct</span> pid_namespace <span style="color:#f92672">*</span>parent;
+    ...
+} __randomize_layout;
+</code></pre></div><p>其中主要的变量：</p>
+<ul>
+<li>child_reaper 每个命名空间必须绑定一个进程，这个进程就相当于init进程，该进程也必须完成init进程的工作，例如对孤儿进程调用<code>wait4</code>。</li>
+<li>parent 指向父命名空间。level表示当前命名空间的深度，初始为0，依次递增。level较低命名空间对较高命名空间可见。</li>
+</ul>
+<p>局部pid的管理主要围绕两个数据结构：<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/pid.h#L59">struct pid</a>是内核对局部ID的表示，而<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/pid.h#L54">struct upid</a>则是PID在namespace内的可见信息。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">struct</span> upid {
+    <span style="color:#66d9ef">int</span> nr;
+    <span style="color:#66d9ef">struct</span> pid_namespace <span style="color:#f92672">*</span>ns;
+};
+<span style="color:#66d9ef">struct</span> pid
+{
+    refcount_t count;
+    <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">int</span> level;
+    spinlock_t lock;
+    <span style="color:#75715e">/* 使用该pid的进程列表 */</span>
+    <span style="color:#66d9ef">struct</span> hlist_head tasks[PIDTYPE_MAX];
+    <span style="color:#66d9ef">struct</span> hlist_head inodes;
+    <span style="color:#75715e">/* wait queue for pidfd notifications */</span>
+    wait_queue_head_t wait_pidfd;
+    <span style="color:#66d9ef">struct</span> rcu_head rcu;
+    <span style="color:#66d9ef">struct</span> upid numbers[<span style="color:#ae81ff">1</span>];
+};
+</code></pre></div><p>首先是<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/pid.h#L54">struct upid</a>，变量nr表示id的数值，比如执行shell命令<code>ps</code>得到的PID就是取的这个值。ns指向对应的namespace。这样一个数据结构就能在增加namespace特性的情况下唯一的表示一个局部ID。</p>
+<p><a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/pid.h#L59">struct pid</a>中count是一个引用计数，task是一个散列数组，包含了所有引用该struct pid的进程。因为同一个ID可能用于几个进程。比如进程组内进程组ID相同等。PIDTYPE_MAX表示ID的类型数。</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#66d9ef">enum</span> pid_type
+{
+    PIDTYPE_PID,
+    PIDTYPE_TGID,
+    PIDTYPE_PGID,
+    PIDTYPE_SID,
+    PIDTYPE_MAX,
+};
+</code></pre></div><p>一个进程可能对多个namespace都可见，所以level表示namespace的深度，如图左下角。而numbers对应一个<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/pid.h#L54">struct upid</a>的数组，长度为level，表示在每个namespace的ID。<strong>注意该数组形式上只有一个数组项，如果一个进程只包含在全局命名空间中，那么确实如此。由于该数组位于结构的末尾，因此 只要分配更多的内存空间，即可向数组添加附加的项。</strong></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/linux-process-management-and-scheduling-process-id-2.png">
+<img src="/images/linux-process-management-and-scheduling-process-id-2.png" alt="linux-process-management-and-scheduling-process-id-2"  />
+</a>
+</div>
+
+</p>
+<p>这三个数据结构的关系如上图：</p>
+<ul>
+<li>struct task_struct内部会有指向struct pid的指针，方便查找ID时找到数据结构。指向struct pid的指针也做了分类，像PID、TID这种一般不会进行<strong>组操作的ID</strong>就用struct pid *thread_pid指针缓存，查找PID时直接用这个指针。而PGID、TGID、SID这种需要<strong>组操作的ID</strong>就放在task_struct-&gt;signal-&gt;pids[PID_TYPE]里面，查找这三类ID时就直接从task_struct-&gt;signal-&gt;pids[PID_TYPE]查。</li>
+<li>同时struct pid也会缓存引用他的struct task_struct，将引用他的struct task_struct都放在自身tasks变量中。</li>
+<li>struct pid中level变量会记录当前struct pid在第几层namespace，而pid-&gt;numbers记录了ID在各层ID数值。</li>
+</ul>
+<h4 id="函数">函数</h4>
+<p>内核提供了若干函数辅助操作上面的三个数据结构，但本质离不开两个问题：</p>
+<ol>
+<li>给定局部数字类型ID和namespace，如何找到对应的struct pid。</li>
+<li>给出task_struct、ID类型和namespace，如何找到数字类型的ID。</li>
+</ol>
+<p>在这两个问题之前，有个问题：如何找到进程所在的namespace？</p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/linux-process-management-and-scheduling-process-id-find-namespace.png">
+<img src="/images/linux-process-management-and-scheduling-process-id-find-namespace.png" alt="linux-process-management-and-scheduling-process-id-find-namespace"  />
+</a>
+</div>
+
+</p>
+<p>首先如果没给定task_struct的话，可以调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/current.h#L18">current</a>宏获取当前所在task_struct。</p>
+<p>然后调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/kernel/pid.c#L507">task_active_pid_ns</a>获取namespace，大概流程就是，通过task_struct-&gt;thread_pid指针获的指向的struct pid，其变量记录了当前所在第几层namespace，然后从pid-&gt;numbers[level]变量中取出对应的struct upid，其变量记录了对应的namespace。</p>
+<p>再回到前边两个问题:</p>
+<p><strong>[1]给定局部数字类型ID和namespace，如何找到对应的struct pid?</strong></p>
+<p>内核用<a href="https://en.wikipedia.org/wiki/Radix_tree">基数树</a>存储局部ID到struct pid的映射，实际就是存储了局部ID（数字类型）对应的struct pid的内存地址（数字）。</p>
+<p>通过<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/kernel/pid.c#L309">find_pid_ns</a>找到局部ID对应的struct pid对象。</p>
+<p>然后根据需要的ID的类型取出pid-&gt;tasks[ID_TYPE]散列表中第一个实例。</p>
+<p><strong>[2] 给出task_struct、ID类型和namespace，如何找到数字类型的ID?</strong></p>
+<ol>
+<li>通过task_struct和ID类型拿到struct pid:
+<ol>
+<li>PID/TID: 取task_struct-&gt;thread_pid</li>
+<li>其他类型:
+<ol>
+<li>PGID: 通过task_struct-&gt;group_leader找到进程组组长对应的task_struct</li>
+<li>TGID: 线程组ID就是PID，调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/current.h#L18">current</a>获取task_struct</li>
+<li>SID: 调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/current.h#L18">current</a>获取task_struct。</li>
+<li>分别调用<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched.h#L1368">task_pid</a>、<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched/signal.h#L637">task_pgrp</a>、<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched/signal.h#L627">task_tgid</a>、<a href="https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched/signal.h#L642">task_session</a>获取对应的struct pid</li>
+</ol>
+</li>
+</ol>
+</li>
+<li>然后根据struct pid和namespace找到对应数字类型ID，这里实际就是用namespace里的level去struct pid里取第几个struct upid，然后struct upid的成员变量nr就是所需要的数字类型id。</li>
+</ol>
+
+        </div>
+        
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+<script src="https://cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+<div id="gitalk-container"></div>
+<script type="text/javascript">
+    var gitalk = new Gitalk({
+        clientID: 'a60f22cd3c5d7e6aafa8',
+        clientSecret: 'db8f7c66f2e8e20275173155975b749870291c5b',
+        repo: 'journey-c.github.io',
+        owner: 'journey-c',
+        admin: ['journey-c'],
+        id: 'Linux进程管理和调度（一）',
+        distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+</script>
+
+        
+
+        
+    </article>
+</div>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <p>Copyright @ 2020-<script>document.write(new Date().getFullYear())</script> <a class="footer-links-kudos" href="https://github.com/journey-c">Journey-C</a>.
+    </p>
+          </li>
+        </ul>
+      </footer>
+    </main>
+
+    <script type=text/javascript async src="https://cdn.staticfile.org/mathjax/2.7.7/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    MathJax.Hub.Config({
+        tex2jax: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$']],
+            processEscapes: true,
+            processEnvironments: true,
+            skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+            TeX: {
+                equationNumbers: {
+                    autoNumber: "AMS"
+                },
+                extensions: ["AMSmath.js", "AMSsymbols.js"]
+            }
+        }
+    });
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(),
+            i;
+        for (i = 0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+    MathJax.Hub.Config({
+        TeX: {
+            equationNumbers: {
+                autoNumber: "AMS"
+            }
+        }
+    });
+    </script>
+  </body>
+</html>
+

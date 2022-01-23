@@ -7,6 +7,7 @@
 <meta name="generator" content="Hugo 0.74.3" />
 
 
+
 <title>goroutine 源码阅读 - Journey-C</title>
 <meta property="og:title" content="goroutine 源码阅读 - Journey-C">
 
@@ -54,10 +55,17 @@ if (!doNotTrack) {
 
 
 
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+
+
 </head>
 
 <body>
     <input type="checkbox" class="hidden toggle" id="toc-control" />
+
     <main class="wrapper">
         <div>
             <header class="header">
@@ -93,15 +101,6 @@ if (!doNotTrack) {
                         width="50" height="50"
                         alt="Logo">
                 </a>
-
-                
-                <div style="float:right">
-                    <label for="toc-control">
-                        <img src="/svg/toc.svg" class="article-icon" alt="Table of Contents" />
-                    </label>
-                </div>
-                
-
                 <ul class="nav-links">
                     
                     <li><a href="/tags/"></a></li>
@@ -116,68 +115,11 @@ if (!doNotTrack) {
                     
                     <li>
                 </ul>
-
-                
-                <aside class="hidden clearfix mobile-toc">
-                    <nav id="TableOfContents">
-  <ul>
-    <li><a href="#1数据结构">1.数据结构</a>
-      <ul>
-        <li><a href="#11-g">1.1 G</a></li>
-        <li><a href="#12-m">1.2 M</a></li>
-        <li><a href="#13-p">1.3 P</a></li>
-        <li><a href="#14-schedt">1.4 schedt</a></li>
-        <li><a href="#15-重要的全局变量">1.5 重要的全局变量</a></li>
-      </ul>
-    </li>
-    <li><a href="#2分步骤剖析调度的初始化">2.分步骤剖析调度的初始化</a>
-      <ul>
-        <li><a href="#21-编译">2.1 编译</a></li>
-        <li><a href="#22-调试">2.2 调试</a></li>
-        <li><a href="#23-初始化">2.3 初始化</a></li>
-        <li><a href="#24-调度循环">2.4 调度循环</a></li>
-        <li><a href="#25-触发调度">2.5 触发调度</a></li>
-      </ul>
-    </li>
-  </ul>
-</nav>
-                </aside>
-                
             </header>
         </div>
 
 
 <div class="content">
-    
-    <aside class="article-toc" id="article-toc">
-    <div class="article-toc-content">
-        <nav id="TableOfContents">
-  <ul>
-    <li><a href="#1数据结构">1.数据结构</a>
-      <ul>
-        <li><a href="#11-g">1.1 G</a></li>
-        <li><a href="#12-m">1.2 M</a></li>
-        <li><a href="#13-p">1.3 P</a></li>
-        <li><a href="#14-schedt">1.4 schedt</a></li>
-        <li><a href="#15-重要的全局变量">1.5 重要的全局变量</a></li>
-      </ul>
-    </li>
-    <li><a href="#2分步骤剖析调度的初始化">2.分步骤剖析调度的初始化</a>
-      <ul>
-        <li><a href="#21-编译">2.1 编译</a></li>
-        <li><a href="#22-调试">2.2 调试</a></li>
-        <li><a href="#23-初始化">2.3 初始化</a></li>
-        <li><a href="#24-调度循环">2.4 调度循环</a></li>
-        <li><a href="#25-触发调度">2.5 触发调度</a></li>
-      </ul>
-    </li>
-  </ul>
-</nav>
-    </div>
-</aside>
-
-    
-
     <article class="article">
         
         <span class="article-duration">14 min read</span>
@@ -199,6 +141,49 @@ if (!doNotTrack) {
         
         
 
+        <div class="toc">
+    <details >
+        <summary>
+            <span class="details">Table Of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#1%e6%95%b0%e6%8d%ae%e7%bb%93%e6%9e%84" aria-label="1.数据结构">1.数据结构</a><ul>
+                        
+                <li>
+                    <a href="#11-g" aria-label="1.1 G">1.1 G</a></li>
+                <li>
+                    <a href="#12-m" aria-label="1.2 M">1.2 M</a></li>
+                <li>
+                    <a href="#13-p" aria-label="1.3 P">1.3 P</a></li>
+                <li>
+                    <a href="#14-schedt" aria-label="1.4 schedt">1.4 schedt</a></li>
+                <li>
+                    <a href="#15-%e9%87%8d%e8%a6%81%e7%9a%84%e5%85%a8%e5%b1%80%e5%8f%98%e9%87%8f" aria-label="1.5 重要的全局变量">1.5 重要的全局变量</a></li></ul>
+                </li>
+                <li>
+                    <a href="#2%e5%88%86%e6%ad%a5%e9%aa%a4%e5%89%96%e6%9e%90%e8%b0%83%e5%ba%a6%e7%9a%84%e5%88%9d%e5%a7%8b%e5%8c%96" aria-label="2.分步骤剖析调度的初始化">2.分步骤剖析调度的初始化</a><ul>
+                        
+                <li>
+                    <a href="#21-%e7%bc%96%e8%af%91" aria-label="2.1 编译">2.1 编译</a></li>
+                <li>
+                    <a href="#22-%e8%b0%83%e8%af%95" aria-label="2.2 调试">2.2 调试</a></li>
+                <li>
+                    <a href="#23-%e5%88%9d%e5%a7%8b%e5%8c%96" aria-label="2.3 初始化">2.3 初始化</a></li>
+                <li>
+                    <a href="#24-%e8%b0%83%e5%ba%a6%e5%be%aa%e7%8e%af" aria-label="2.4 调度循环">2.4 调度循环</a></li>
+                <li>
+                    <a href="#25-%e8%a7%a6%e5%8f%91%e8%b0%83%e5%ba%a6" aria-label="2.5 触发调度">2.5 触发调度</a>
+                </li>
+            </ul>
+            </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+
         <div class="article-content">
             <h1 id="1数据结构">1.数据结构</h1>
 <p>调度相关的数据结构有三个，M(线程)，P(调度器)，G(goroutine)
@@ -206,7 +191,14 @@ M表示线程，P作为调度器用来帮助每个线程管理自己的goroutine
 <p><strong>那其他线程是什么时候创建的呐?</strong>
 当goroutine被唤醒时，要在M上运行(恢复goroutine的上下文)，P是帮助M管理goroutine的，恢复上下文的操作也由P来完成。如果被唤醒时发现还有空闲的P，并且没有其他M在窃取goroutine(M发现本地goroutine队列和全局goroutine队列都没有goroutine的时候，会去其他线程窃取goroutine)，说明其他M都在忙，就会创建一个M让这个空闲的P帮他来管理goroutine。
 总之一句话，开始的时候创建一个M，当发现调度不过来且还有空闲P没有工作就在创建新的，直到创建procs个M(procs通过runtime.GOMAXPROCS设置)</p>
-<p><img src="/images/model.png" alt="model"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/model.png">
+<img src="/images/model.png" alt="model"  />
+</a>
+</div>
+
+</p>
 <h2 id="11-g">1.1 G</h2>
 <p>golang 用结构体g表示goroutine</p>
 <ul>
@@ -436,7 +428,14 @@ Breakpoint <span style="color:#ae81ff">3</span> at 0x1049360: file /usr/local/go
 </span><span style="color:#75715e"></span>	<span style="color:#a6e22e">MOVQ</span>	<span style="color:#a6e22e">SP</span>, (<span style="color:#a6e22e">g_stack</span><span style="color:#f92672">+</span><span style="color:#a6e22e">stack_hi</span>)(<span style="color:#a6e22e">DI</span>) <span style="color:#75715e">// g0.stack.hi = SP
 </span><span style="color:#75715e"></span>
 </code></pre></div><p>创建完g0的内存分布</p>
-<p><img src="/images/stack_0.png" alt="stack_0"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/stack_0.png">
+<img src="/images/stack_0.png" alt="stack_0"  />
+</a>
+</div>
+
+</p>
 <p>然后略过一段CPU型号检测和CGO初始化的代码</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#f92672">...</span>
 </code></pre></div><ul>
@@ -473,7 +472,14 @@ Breakpoint <span style="color:#ae81ff">3</span> at 0x1049360: file /usr/local/go
 	<span style="color:#a6e22e">CLD</span>				<span style="color:#75715e">// convention is D is always left cleared
 </span><span style="color:#75715e"></span>	<span style="color:#a6e22e">CALL</span>	<span style="color:#a6e22e">runtime</span><span style="color:#960050;background-color:#1e0010">·</span><span style="color:#a6e22e">check</span>(<span style="color:#a6e22e">SB</span>)
 </code></pre></div><p>创建完m0之后的内存分布</p>
-<p><img src="/images/stack_1.png" alt="stack_1"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/stack_1.png">
+<img src="/images/stack_1.png" alt="stack_1"  />
+</a>
+</div>
+
+</p>
 <ul>
 <li>m0和g0的关系</li>
 </ul>
@@ -845,7 +851,14 @@ Breakpoint <span style="color:#ae81ff">3</span> at 0x1049360: file /usr/local/go
 </span><span style="color:#75715e"></span>	<span style="color:#a6e22e">releasem</span>(<span style="color:#a6e22e">_g_</span>.<span style="color:#a6e22e">m</span>)
 }
 </code></pre></div><p>总结一下创建第一个goroutine执行runtime.main的过程(只是创建啊，整个调度这时候还是没有跑起来)
-<img src="/images/creat_goroutine_main.png" alt="create_goroutine_main"></p>
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/creat_goroutine_main.png">
+<img src="/images/creat_goroutine_main.png" alt="create_goroutine_main"  />
+</a>
+</div>
+
+</p>
 <h2 id="24-调度循环">2.4 调度循环</h2>
 <p>我们再返回runtime·rt0_go继续看，总结一下到目前为止已经准备好的事情</p>
 <ol>

@@ -7,6 +7,7 @@
 <meta name="generator" content="Hugo 0.74.3" />
 
 
+
 <title>红黑树 - Journey-C</title>
 <meta property="og:title" content="红黑树 - Journey-C">
 
@@ -54,10 +55,17 @@ if (!doNotTrack) {
 
 
 
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+
+
 </head>
 
 <body>
     <input type="checkbox" class="hidden toggle" id="toc-control" />
+
     <main class="wrapper">
         <div>
             <header class="header">
@@ -93,15 +101,6 @@ if (!doNotTrack) {
                         width="50" height="50"
                         alt="Logo">
                 </a>
-
-                
-                <div style="float:right">
-                    <label for="toc-control">
-                        <img src="/svg/toc.svg" class="article-icon" alt="Table of Contents" />
-                    </label>
-                </div>
-                
-
                 <ul class="nav-links">
                     
                     <li><a href="/tags/"></a></li>
@@ -116,122 +115,11 @@ if (!doNotTrack) {
                     
                     <li>
                 </ul>
-
-                
-                <aside class="hidden clearfix mobile-toc">
-                    <nav id="TableOfContents">
-  <ul>
-    <li><a href="#1-性质">1. 性质</a></li>
-    <li><a href="#2-为什么红黑树可以平衡">2. 为什么红黑树可以平衡</a>
-      <ul>
-        <li><a href="#21-引理">2.1 引理</a></li>
-        <li><a href="#22-证明">2.2 证明</a></li>
-      </ul>
-    </li>
-    <li><a href="#3-红黑树如何实现自平衡">3. 红黑树如何实现自平衡</a>
-      <ul>
-        <li><a href="#31-旋转">3.1 旋转</a>
-          <ul>
-            <li><a href="#311-左旋">3.1.1 左旋</a></li>
-            <li><a href="#312-右旋">3.1.2 右旋</a></li>
-          </ul>
-        </li>
-        <li><a href="#32-插入">3.2 插入</a>
-          <ul>
-            <li><a href="#321-修复">3.2.1 修复</a>
-              <ul>
-                <li><a href="#3211-case-1">3.2.1.1 case 1</a></li>
-                <li><a href="#3212-case-2">3.2.1.2 case 2</a></li>
-                <li><a href="#3213-case-3">3.2.1.3 case 3</a></li>
-              </ul>
-            </li>
-            <li><a href="#322-插入节点为什么设置为红色">3.2.2 插入节点为什么设置为红色?</a></li>
-            <li><a href="#323-小结">3.2.3 小结</a></li>
-          </ul>
-        </li>
-        <li><a href="#33-删除">3.3 删除</a>
-          <ul>
-            <li><a href="#331-修复解析">3.3.1 修复解析</a></li>
-            <li><a href="#332-修复策略">3.3.2 修复策略</a>
-              <ul>
-                <li><a href="#3321-case-1">3.3.2.1 case 1</a></li>
-                <li><a href="#3322-case-2">3.3.2.2 case 2</a></li>
-                <li><a href="#3323-case-3">3.3.2.3 case 3</a></li>
-                <li><a href="#3324-case-4">3.3.2.4 case 4</a></li>
-              </ul>
-            </li>
-            <li><a href="#334-小结">3.3.4 小结</a></li>
-          </ul>
-        </li>
-      </ul>
-    </li>
-    <li><a href="#4-代码实现">4. 代码实现</a></li>
-  </ul>
-</nav>
-                </aside>
-                
             </header>
         </div>
 
 
 <div class="content">
-    
-    <aside class="article-toc" id="article-toc">
-    <div class="article-toc-content">
-        <nav id="TableOfContents">
-  <ul>
-    <li><a href="#1-性质">1. 性质</a></li>
-    <li><a href="#2-为什么红黑树可以平衡">2. 为什么红黑树可以平衡</a>
-      <ul>
-        <li><a href="#21-引理">2.1 引理</a></li>
-        <li><a href="#22-证明">2.2 证明</a></li>
-      </ul>
-    </li>
-    <li><a href="#3-红黑树如何实现自平衡">3. 红黑树如何实现自平衡</a>
-      <ul>
-        <li><a href="#31-旋转">3.1 旋转</a>
-          <ul>
-            <li><a href="#311-左旋">3.1.1 左旋</a></li>
-            <li><a href="#312-右旋">3.1.2 右旋</a></li>
-          </ul>
-        </li>
-        <li><a href="#32-插入">3.2 插入</a>
-          <ul>
-            <li><a href="#321-修复">3.2.1 修复</a>
-              <ul>
-                <li><a href="#3211-case-1">3.2.1.1 case 1</a></li>
-                <li><a href="#3212-case-2">3.2.1.2 case 2</a></li>
-                <li><a href="#3213-case-3">3.2.1.3 case 3</a></li>
-              </ul>
-            </li>
-            <li><a href="#322-插入节点为什么设置为红色">3.2.2 插入节点为什么设置为红色?</a></li>
-            <li><a href="#323-小结">3.2.3 小结</a></li>
-          </ul>
-        </li>
-        <li><a href="#33-删除">3.3 删除</a>
-          <ul>
-            <li><a href="#331-修复解析">3.3.1 修复解析</a></li>
-            <li><a href="#332-修复策略">3.3.2 修复策略</a>
-              <ul>
-                <li><a href="#3321-case-1">3.3.2.1 case 1</a></li>
-                <li><a href="#3322-case-2">3.3.2.2 case 2</a></li>
-                <li><a href="#3323-case-3">3.3.2.3 case 3</a></li>
-                <li><a href="#3324-case-4">3.3.2.4 case 4</a></li>
-              </ul>
-            </li>
-            <li><a href="#334-小结">3.3.4 小结</a></li>
-          </ul>
-        </li>
-      </ul>
-    </li>
-    <li><a href="#4-代码实现">4. 代码实现</a></li>
-  </ul>
-</nav>
-    </div>
-</aside>
-
-    
-
     <article class="article">
         
         <span class="article-duration">2 min read</span>
@@ -253,11 +141,94 @@ if (!doNotTrack) {
         
         
 
+        <div class="toc">
+    <details >
+        <summary>
+            <span class="details">Table Of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#1-%e6%80%a7%e8%b4%a8" aria-label="1. 性质">1. 性质</a></li>
+                <li>
+                    <a href="#2-%e4%b8%ba%e4%bb%80%e4%b9%88%e7%ba%a2%e9%bb%91%e6%a0%91%e5%8f%af%e4%bb%a5%e5%b9%b3%e8%a1%a1" aria-label="2. 为什么红黑树可以平衡">2. 为什么红黑树可以平衡</a><ul>
+                        
+                <li>
+                    <a href="#21-%e5%bc%95%e7%90%86" aria-label="2.1 引理">2.1 引理</a></li>
+                <li>
+                    <a href="#22-%e8%af%81%e6%98%8e" aria-label="2.2 证明">2.2 证明</a></li></ul>
+                </li>
+                <li>
+                    <a href="#3-%e7%ba%a2%e9%bb%91%e6%a0%91%e5%a6%82%e4%bd%95%e5%ae%9e%e7%8e%b0%e8%87%aa%e5%b9%b3%e8%a1%a1" aria-label="3. 红黑树如何实现自平衡">3. 红黑树如何实现自平衡</a><ul>
+                        
+                <li>
+                    <a href="#31-%e6%97%8b%e8%bd%ac" aria-label="3.1 旋转">3.1 旋转</a><ul>
+                        
+                <li>
+                    <a href="#311-%e5%b7%a6%e6%97%8b" aria-label="3.1.1 左旋">3.1.1 左旋</a></li>
+                <li>
+                    <a href="#312-%e5%8f%b3%e6%97%8b" aria-label="3.1.2 右旋">3.1.2 右旋</a></li></ul>
+                </li>
+                <li>
+                    <a href="#32-%e6%8f%92%e5%85%a5" aria-label="3.2 插入">3.2 插入</a><ul>
+                        
+                <li>
+                    <a href="#321-%e4%bf%ae%e5%a4%8d" aria-label="3.2.1 修复">3.2.1 修复</a><ul>
+                        
+                <li>
+                    <a href="#3211-case-1" aria-label="3.2.1.1 case 1">3.2.1.1 case 1</a></li>
+                <li>
+                    <a href="#3212-case-2" aria-label="3.2.1.2 case 2">3.2.1.2 case 2</a></li>
+                <li>
+                    <a href="#3213-case-3" aria-label="3.2.1.3 case 3">3.2.1.3 case 3</a></li></ul>
+                </li>
+                <li>
+                    <a href="#322-%e6%8f%92%e5%85%a5%e8%8a%82%e7%82%b9%e4%b8%ba%e4%bb%80%e4%b9%88%e8%ae%be%e7%bd%ae%e4%b8%ba%e7%ba%a2%e8%89%b2" aria-label="3.2.2 插入节点为什么设置为红色?">3.2.2 插入节点为什么设置为红色?</a></li>
+                <li>
+                    <a href="#323-%e5%b0%8f%e7%bb%93" aria-label="3.2.3 小结">3.2.3 小结</a></li></ul>
+                </li>
+                <li>
+                    <a href="#33-%e5%88%a0%e9%99%a4" aria-label="3.3 删除">3.3 删除</a><ul>
+                        
+                <li>
+                    <a href="#331-%e4%bf%ae%e5%a4%8d%e8%a7%a3%e6%9e%90" aria-label="3.3.1 修复解析">3.3.1 修复解析</a></li>
+                <li>
+                    <a href="#332-%e4%bf%ae%e5%a4%8d%e7%ad%96%e7%95%a5" aria-label="3.3.2 修复策略">3.3.2 修复策略</a><ul>
+                        
+                <li>
+                    <a href="#3321-case-1" aria-label="3.3.2.1 case 1">3.3.2.1 case 1</a></li>
+                <li>
+                    <a href="#3322-case-2" aria-label="3.3.2.2 case 2">3.3.2.2 case 2</a></li>
+                <li>
+                    <a href="#3323-case-3" aria-label="3.3.2.3 case 3">3.3.2.3 case 3</a></li>
+                <li>
+                    <a href="#3324-case-4" aria-label="3.3.2.4 case 4">3.3.2.4 case 4</a></li></ul>
+                </li>
+                <li>
+                    <a href="#334-%e5%b0%8f%e7%bb%93" aria-label="3.3.4 小结">3.3.4 小结</a></li></ul>
+                </li></ul>
+                </li>
+                <li>
+                    <a href="#4-%e4%bb%a3%e7%a0%81%e5%ae%9e%e7%8e%b0" aria-label="4. 代码实现">4. 代码实现</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+
         <div class="article-content">
             <p>红黑树是一种自平衡二叉搜索树。二叉搜索树就是插入的时候，比当前节点小的放到左子树，大的放到右子树。这样查找的时候可以沿着树的一条路径找到想要的值，所以时间复杂度是树的深度，最坏$O(N)$，平均$O(lg^N)$。</p>
 <p>正因为二叉搜索树由于数据的不确定性可能造成树建的不平衡，导致树过深，时间复杂度过高。所以出现了自平衡二叉搜索树像红黑树。</p>
 <p>红黑树所有的性质和特点都是想让树尽可能的平衡。</p>
-<p><img src="/images/rbtree.jpg" alt="rbtree"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/rbtree.jpg">
+<img src="/images/rbtree.jpg" alt="rbtree"  />
+</a>
+</div>
+
+</p>
 <div>
 	<center>图片引自《算法导论》第三版</center>
 </div>
@@ -303,7 +274,14 @@ if (!doNotTrack) {
 <h2 id="31-旋转">3.1 旋转</h2>
 <p>由于插入和删除操作会对红黑树修改，有可能会不符合红黑树的性质，所以必须通过调整节点的颜色和指针结构来重新满足性质，而调整指针结构的操作是旋转，有左旋、右旋。
 <strong>下图α,β,γ代表一棵子树(可能为空)</strong></p>
-<p><img src="/images/rotate.png" alt="rotate"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/rotate.png">
+<img src="/images/rotate.png" alt="rotate"  />
+</a>
+</div>
+
+</p>
 <h3 id="311-左旋">3.1.1 左旋</h3>
 <p>上图为例，左旋就是从右边树结构变成左边树结构的操作。
 当在某点例如x点做左旋时:</p>
@@ -376,11 +354,25 @@ if (!doNotTrack) {
 2.入节点叔节点是红色
 <strong>(z是插入节点，p是父节点，u是叔节点，g是祖父节点)</strong></p>
 </blockquote>
-<p><img src="/images/insert_case1.png" alt="insert_case1"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/insert_case1.png">
+<img src="/images/insert_case1.png" alt="insert_case1"  />
+</a>
+</div>
+
+</p>
 <blockquote>
 <p>这种情况将父节点和叔节点变为黑色，祖父节点变为红色，指针指向祖父节点(上移两层)然后继续判断。</p>
 </blockquote>
-<p><img src="/images/insert_case1_fix.png" alt="insert_case1_fix"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/insert_case1_fix.png">
+<img src="/images/insert_case1_fix.png" alt="insert_case1_fix"  />
+</a>
+</div>
+
+</p>
 <p><em>这一步祖父节点可能是根结点，所以在修复完违反性质4的情况之后，再把根结点设置为黑色，避免再违反性质1</em></p>
 <h4 id="3212-case-2">3.2.1.2 case 2</h4>
 <blockquote>
@@ -389,7 +381,14 @@ if (!doNotTrack) {
 3.插入节点是父节点右儿子
 <strong>(z是插入节点，b是兄弟节点，p是父节点，u是叔节点，g是祖父节点)</strong></p>
 </blockquote>
-<p><img src="/images/insert_case2.png" alt="insert_case2"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/insert_case2.png">
+<img src="/images/insert_case2.png" alt="insert_case2"  />
+</a>
+</div>
+
+</p>
 <blockquote>
 <p>关于父节点做左旋，就可以变为case 3。</p>
 </blockquote>
@@ -400,11 +399,25 @@ if (!doNotTrack) {
 3.插入节点是父节点左儿子
 <strong>(z是插入节点，b是兄弟节点，p是父节点，u是叔节点，g是祖父节点)</strong></p>
 </blockquote>
-<p><img src="/images/insert_case3.png" alt="insert_case3"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/insert_case3.png">
+<img src="/images/insert_case3.png" alt="insert_case3"  />
+</a>
+</div>
+
+</p>
 <blockquote>
 <p>将父节点变为黑色，祖父节点变为红色，然后关于祖父节点做右旋得到下图(关系还是按照旋转前定的)</p>
 </blockquote>
-<p><img src="/images/insert_case3_fix.png" alt="insert_case3_fix"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/insert_case3_fix.png">
+<img src="/images/insert_case3_fix.png" alt="insert_case3_fix"  />
+</a>
+</div>
+
+</p>
 <blockquote>
 <p>case3修复之后，看上图，就没有可能违反性质的地方了，修复结束。</p>
 </blockquote>
@@ -436,35 +449,91 @@ if (!doNotTrack) {
 <ol>
 <li>z没有子节点</li>
 </ol>
-<p><img src="/images/delete_case1.png" alt="delete_case1"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/delete_case1.png">
+<img src="/images/delete_case1.png" alt="delete_case1"  />
+</a>
+</div>
+
+</p>
 <blockquote>
 <p>直接删除z，z的父节点的儿子指向T.nil。</p>
 </blockquote>
-<p><img src="/images/delete_case1_op.png" alt="delete_case1_op"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/delete_case1_op.png">
+<img src="/images/delete_case1_op.png" alt="delete_case1_op"  />
+</a>
+</div>
+
+</p>
 <ol start="2">
 <li>z只有右儿子</li>
 </ol>
-<p><img src="/images/delete_case2.png" alt="delete_case2"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/delete_case2.png">
+<img src="/images/delete_case2.png" alt="delete_case2"  />
+</a>
+</div>
+
+</p>
 <blockquote>
 <p>将z的右子树提到z的位置。</p>
 </blockquote>
-<p><img src="/images/delete_case2_op.png" alt="delete_case2_op"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/delete_case2_op.png">
+<img src="/images/delete_case2_op.png" alt="delete_case2_op"  />
+</a>
+</div>
+
+</p>
 <ol start="3">
 <li>z只有左儿子</li>
 </ol>
-<p><img src="/images/delete_case3.png" alt="delete_case3"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/delete_case3.png">
+<img src="/images/delete_case3.png" alt="delete_case3"  />
+</a>
+</div>
+
+</p>
 <blockquote>
 <p>将z的左子树提到z的位置。</p>
 </blockquote>
-<p><img src="/images/delete_case3_op.png" alt="delete_case3_op"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/delete_case3_op.png">
+<img src="/images/delete_case3_op.png" alt="delete_case3_op"  />
+</a>
+</div>
+
+</p>
 <ol start="4">
 <li>z有两个儿子</li>
 </ol>
-<p><img src="/images/delete_case4.png" alt="delete_case4"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/delete_case4.png">
+<img src="/images/delete_case4.png" alt="delete_case4"  />
+</a>
+</div>
+
+</p>
 <blockquote>
 <p>找到后继节点y(比z大的最小的那个)，用y替换z的位置，颜色设置为z的颜色，这样y原来的位置就空了，将y的右子树x(如果有)提到y原来的位置。</p>
 </blockquote>
-<p><img src="/images/delete_case4_op.png" alt="delete_case4_op"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/delete_case4_op.png">
+<img src="/images/delete_case4_op.png" alt="delete_case4_op"  />
+</a>
+</div>
+
+</p>
 <h3 id="331-修复解析">3.3.1 修复解析</h3>
 <blockquote>
 <p>y: 代表要z或者z的后继节点(case 4)
@@ -529,7 +598,14 @@ case 4: x为z后继的右儿子</p>
 <blockquote>
 <p>x的兄弟节点w是红色</p>
 </blockquote>
-<p><img src="/images/delete_fix_case1.png" alt="delete_fix_case1"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/delete_fix_case1.png">
+<img src="/images/delete_fix_case1.png" alt="delete_fix_case1"  />
+</a>
+</div>
+
+</p>
 <blockquote>
 <p>此时: 1) 因为w是红色，所以p是黑色。 2) 因为x是双重黑色，所以w一定有儿子且w的子节点是黑色。如果没有，那么从p到叶子各路径上的黑节点数量就不一样了。
 措施:</p>
@@ -538,12 +614,26 @@ case 4: x为z后继的右儿子</p>
 <li>操作前l，r，x到p的父节点之前的路径有1个黑色节点(p)，操作后还是1个(w)，所以没改变黑色个数的性质。且x有黑色性质，所以p为红色也没违反性质。</li>
 </ul>
 </blockquote>
-<p><img src="/images/delete_fix_case1_fix.png" alt="delete_fix_case1_fix"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/delete_fix_case1_fix.png">
+<img src="/images/delete_fix_case1_fix.png" alt="delete_fix_case1_fix"  />
+</a>
+</div>
+
+</p>
 <h4 id="3322-case-2">3.3.2.2 case 2</h4>
 <blockquote>
 <p>x的兄弟节点w是黑色，且w的两个子节点是黑色</p>
 </blockquote>
-<p><img src="/images/delete_fix_case2.png" alt="delete_fix_case2"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/delete_fix_case2.png">
+<img src="/images/delete_fix_case2.png" alt="delete_fix_case2"  />
+</a>
+</div>
+
+</p>
 <div>
 <center>因为w是黑色，所以p不确定是什么颜色，用白色表示<center>
 </div>
@@ -555,19 +645,40 @@ case 4: x为z后继的右儿子</p>
 <li>x的父节点原来是黑色，那么继续遍历，一直将双重黑色传递至根，这样去掉一重黑色，相当于所有路径都去了一个黑节点，依然满足性质。</li>
 </ul>
 </blockquote>
-<p><img src="/images/delete_fix_case2_fix.png" alt="delete_fix_case2_fix"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/delete_fix_case2_fix.png">
+<img src="/images/delete_fix_case2_fix.png" alt="delete_fix_case2_fix"  />
+</a>
+</div>
+
+</p>
 <h4 id="3323-case-3">3.3.2.3 case 3</h4>
 <blockquote>
 <p>x的兄弟节点w是黑色，且w的左儿子是红色，右儿子是黑色</p>
 </blockquote>
-<p><img src="/images/delete_fix_case3.png" alt="delete_fix_case3"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/delete_fix_case3.png">
+<img src="/images/delete_fix_case3.png" alt="delete_fix_case3"  />
+</a>
+</div>
+
+</p>
 <div>
 <center>因为w是黑色，所以p不确定是什么颜色，用白色表示<center>
 </div>
 <blockquote>
 <p>交换w和左儿子的颜色，然后关于w做一次右旋，变成case 4。黑色节点的个数都没有变，所以没改变性质。</p>
 </blockquote>
-<p><img src="/images/delete_fix_case3_fix.png" alt="delete_fix_case3_fix"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/delete_fix_case3_fix.png">
+<img src="/images/delete_fix_case3_fix.png" alt="delete_fix_case3_fix"  />
+</a>
+</div>
+
+</p>
 <div>
 <center>因为w是黑色，所以p不确定是什么颜色，用白色表示<center>
 </div>
@@ -575,7 +686,14 @@ case 4: x为z后继的右儿子</p>
 <blockquote>
 <p>x的兄弟节点w是黑色，且w的右儿子是红色</p>
 </blockquote>
-<p><img src="/images/delete_fix_case4.png" alt="delete_fix_case4"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/delete_fix_case4.png">
+<img src="/images/delete_fix_case4.png" alt="delete_fix_case4"  />
+</a>
+</div>
+
+</p>
 <div>
 <center>p的颜色未知，l的颜色随便，用白色表示<center>
 </div>
@@ -586,7 +704,14 @@ case 4: x为z后继的右儿子</p>
 <li>l到原p的父亲中间有1个黑(原w)+1个可能黑(原p)，操作后1个黑(p)+1个可能黑(w)所以刚好也不违反性质，操作后x的双重颜色成功被去掉，结束修复。</li>
 </ol>
 </blockquote>
-<p><img src="/images/delete_fix_case4_fix.png" alt="delete_fix_case4"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/delete_fix_case4_fix.png">
+<img src="/images/delete_fix_case4_fix.png" alt="delete_fix_case4"  />
+</a>
+</div>
+
+</p>
 <div>
 <center>w为p之前的颜色(未知)，l颜色随便，用白色表示<center>
 </div>

@@ -7,6 +7,7 @@
 <meta name="generator" content="Hugo 0.74.3" />
 
 
+
 <title>Timing wheel心跳机制 - Journey-C</title>
 <meta property="og:title" content="Timing wheel心跳机制 - Journey-C">
 
@@ -54,10 +55,17 @@ if (!doNotTrack) {
 
 
 
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+
+
 </head>
 
 <body>
     <input type="checkbox" class="hidden toggle" id="toc-control" />
+
     <main class="wrapper">
         <div>
             <header class="header">
@@ -93,15 +101,6 @@ if (!doNotTrack) {
                         width="50" height="50"
                         alt="Logo">
                 </a>
-
-                
-                <div style="float:right">
-                    <label for="toc-control">
-                        <img src="/svg/toc.svg" class="article-icon" alt="Table of Contents" />
-                    </label>
-                </div>
-                
-
                 <ul class="nav-links">
                     
                     <li><a href="/tags/"></a></li>
@@ -116,46 +115,11 @@ if (!doNotTrack) {
                     
                     <li>
                 </ul>
-
-                
-                <aside class="hidden clearfix mobile-toc">
-                    <nav id="TableOfContents">
-  <ul>
-    <li><a href="#1-一种简单粗暴的方式">1. 一种简单粗暴的方式：</a></li>
-    <li><a href="#2-原理">2. 原理</a>
-      <ul>
-        <li><a href="#21-例子">2.1 例子</a></li>
-      </ul>
-    </li>
-    <li><a href="#3-实现">3. 实现</a></li>
-  </ul>
-</nav>
-                </aside>
-                
             </header>
         </div>
 
 
 <div class="content">
-    
-    <aside class="article-toc" id="article-toc">
-    <div class="article-toc-content">
-        <nav id="TableOfContents">
-  <ul>
-    <li><a href="#1-一种简单粗暴的方式">1. 一种简单粗暴的方式：</a></li>
-    <li><a href="#2-原理">2. 原理</a>
-      <ul>
-        <li><a href="#21-例子">2.1 例子</a></li>
-      </ul>
-    </li>
-    <li><a href="#3-实现">3. 实现</a></li>
-  </ul>
-</nav>
-    </div>
-</aside>
-
-    
-
     <article class="article">
         
         <span class="article-duration">1 min read</span>
@@ -175,6 +139,30 @@ if (!doNotTrack) {
         
         
 
+        <div class="toc">
+    <details >
+        <summary>
+            <span class="details">Table Of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#1-%e4%b8%80%e7%a7%8d%e7%ae%80%e5%8d%95%e7%b2%97%e6%9a%b4%e7%9a%84%e6%96%b9%e5%bc%8f" aria-label="1. 一种简单粗暴的方式：">1. 一种简单粗暴的方式：</a></li>
+                <li>
+                    <a href="#2-%e5%8e%9f%e7%90%86" aria-label="2. 原理">2. 原理</a><ul>
+                        
+                <li>
+                    <a href="#21-%e4%be%8b%e5%ad%90" aria-label="2.1 例子">2.1 例子</a></li></ul>
+                </li>
+                <li>
+                    <a href="#3-%e5%ae%9e%e7%8e%b0" aria-label="3. 实现">3. 实现</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+
         <div class="article-content">
             <p>在web服务中，断开空闲连接是一种减少资源浪费的一种手段，由此就有了心跳机制来判断一个连接是否空闲。</p>
 <h1 id="1-一种简单粗暴的方式">1. 一种简单粗暴的方式：</h1>
@@ -190,13 +178,34 @@ if (!doNotTrack) {
 <p>本文介绍的是，George Varghese 和 Tony Lauck 1996 年的论文《Hashed and Hierarchical Timing Wheels: data structures to efficiently implement a timer facility》中提出了一种时间轮(Timing wheel)管理time out事件的方式。</p>
 <h1 id="2-原理">2. 原理</h1>
 <p>下图是一个时间轮模型，假设当前心跳间隔是4S，将时间轮分为4分，每个格子表示当前格子的剩余寿命(s)。
-<img src="/images/time_wheel_1.png" alt="">
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/time_wheel_1.png">
+<img src="/images/time_wheel_1.png" alt=""  />
+</a>
+</div>
+
+
 每隔1S，pointer滚动一次，先清理掉0号格子存放的所有连接，然后当前时刻进来的连接放入(heart_beat – 1)号格子格子。</p>
 <h2 id="21-例子">2.1 例子</h2>
 <p>当前时刻conn 1连入，此时conn1剩余寿命3S，放入3号格子
-<img src="/images/time_wheel_2.png" alt="">
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/time_wheel_2.png">
+<img src="/images/time_wheel_2.png" alt=""  />
+</a>
+</div>
+
+
 1S后，此时conn1剩余寿命2S
-<img src="/images/time_wheel_3.png" alt="">
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/time_wheel_3.png">
+<img src="/images/time_wheel_3.png" alt=""  />
+</a>
+</div>
+
+
 当conn1剩余寿命为0S时，此连接会被清理。如果恰好这一秒conn进行操作了，那么会放入3号格子另一个conn1，如果时间轮上所有的conn1都被清理，那么这个连接会被关闭。</p>
 <h1 id="3-实现">3. 实现</h1>
 <p>C++以及一些指针友好型语言实现比较简单，轮子转动一次格子的指针引用数-1即可，当某个格子指针引用数为0时，代表格子时间到了，会析构掉。

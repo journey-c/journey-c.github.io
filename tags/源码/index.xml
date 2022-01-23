@@ -10,10 +10,260 @@
   
   
   
-  <lastBuildDate>Sun, 16 May 2021 23:10:11 +0800</lastBuildDate>
+  <lastBuildDate>Sun, 23 Jan 2022 19:07:41 +0800</lastBuildDate>
   
       <atom:link href="https://journey-c.github.io/tags/%E6%BA%90%E7%A0%81/index.xml" rel="self" type="application/rss+xml" />
   
+  
+  <item>
+    <title>Linux进程管理和调度（一）</title>
+    <link>https://journey-c.github.io/linux-process-management-and-scheduling-1/</link>
+    <pubDate>Sun, 23 Jan 2022 19:07:41 +0800</pubDate>
+    
+    <guid>https://journey-c.github.io/linux-process-management-and-scheduling-1/</guid>
+    <description>&lt;p&gt;几乎所有现代操作系统都支持同时运行若干程序（至少在用户错觉是这样的）。这种错觉是由内核和处理器建立的，在很短的时间间隔内多任务不停切换。由于用户无法注意到短时间内的停滞，所以就造成了感官上的多任务并行。本文就一起来探究一下Linux是如果管理多任务的。&lt;/p&gt;
+&lt;h1 id=&#34;进程表示&#34;&gt;进程表示&lt;/h1&gt;
+&lt;p&gt;既然要管理任务，就要有一个描述任务的数据结构，操作系统一般用&lt;a href=&#34;https://en.wikipedia.org/wiki/Process_(computing)&#34;&gt;进程&lt;/a&gt;来表示任务，Linux中将进程线程抽象为&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched.h#L640&#34;&gt;struct task_struct&lt;/a&gt;，&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched.h#L640&#34;&gt;struct task_struct&lt;/a&gt;中涉及了若干个子系统，十分的复杂，我们一点点来分析。
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process.png&#34; alt=&#34;linux-process-management-and-scheduling-process&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
+&lt;h2 id=&#34;命名空间&#34;&gt;命名空间&lt;/h2&gt;
+&lt;p&gt;在分析其他字段之前，先简单了解一下namespace的概念，因为后边讲的东西多多少少都会涉及这个特性。命名空间提供了虚拟化的一种轻量级形式，使得我们可以从不同的方面来查看运行系统的全局属性。该机制类似于Solaris中的zone或FreeBSD中的jail。&lt;/p&gt;
+&lt;h3 id=&#34;概念&#34;&gt;概念&lt;/h3&gt;
+&lt;p&gt;传统的类UNIX系统中许多资源都是全局管理的，内核统一维护所有进程的ID，以及用户ID等，调用者调用uname命令看到的内核信息都是相同的。&lt;/p&gt;
+&lt;p&gt;全局管理可以有选择的允许或拒绝某些特权，0号进程几乎可以做任何事，但是其他用户的权限会被收敛，例如用户A不能杀死用户B的进程。虽然用户A不能杀死用户B的进程，但是能看到。Linux是多任务、多用户的的系统，没道理不让看其他用户的活动。&lt;/p&gt;
+&lt;p&gt;但是在有些情况下，这种特性并不是十分友好，例如云厂商对外提供计算服务，当然要给予他机器所有的权利，最直白的方式是给用户提供物理机，但是用户需要的计算能力不一样，并且采购也需要时间的，运营成品极高。使用KVM或VMWare提供的虚拟化环境是另一种解决问题的方案。但是这种方案的弊端明显，需要先虚出来硬件，然后在此基础上运行操作系统，虽然随着虚拟化的发展，性能损耗可以讲到1%以下。但是创建计算节点的耗时高还是给使用上带来了不便。&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-namespace_1.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-namespace_1.png&#34; alt=&#34;linux-process-management-and-scheduling-namespace_1&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+
+而命名空间则提供了一种新的解决方案，将所有全局资源通过命名空间抽象起来，将一组进程放入容器中，容器间隔离，但也允许一定程度上的共享，例如两个容器共享同一个文件系统。&lt;/p&gt;
+&lt;h3 id=&#34;实现&#34;&gt;实现&lt;/h3&gt;
+&lt;p&gt;资源隔离后所有资源不再是全局唯一，只有&lt;code&gt;资源+资源所在命名空间&lt;/code&gt;的二元组全局唯一。
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-namespace_2.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-namespace_2.png&#34; alt=&#34;linux-process-management-and-scheduling-namespace_1&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* Namespaces: */&lt;/span&gt;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; nsproxy          &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;nsproxy;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched.h#L640&#34;&gt;struct task_struct&lt;/a&gt;中使用&lt;a href=&#34;https://github.com/torvalds/linux/blob/60a9483534ed0d99090a2ee1d4bb0b8179195f51/include/linux/nsproxy.h#L31&#34;&gt;struct nsproxy&lt;/a&gt;来维护namespace的信息。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; nsproxy {
+    atomic_t count;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; uts_namespace &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;uts_ns;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; ipc_namespace &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;ipc_ns;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; mnt_namespace &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;mnt_ns;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; pid_namespace &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;pid_ns_for_children;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; net       &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;net_ns;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; time_namespace &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;time_ns;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; time_namespace &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;time_ns_for_children;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; cgroup_namespace &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;cgroup_ns;
+};
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;当前内核可以感知以下命名空间&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;uts_ns 记录了内核名称、版本、体系结构等信息，通过&lt;code&gt;uname&lt;/code&gt;系统调用可以获取&lt;/li&gt;
+&lt;li&gt;ipc_us 记录了进程间通信的信息&lt;/li&gt;
+&lt;li&gt;mnt_ns 已经装载的文件系统的视图&lt;/li&gt;
+&lt;li&gt;pid_ns_for_children 进程ID相关的信息&lt;/li&gt;
+&lt;li&gt;net_ns 包含所有网络相关的命名空间参数&lt;/li&gt;
+&lt;li&gt;time_ns和time_ns_for_children 维护了时间相关信息&lt;/li&gt;
+&lt;li&gt;cgroup_ns 包含了计算资源分配相关的信息，例如CPU、内存、磁盘I/O等&lt;/li&gt;
+&lt;li&gt;count是引用计数，各task通过指针指向相同的nsproxy，所以这里有一个引用计数&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;相同namespace进程通过指针指向同一个nsproxy结构，反之的指向不同nsproxy，这样就做到改变只影响本namespace。&lt;/p&gt;
+&lt;h3 id=&#34;相关操作&#34;&gt;相关操作&lt;/h3&gt;
+&lt;p&gt;使用最频繁的操作就是获取当前进程所在的命名空间了。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;如果没有给定数字类型pid或者struct task_struct结构体，就使用get_current()获取当前进程。&lt;/li&gt;
+&lt;li&gt;根据task_struct-&amp;gt;thread_pid-&amp;gt;level取出第几个struct upid&lt;/li&gt;
+&lt;li&gt;struct upid中有对应的struct pid_namespace&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;进程id&#34;&gt;进程ID&lt;/h2&gt;
+&lt;p&gt;进程作为操作系统的一个核心概念，每个进程都有自己的ID：进程ID，也有自己的生命周期。
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-life-cycle.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-life-cycle.png&#34; alt=&#34;linux-process-management-and-scheduling-life-cycle&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
+&lt;p&gt;子进程有父进程，父进程也有父进程，这样就形成了以init进程为根的家族树。除了纵向的关系，还有横向的关系：进程组、会话组。&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process_groups_and_session_groups.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process_groups_and_session_groups.png&#34; alt=&#34;linux-process-management-and-scheduling-process_groups_and_session_groups&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
+&lt;p&gt;进程组和会话组的之间又形成了两级的关系：进程组是一组进程的集合，而会话组则是一组相关进程组的集合。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;进程组组长，linux中直接在task_struct中用变量&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched.h#L859&#34;&gt;task_struct-&amp;gt;group_leader&lt;/a&gt;指向进程组组长。&lt;/li&gt;
+&lt;li&gt;会话组组长，进程组组成会话组，所以会话内某个进程组组长就是会话组组长，每个进程组组长都有一个变量&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched/signal.h#L162&#34;&gt;task_struct-&amp;gt;group_leader-&amp;gt;signal-&amp;gt;leader&lt;/a&gt;来表示自己是不是会话组组长。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;由上边的描述，进程就需要三个ID来标识不同身份：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;进程ID（PID）进程的唯一标识。&lt;/li&gt;
+&lt;li&gt;进程组ID（PGID）一般为进程组组长的PID，创建新进程是默认会继承父进程PGID。&lt;/li&gt;
+&lt;li&gt;会话ID（SID）一般为会话组组长的PID，创建新进程是默认会继承父进程SID。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;再细分的话，进程内部的工作单位还有线程，几个线程也可以合并为一个线程组。这样就又需要两个ID来标识身份：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;线程ID（TID）Linux中当task_struct作为线程时、其TID的值为PID。&lt;/li&gt;
+&lt;li&gt;线程组ID（TGID）为线程组组长的TID，而线程组组长的TID就是整个进程的ID，所以Linux中又以TID是否为PID来判断线程是否为主线程。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process-id.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process-id.png&#34; alt=&#34;linux-process-management-and-scheduling-process-id&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
+&lt;p&gt;如果没有命名空间的特性的话，内核可以直接在struct task_struct使用五个数字类型的ID来表示上面定义的ID。但是命名空间的特性使得各种ID的维护变得更加的复杂。&lt;/p&gt;
+&lt;p&gt;PID的命名空间类似树形的层次结构，创建一个新的命名空间时，该空间内所有的PID都是对父命名空间以及上层的命名空间可见的。往上多一层就要多一个ID表示。&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process-id-namespace_1.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process-id-namespace_1.png&#34; alt=&#34;linux-process-management-and-scheduling-process-id-namespace_1&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
+&lt;p&gt;例如图中进程，对init命名空间、命名空间2、命名空间4可见，则PID就需要三个值来分别在三个命名空间表示唯一。&lt;/p&gt;
+&lt;p&gt;根据命名空间的分层，可以将PID分成两类：全局ID、局部ID&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;全局ID，是内核本身和初始命名空间(init进程所在namespace)的ID号。&lt;/li&gt;
+&lt;li&gt;局部ID，属于某个特定namespace，不同namespace间可以相同，但namespace内部不同。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h3 id=&#34;全局id&#34;&gt;全局ID&lt;/h3&gt;
+&lt;p&gt;首先全局的pid和tgid直接保存在struct task_struct中。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; task_struct {
+    ...
+    pid_t pid;
+    pid_t tgid;
+    ...
+};
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;其余全局ID都可以用这两个ID来表示：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;全局SID，为会话组组长的全局pid。&lt;/li&gt;
+&lt;li&gt;全局PGID，为进程组组长的全局pid。&lt;/li&gt;
+&lt;li&gt;全局TID，当task_struct为线程时，pid就是tid，则全局pid也就是全局tid&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;局部id&#34;&gt;局部ID&lt;/h3&gt;
+&lt;p&gt;除了全局ID这两个字段之外，内核还需要管理局部ID，因为增加了namespace的特性，所以这需要几个相互联系的数据结构，以及辅助函数。&lt;/p&gt;
+&lt;h4 id=&#34;数据结构&#34;&gt;数据结构&lt;/h4&gt;
+&lt;p&gt;先来看一下pid的&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/pid_namespace.h#L20&#34;&gt;namespace&lt;/a&gt;表示方式。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; pid_namespace {
+    ...
+	&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; task_struct &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;child_reaper;
+    ...
+	&lt;span style=&#34;color:#66d9ef&#34;&gt;unsigned&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; level;
+	&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; pid_namespace &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;parent;
+    ...
+} __randomize_layout;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;其中主要的变量：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;child_reaper 每个命名空间必须绑定一个进程，这个进程就相当于init进程，该进程也必须完成init进程的工作，例如对孤儿进程调用&lt;code&gt;wait4&lt;/code&gt;。&lt;/li&gt;
+&lt;li&gt;parent 指向父命名空间。level表示当前命名空间的深度，初始为0，依次递增。level较低命名空间对较高命名空间可见。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;局部pid的管理主要围绕两个数据结构：&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/pid.h#L59&#34;&gt;struct pid&lt;/a&gt;是内核对局部ID的表示，而&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/pid.h#L54&#34;&gt;struct upid&lt;/a&gt;则是PID在namespace内的可见信息。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; upid {
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; nr;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; pid_namespace &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;ns;
+};
+&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; pid
+{
+    refcount_t count;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;unsigned&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; level;
+    spinlock_t lock;
+    &lt;span style=&#34;color:#75715e&#34;&gt;/* 使用该pid的进程列表 */&lt;/span&gt;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; hlist_head tasks[PIDTYPE_MAX];
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; hlist_head inodes;
+    &lt;span style=&#34;color:#75715e&#34;&gt;/* wait queue for pidfd notifications */&lt;/span&gt;
+    wait_queue_head_t wait_pidfd;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; rcu_head rcu;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; upid numbers[&lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;];
+};
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;首先是&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/pid.h#L54&#34;&gt;struct upid&lt;/a&gt;，变量nr表示id的数值，比如执行shell命令&lt;code&gt;ps&lt;/code&gt;得到的PID就是取的这个值。ns指向对应的namespace。这样一个数据结构就能在增加namespace特性的情况下唯一的表示一个局部ID。&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/pid.h#L59&#34;&gt;struct pid&lt;/a&gt;中count是一个引用计数，task是一个散列数组，包含了所有引用该struct pid的进程。因为同一个ID可能用于几个进程。比如进程组内进程组ID相同等。PIDTYPE_MAX表示ID的类型数。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;enum&lt;/span&gt; pid_type
+{
+    PIDTYPE_PID,
+    PIDTYPE_TGID,
+    PIDTYPE_PGID,
+    PIDTYPE_SID,
+    PIDTYPE_MAX,
+};
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;一个进程可能对多个namespace都可见，所以level表示namespace的深度，如图左下角。而numbers对应一个&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/pid.h#L54&#34;&gt;struct upid&lt;/a&gt;的数组，长度为level，表示在每个namespace的ID。&lt;strong&gt;注意该数组形式上只有一个数组项，如果一个进程只包含在全局命名空间中，那么确实如此。由于该数组位于结构的末尾，因此 只要分配更多的内存空间，即可向数组添加附加的项。&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process-id-2.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process-id-2.png&#34; alt=&#34;linux-process-management-and-scheduling-process-id-2&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
+&lt;p&gt;这三个数据结构的关系如上图：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;struct task_struct内部会有指向struct pid的指针，方便查找ID时找到数据结构。指向struct pid的指针也做了分类，像PID、TID这种一般不会进行&lt;strong&gt;组操作的ID&lt;/strong&gt;就用struct pid *thread_pid指针缓存，查找PID时直接用这个指针。而PGID、TGID、SID这种需要&lt;strong&gt;组操作的ID&lt;/strong&gt;就放在task_struct-&amp;gt;signal-&amp;gt;pids[PID_TYPE]里面，查找这三类ID时就直接从task_struct-&amp;gt;signal-&amp;gt;pids[PID_TYPE]查。&lt;/li&gt;
+&lt;li&gt;同时struct pid也会缓存引用他的struct task_struct，将引用他的struct task_struct都放在自身tasks变量中。&lt;/li&gt;
+&lt;li&gt;struct pid中level变量会记录当前struct pid在第几层namespace，而pid-&amp;gt;numbers记录了ID在各层ID数值。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&#34;函数&#34;&gt;函数&lt;/h4&gt;
+&lt;p&gt;内核提供了若干函数辅助操作上面的三个数据结构，但本质离不开两个问题：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;给定局部数字类型ID和namespace，如何找到对应的struct pid。&lt;/li&gt;
+&lt;li&gt;给出task_struct、ID类型和namespace，如何找到数字类型的ID。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;在这两个问题之前，有个问题：如何找到进程所在的namespace？&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process-id-find-namespace.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process-id-find-namespace.png&#34; alt=&#34;linux-process-management-and-scheduling-process-id-find-namespace&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
+&lt;p&gt;首先如果没给定task_struct的话，可以调用&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/current.h#L18&#34;&gt;current&lt;/a&gt;宏获取当前所在task_struct。&lt;/p&gt;
+&lt;p&gt;然后调用&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/kernel/pid.c#L507&#34;&gt;task_active_pid_ns&lt;/a&gt;获取namespace，大概流程就是，通过task_struct-&amp;gt;thread_pid指针获的指向的struct pid，其变量记录了当前所在第几层namespace，然后从pid-&amp;gt;numbers[level]变量中取出对应的struct upid，其变量记录了对应的namespace。&lt;/p&gt;
+&lt;p&gt;再回到前边两个问题:&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;[1]给定局部数字类型ID和namespace，如何找到对应的struct pid?&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;内核用&lt;a href=&#34;https://en.wikipedia.org/wiki/Radix_tree&#34;&gt;基数树&lt;/a&gt;存储局部ID到struct pid的映射，实际就是存储了局部ID（数字类型）对应的struct pid的内存地址（数字）。&lt;/p&gt;
+&lt;p&gt;通过&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/kernel/pid.c#L309&#34;&gt;find_pid_ns&lt;/a&gt;找到局部ID对应的struct pid对象。&lt;/p&gt;
+&lt;p&gt;然后根据需要的ID的类型取出pid-&amp;gt;tasks[ID_TYPE]散列表中第一个实例。&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;[2] 给出task_struct、ID类型和namespace，如何找到数字类型的ID?&lt;/strong&gt;&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;通过task_struct和ID类型拿到struct pid:
+&lt;ol&gt;
+&lt;li&gt;PID/TID: 取task_struct-&amp;gt;thread_pid&lt;/li&gt;
+&lt;li&gt;其他类型:
+&lt;ol&gt;
+&lt;li&gt;PGID: 通过task_struct-&amp;gt;group_leader找到进程组组长对应的task_struct&lt;/li&gt;
+&lt;li&gt;TGID: 线程组ID就是PID，调用&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/current.h#L18&#34;&gt;current&lt;/a&gt;获取task_struct&lt;/li&gt;
+&lt;li&gt;SID: 调用&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/current.h#L18&#34;&gt;current&lt;/a&gt;获取task_struct。&lt;/li&gt;
+&lt;li&gt;分别调用&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched.h#L1368&#34;&gt;task_pid&lt;/a&gt;、&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched/signal.h#L637&#34;&gt;task_pgrp&lt;/a&gt;、&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched/signal.h#L627&#34;&gt;task_tgid&lt;/a&gt;、&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched/signal.h#L642&#34;&gt;task_session&lt;/a&gt;获取对应的struct pid&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/li&gt;
+&lt;li&gt;然后根据struct pid和namespace找到对应数字类型ID，这里实际就是用namespace里的level去struct pid里取第几个struct upid，然后struct upid的成员变量nr就是所需要的数字类型id。&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+  </item>
   
   <item>
     <title>Redis的网络模型</title>
@@ -25,18 +275,53 @@
 &lt;p&gt;服务端程序几乎都会有网络交互的功能，一个优秀网络模型可以合理配合使用计算机的各资源。&lt;/p&gt;
 &lt;/blockquote&gt;
 &lt;p&gt;Redis作为广为人知的内存数据库，从玩具级项目到工业级项目中都可以看到它的身影，而Redis在最初的几个版本中一直是单线程，却能扛住&lt;a href=&#34;https://redis.io/topics/faq#what39s-the-redis-memory-footprint&#34;&gt;1 million requests per second&lt;/a&gt;的请求量（非单点）。其实现的单线程网络模型必然十分优秀。
-&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-share.png&#34; alt=&#34;redis-network-model-share&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/redis-network-model-share.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-share.png&#34; alt=&#34;redis-network-model-share&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h1 id=&#34;设计原理&#34;&gt;设计原理&lt;/h1&gt;
 &lt;p&gt;在分析网络模型之前先分析一下Redis中网络交互的场景。一般来说我们在使用Redis时，一般会和Redis-Server建若干个连接，然后并发的给Redis-Server发送指令并得到回复。而Redis-Server就需要同时维护若干个与Redis-Client的连接，并且随时处理每个连接发来的请求。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-connecttion-per-thread.png&#34; alt=&#34;redis-network-model-connecttion-per-thread&#34;&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/redis-network-model-connecttion-per-thread.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-connecttion-per-thread.png&#34; alt=&#34;redis-network-model-connecttion-per-thread&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+
 一种方式是起一个线程监听一个端口，当新连接到来时，创建一个新线程处理这个连接。这样做的缺点是，当连接过多时线程数也随之增多，线程栈大小一般8MB，大量的线程会占用大量内存和CPU资源。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-connecttion-worker-pool.png&#34; alt=&#34;redis-network-model-connecttion-worker-pool&#34;&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/redis-network-model-connecttion-worker-pool.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-connecttion-worker-pool.png&#34; alt=&#34;redis-network-model-connecttion-worker-pool&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+
 另一种方式是起一个线程监听端口，新连接交给线程池来处理，这样做的优点是连接数不再会压垮计算机，而缺点就是服务器的处理能力受限与线程池的大小，并且空闲连接也会占用线程池的资源。&lt;/p&gt;
 &lt;p&gt;上边两种网络模型的问题就在于一个线程只处理一个连接，而操作系统提供的&lt;a href=&#34;https://journey-c.github.io/io-multiplexing&#34;&gt;IO多路复用技术&lt;/a&gt;可以解决这一问题。一个线程监听多个连接，每个连接只有在活跃时才会使用CPU，从而达到节省资源的目录。&lt;/p&gt;
 &lt;p&gt;Redis采用Reactor模式实现的网络模型。主要由事件收集器、事件发送器、事件处理器组成。事件收集器主要收集所有事件，包括来自硬件软件的事件。事件发送器负责将事件发送到实现注册的事件处理器。而事件处理器则负责处理事件。其中事件收集器就是通过&lt;a href=&#34;https://journey-c.github.io/io-multiplexing&#34;&gt;IO多路复用技术&lt;/a&gt;来实现的。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model.png&#34; alt=&#34;redis-network-model&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/redis-network-model.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model.png&#34; alt=&#34;redis-network-model&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h1 id=&#34;数据结构&#34;&gt;数据结构&lt;/h1&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-data-structure.png&#34; alt=&#34;redis-network-model-data-structure&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/redis-network-model-data-structure.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-data-structure.png&#34; alt=&#34;redis-network-model-data-structure&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;结构体&lt;a href=&#34;https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.h#L99&#34;&gt;aeEventLoop&lt;/a&gt;封装了事件循环相关的变量，包括两种事件的链表(时间事件、文件事件)。然后文件事件（&lt;a href=&#34;https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.h#L72&#34;&gt;aeFileEvent&lt;/a&gt;）中封装了读写事件接口充当事件处理器，时间事件（&lt;a href=&#34;https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.h#L80&#34;&gt;aeTimeEvent&lt;/a&gt;）中也封装了相应接口作为事件处理器。&lt;/p&gt;
 &lt;h1 id=&#34;事件&#34;&gt;事件&lt;/h1&gt;
 &lt;p&gt;默认有两种事件：&lt;code&gt;文件事件&lt;/code&gt;, &lt;code&gt;时间事件&lt;/code&gt;。&lt;/p&gt;
@@ -96,7 +381,14 @@
 &lt;p&gt;根据配置文件监听端口之后，会调用&lt;a href=&#34;https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/server.c#L3000&#34;&gt;createSocketAcceptHandler&lt;/a&gt;将&lt;code&gt;Listen FD&lt;/code&gt;封装成文件事件加入&lt;a href=&#34;https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.h#L99&#34;&gt;aeEventLoop&lt;/a&gt;。&lt;/p&gt;
 &lt;p&gt;此时服务端准备工作基本完成了，端口监听了，&lt;code&gt;Listen FD&lt;/code&gt;的&lt;code&gt;accept&lt;/code&gt;动作也监听了。&lt;/p&gt;
 &lt;p&gt;然后就会调用&lt;a href=&#34;https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.c#L484&#34;&gt;aeMain&lt;/a&gt;进入事件循环了。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-eventloop.png&#34; alt=&#34;redis-network-model-eventloop&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/redis-network-model-eventloop.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-eventloop.png&#34; alt=&#34;redis-network-model-eventloop&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.c#L484&#34;&gt;aeMain&lt;/a&gt;函数中是一个循环，不断判断是否停止，不停止就执行&lt;a href=&#34;https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.c#L348&#34;&gt;aeProcessEvents&lt;/a&gt;函数。&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;https://github.com/redis/redis/blob/e90e5640e7840860bc6726a08135ea86687bbd58/src/ae.c#L348&#34;&gt;aeProcessEvents&lt;/a&gt;中：&lt;/p&gt;
 &lt;ol&gt;
@@ -113,19 +405,33 @@
 &lt;h1 id=&#34;总结&#34;&gt;总结&lt;/h1&gt;
 &lt;p&gt;上面分析的网络模型在Redis中都是在单线程中实现的，所有事件执行也是串行的，这也是很多人使用Redis实现分布式锁而不用考虑并发原因了。Redis采用单线程实现网络模型也能扛住大量请求，一方面是网络模型足够优秀，另一方面就是所有操作都在内存中，单事物处理时间短，并且Redis数据库中数据结构实现优化到了极致，比如同种数据结构根据数据量大小选择不同底层实现，通用回复字符串共享，秒级时间戳缓存等等。&lt;/p&gt;
 &lt;p&gt;事件驱动实现并非只能单线程实现，Redis之所以使用单线程实现一方面是为了方便开发者，另一方面是Redis的瓶颈并不在网络请求。而多线程实现的代表就是&lt;a href=&#34;https://nginx.org/&#34;&gt;Nginx&lt;/a&gt;了。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-nginx.png&#34; alt=&#34;redis-network-model-nginx&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/redis-network-model-nginx.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-nginx.png&#34; alt=&#34;redis-network-model-nginx&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;nginx实现时，Master监听，将连接分发给若干个Worker线程处理，每个Worker线程有自己的事件循环。为了避免调度对网络响应的损耗，nginx会调用&lt;a href=&#34;https://man7.org/linux/man-pages/man2/sched_setaffinity.2.html&#34;&gt;SCHED_SETAFFINITY&lt;/a&gt;将每个Worker分散绑定到不同CPU上。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-golang.png&#34; alt=&#34;redis-network-model-golang&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/redis-network-model-golang.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/redis-network-model-golang.png&#34; alt=&#34;redis-network-model-golang&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;而以高并发著称的golang语言却不适合采用事件驱动编程。golang标准库中的网络模型都是&lt;code&gt;connection-per-goroutine&lt;/code&gt;，这样做的原因是go无法将goroutine固定到指定&lt;code&gt;P&lt;/code&gt;上，如果采用事件驱动模型，最坏的情况下所有Worker被调度到同一个&lt;code&gt;P&lt;/code&gt;上，就变成单线程模型了。从上面golang事件驱动模型的尖刺非常明显（蓝色为 netpoll + 多路复用，绿色为 netpoll + 长连接，黄色为 net 库 + 长连接）。&lt;/p&gt;
 </description>
   </item>
   
   <item>
     <title>Linux内存管理</title>
-    <link>https://journey-c.github.io/linux-memory-management/</link>
+    <link>https://journey-c.github.io/linux-memory-management-1/</link>
     <pubDate>Fri, 19 Feb 2021 23:25:19 +0800</pubDate>
     
-    <guid>https://journey-c.github.io/linux-memory-management/</guid>
+    <guid>https://journey-c.github.io/linux-memory-management-1/</guid>
     <description>&lt;blockquote&gt;
 &lt;p&gt;计算机的计算，一方面说的是进程、线程对于CPU的使用，另一方面是对于内存的管理。本文就是介绍Linux的内存管理。&lt;/p&gt;
 &lt;/blockquote&gt;
@@ -143,10 +449,24 @@
 &lt;/blockquote&gt;
 &lt;p&gt;使用虚拟地址一个核心的问题，需要记录虚拟地址到物理地址的映射，最简单的方式是虚拟地址与物理地址一一对应，这样4G内存光是维护映射关系就需要4G（扯淡）。所以需要其他有效的内存管理方案。通常有两种：分段、分页。下面我们来一起分析一下这两种管理机制以及在Linux中是如何应用的。&lt;/p&gt;
 &lt;h2 id=&#34;分段&#34;&gt;分段&lt;/h2&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/memory-management-x86-cpu.png&#34; alt=&#34;&#34;&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/memory-management-x86-cpu.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/memory-management-x86-cpu.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+
 8086升级到80386之后，段寄存器CS、DS、SS、ES从直接存放地址变成高位存放段选择子，低位做段描述符缓存器。由原来的直接使用内存地址变为现在的通过分段机制来使用内存地址。&lt;/p&gt;
 &lt;p&gt;那我们先来看一下内存管理中分段机制的原理。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/memory-management-segmented.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/memory-management-segmented.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/memory-management-segmented.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;分段机制下虚拟地址由两部分组成，&lt;strong&gt;段选择子&lt;/strong&gt;和&lt;strong&gt;段内偏移量&lt;/strong&gt;。段选择子中的段号作为段表的索引，通过段号可以在段表找到对应段表项，每一项记录了一段空间：段基址、段的界限、特权级等。用段基址+段内偏移量就可以计算出对应的物理地址。&lt;/p&gt;
 &lt;p&gt;Linux中段表称为段描述符表，放在全局描述符表中，用&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/desc_defs.h#L23&#34;&gt;GDT_ENTRY_INIT&lt;/a&gt;函数来初始化表项&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/desc_defs.h#L16&#34;&gt;desc_struct&lt;/a&gt;。&lt;/p&gt;
 &lt;p&gt;下面是Linux中&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/segment.h#L171&#34;&gt;段选择子&lt;/a&gt;和&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/kernel/cpu/common.c#L115&#34;&gt;段表&lt;/a&gt;的定义，看一下所有段表项初始化传入的参数中，段基址base都是0，这没有分段。事实上Linux中没有用到全部的分段功能，对于内存管理更倾向于分页机制。&lt;/p&gt;
@@ -176,16 +496,37 @@
 EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;分页&#34;&gt;分页&lt;/h2&gt;
 &lt;p&gt;分页机制和分段机制差不多，都是将物理地址分块。不同的是分段一般将内存大段大段的分割且每段大小一般不相同。而分页将物理内存分成一块块大小相同的页，一般大小为4KB。
-&lt;img src=&#34;https://journey-c.github.io/images/memory-management-pagination_0.png&#34; alt=&#34;&#34;&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/memory-management-pagination_0.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/memory-management-pagination_0.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+
 在分页机制下，虚拟地址有两部分组成(两部分不是严格的两段，比如页号就可以有多级页号)，&lt;strong&gt;页号、页内偏移量&lt;/strong&gt;。通过页号找到对应页表项，页表项高位存了物理页号，低位存储了FLAGS。&lt;/p&gt;
 &lt;p&gt;例如页大小为4KB，只分一级，32位环境中虚拟地址为32位，$2^{32}/2^{12}=2^{20}$可以分1M个页，用20位可以表示页号，12位表示页内偏移。页表项大小为4B(32位)，那么页表大小就是$1M*4B=4MB$，因为每个进程都有自己独立的虚拟地址空间，有100个进程的话光维护页表就需要100MB的空间，这个对于内核来说有点太大了。
-&lt;img src=&#34;https://journey-c.github.io/images/memory-management-pagination_1.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/memory-management-pagination_1.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/memory-management-pagination_1.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;Linux是如何解决页表太大的问题呢？&lt;/p&gt;
 &lt;blockquote&gt;
 &lt;p&gt;采用多级分页的策略才解决页表太大的问题。&lt;/p&gt;
 &lt;/blockquote&gt;
 &lt;p&gt;32位环境中，一级分页和上边描述的一样，分成1M个4KB的页，由页表维护虚拟页号到物理页号的映射。内核在这次分页之后，又对页表进行分页。页表大小为4MB，我们在按照4KB一页进行分页，4KB包含页表项1K项。所以二级分页就是把页表1M的项按照1K项为一页分了1K页。
-&lt;img src=&#34;https://journey-c.github.io/images/memory-management-pagination_2.png&#34; alt=&#34;&#34;&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/memory-management-pagination_2.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/memory-management-pagination_2.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+
 二级分页后，虚拟地址就被分成三部分：页目录号、页表内偏移、页内偏移。通过虚拟地址查找物理地址时：&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;通过虚拟地址前10位的页目录号找到对应页目录项，这个页目录项管理了1K个页表项。&lt;/li&gt;
@@ -198,11 +539,25 @@ EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
 &lt;ol&gt;
 &lt;li&gt;如果使用一级页表，那么每个进程都需要一个页表来维护虚拟地址空间，就是说100个进程需要额外400 MB的空间。&lt;/li&gt;
 &lt;li&gt;如果使用二级页表，每个进程必须的是一个4KB的页目录表。当然并不是每个进程都是用全部4GB内存的。所以4MB的二级页表不会全部使用，用到多少地址就建多少个页表项。所以实际需要额外空间为4KB+使用的页表项数量*4KB
-&lt;img src=&#34;https://journey-c.github.io/images/memory-management-pagination_3.png&#34; alt=&#34;&#34;&gt;&lt;/li&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/memory-management-pagination_3.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/memory-management-pagination_3.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/li&gt;
 &lt;/ol&gt;
 &lt;/blockquote&gt;
 &lt;p&gt;当然64位的环境中，二级页表就不够了，使用的是四级页表，包括&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/pgtable_types.h#L286&#34;&gt;全局页目录项 PGD（Page Global Directory）&lt;/a&gt;、&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/pgtable_types.h#L359&#34;&gt;上层页目录项 PUD（Page Upper Directory）&lt;/a&gt;、&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/pgtable_types.h#L385&#34;&gt;中间页目录项 PMD（Page Middle Directory）&lt;/a&gt;和&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/pgtable_64_types.h#L21&#34;&gt;页表项 PTE（Page Table Entry）&lt;/a&gt;
-&lt;img src=&#34;https://journey-c.github.io/images/memory-management-pagination_4.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/memory-management-pagination_4.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/memory-management-pagination_4.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;虽然多级分页解决了页表过大的问题，但是同时也增大了访问延时，由原来的一次访问内存，变为现在访问多次页表之后才能访问目的地址。&lt;/p&gt;
 &lt;p&gt;到目前为止，我们已经知道如何通过一个虚拟地址得到对应的物理地址。&lt;/p&gt;
 &lt;h1 id=&#34;2-进程的虚拟地址空间&#34;&gt;2. 进程的虚拟地址空间&lt;/h1&gt;
@@ -244,12 +599,33 @@ EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
 &lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;					IA32_PAGE_OFFSET : TASK_SIZE_MAX)
 &lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define TASK_SIZE_OF(child)	((test_tsk_thread_flag(child, TIF_ADDR32)) ? \
 &lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;					IA32_PAGE_OFFSET : TASK_SIZE_MAX)
-&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/memory-management-task-size.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/memory-management-task-size.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/memory-management-task-size.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h2 id=&#34;用户态&#34;&gt;用户态&lt;/h2&gt;
 &lt;p&gt;了解了用户空间和内核空间分界之后，我们先来看下用户空间。用户态虚拟内存布局如下，32位和64位区域和布局差别不大。
-&lt;img src=&#34;https://journey-c.github.io/images/memory-management-user-mode-memory-layout.png&#34; alt=&#34;&#34;&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/memory-management-user-mode-memory-layout.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/memory-management-user-mode-memory-layout.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+
 这些空间里的内容是从哪填充来的呢？没错，是不是感觉和可执行文件的格式有点像。一个进程创建之后所有的内存空间都是复制父进程的，当父进程调用exec加载新的二进制时就会将二进制文件内容加载到进程内存各个模块中，但是不一定是立即加载，有些非必需字段是用时加载。
-&lt;img src=&#34;https://journey-c.github.io/images/memory-management-executable-file-format.png&#34; alt=&#34;&#34;&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/memory-management-executable-file-format.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/memory-management-executable-file-format.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+
 &lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L388&#34;&gt;struct mm_struct&lt;/a&gt;结构体中如下参数定义了这些模块的属性和位置。&lt;/p&gt;
 &lt;table&gt;
 &lt;thead&gt;
@@ -337,7 +713,14 @@ EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
 &lt;li&gt;给start_code, end_code, start_data, end_data赋值。&lt;/li&gt;
 &lt;/ol&gt;
 &lt;p&gt;进程的用户态布局就变成下面这样。
-&lt;img src=&#34;https://journey-c.github.io/images/memory-management-user-mode-memory-layout_1.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/memory-management-user-mode-memory-layout_1.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/memory-management-user-mode-memory-layout_1.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;内存区域映射完之后，存在一下情况区域会发生变化：&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;用户调用malloc/free申请堆空间，小内存操作调用brk移动堆结束指针，大内存操作调用mmap。&lt;/li&gt;
@@ -352,7 +735,14 @@ EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
 &lt;/ol&gt;
 &lt;h2 id=&#34;内核态&#34;&gt;内核态&lt;/h2&gt;
 &lt;p&gt;内核态的虚拟地址空间和某个进程没关系，所有进程共享同一个内核态虚拟地址空间。并且此时讨论的还是虚拟地址空间。前面分析用户态和内核态分界的时候讲了32位内核态是1GB，64位内核态是128TB。因为空间的数量级就差很大，可想而知布局也会有一定差别，毕竟32位太小了。我们先来分析一下32位内核态的布局。
-&lt;img src=&#34;https://journey-c.github.io/images/memory-management-kernel-mode-memory-layout.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/memory-management-kernel-mode-memory-layout.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/memory-management-kernel-mode-memory-layout.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;前896M为直接映射区，这部分地址连续，虚拟地址与物理地址映射关系较为简单，内核用了两个宏定义来转换地址&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/page.h#L59&#34;&gt;#define __va(x)&lt;/a&gt;，&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/page.h#L42&#34;&gt;#define __pa(x)&lt;/a&gt;实际转换规则就是虚拟地址-PAGE_OFFSET(前面讲过用户空和内核空间分界)得到物理地址，物理地址+PAGE_OFFSET得到虚拟地址。直接映射区前1M空间开机处于实模式时会使用，内核代码从1M开始加载，然后就是全局变量、BSS等，另外内存管理的页表以及进程的内核栈都会放在这个区域。&lt;/li&gt;
 &lt;li&gt;接下来就是8M的空洞，用于捕捉内存越界。其他空洞也是这个原因。&lt;/li&gt;
@@ -361,7 +751,14 @@ EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
 &lt;li&gt;FIXADDR_START到FIXADDR_TOP为固定映射区域，留作特定用途。&lt;/li&gt;
 &lt;/ol&gt;
 &lt;p&gt;64位的内核态布局就较为简单了，毕竟128TB太大不需要扣内存。
-&lt;img src=&#34;https://journey-c.github.io/images/memory-management-kernel-mode-memory-layout-64.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/memory-management-kernel-mode-memory-layout-64.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/memory-management-kernel-mode-memory-layout-64.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;内核空间从0xffff800000000000开始，之后有8T空洞。&lt;/li&gt;
 &lt;li&gt;0xFFFF880000000000到0xFFFFC80000000000是直接映射区，同32位。&lt;/li&gt;
@@ -371,10 +768,24 @@ EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
 &lt;h1 id=&#34;3-物理地址空间的管理&#34;&gt;3. 物理地址空间的管理&lt;/h1&gt;
 &lt;p&gt;讲完了虚拟地址空间的管理，现在再来看一下Linux是如何管理物理内存的。&lt;/p&gt;
 &lt;p&gt;传统的x86架构的工作模式中，多处理器与一个集中存储器相连时，所有CPU都要通过总线去访问内存。也就是对称多处理器模式&lt;a href=&#34;https://en.wikipedia.org/wiki/Symmetric_multiprocessing&#34;&gt;SMP（Symmetric multiprocessing）&lt;/a&gt;。
-&lt;img src=&#34;https://journey-c.github.io/images/memory-management-symmetric-multiprocessing.png&#34; alt=&#34;&#34;&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/memory-management-symmetric-multiprocessing.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/memory-management-symmetric-multiprocessing.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+
 由于所有的内存访问都要经过总线，所以总线会成为瓶颈。&lt;/p&gt;
 &lt;p&gt;为了提高性能和扩展性，诞生了一种更高级的模式，非一致性内存访问&lt;a href=&#34;https://en.wikipedia.org/wiki/Non-uniform_memory_access&#34;&gt;NUMA（Non-uniform memory access）&lt;/a&gt;。这种模式下每个CPU有自己本地的内存，当本地内存不足时才会访问其他NUMA节点的内存。这样就提高了访问的效率。
-&lt;img src=&#34;https://journey-c.github.io/images/memory-management-physical-memory.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/memory-management-physical-memory.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/memory-management-physical-memory.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;值得注意的一点就是Mysql对NUMA支持不友好，NUMA在默认在本地CPU上分配内存，会导致CPU节点之间内存分配不均衡，当某个CPU节点的内存不足会使用Swap而不是直接从远程节点分配内存。经常内存还有耗尽，Mysql就已经使用Swap照成抖动，这就是&amp;quot;Swap Insanity&amp;rdquo;。所以单机部署Mysql的时候最好将NUMA关掉。&lt;/p&gt;
 &lt;h2 id=&#34;节点&#34;&gt;节点&lt;/h2&gt;
 &lt;p&gt;接下来我们就看一下当前主流的模式NUMA，NUMA模式中内存分节点，每个CPU有本地内存，内核中用&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mmzone.h#L726&#34;&gt;typedef struct pglist_data pg_data_t&lt;/a&gt;表示节点。我们来看一下这个结构体重点的变量。&lt;/p&gt;
@@ -464,7 +875,14 @@ EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
 &lt;/ol&gt;
 &lt;h3 id=&#34;按页分配&#34;&gt;按页分配&lt;/h3&gt;
 &lt;p&gt;使用伙伴系统分配，&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mmzone.h#L448&#34;&gt;struct zone&lt;/a&gt;中的free_area数组每个元素都是一个链表首地址，每条链表有1、2、4、8、16、32、64、128、256、512 和 1024 个连续页。也就是说最多可以分配4MB的连续内存，每个页块的地址物理页地址是页块大小的整数倍。
-&lt;img src=&#34;https://journey-c.github.io/images/memory-management-free-area.png&#34; alt=&#34;&#34;&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/memory-management-free-area.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/memory-management-free-area.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+
 分配使用函数&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/gfp.h#L545&#34;&gt;alloc_pages&lt;/a&gt;，该函数返回连续物理页的第一页的&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L68&#34;&gt;struct page&lt;/a&gt;的地址。&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/gfp.h#L545&#34;&gt;alloc_pages&lt;/a&gt;调用&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/mm/mempolicy.c#L2256&#34;&gt;alloc_pages_current&lt;/a&gt;。&lt;/li&gt;
@@ -475,7 +893,14 @@ EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
 &lt;h3 id=&#34;slab分配&#34;&gt;Slab分配&lt;/h3&gt;
 &lt;p&gt;内核以及用户空间几乎很少用到按页分配的情况，普遍使用都是像malloc那样小段内存申请，并且操作十分频繁。这种频繁的操作通常会使用空闲链表，空闲链表缓存被释放的结构，下次分配是直接从链表抓取而不是申请。&lt;/p&gt;
 &lt;p&gt;内核中，空闲链表面临的主要问题是不能全局控制，当可用内存紧缺时，内核无法通知每个空闲链表收缩从而释放一些内存。事实上内核根本不知道存在哪些空闲链表。为了弥补这一缺陷，Linux内核提供了Slab层。Slab分配器来充当通用数据结构缓存层的角色，以感知所有缓存链表状态。&lt;sup id=&#34;fnref:1&#34;&gt;&lt;a href=&#34;#fn:1&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;1&lt;/a&gt;&lt;/sup&gt;&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/memory-management-slab-allocator.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/memory-management-slab-allocator.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/memory-management-slab-allocator.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;Slab分配模式中：&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;每个结构体对应一个高速缓存，由&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slab.h#L147&#34;&gt;kmem_cache_create&lt;/a&gt;函数创建，由&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slab.h#L155&#34;&gt;kmem_cache_destroy&lt;/a&gt;函数销毁。例如进程线程的结构体&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched.h#L640&#34;&gt;struct task_struct&lt;/a&gt;对应高速缓存为&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/kernel/fork.c#L166&#34;&gt;task_struct_cachep&lt;/a&gt;，进程虚拟内存管理结构体&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/mm_types.h#L388&#34;&gt;struct mm_struct&lt;/a&gt;对应高速缓存为&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/kernel/fork.c#L342&#34;&gt;mm_cachep&lt;/a&gt;，每个高速缓存都使用&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slub_def.h#L83&#34;&gt;struct kmem_cache&lt;/a&gt;表示。这里的&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slub_def.h#L83&#34;&gt;struct kmem_cache&lt;/a&gt;是&lt;code&gt;include/linux/slub_def.h&lt;/code&gt;下的，高速缓存中有多个slab。&lt;/li&gt;
@@ -487,7 +912,14 @@ EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
 &lt;li&gt;每个slab里面存放了若干个连续物理页用于分配，物理页按照结构体大小分割。工程师通过&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slab.h#L390&#34;&gt;kmem_cache_alloc&lt;/a&gt;申请结构体，通过&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slab.h#L391&#34;&gt;kmem_cache_free&lt;/a&gt;释放结构体(放回)。&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;先分析一下高速缓存&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/slub_def.h#L83&#34;&gt;struct kmem_cache&lt;/a&gt;。
-&lt;img src=&#34;https://journey-c.github.io/images/memory-management-kmem-cache.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/memory-management-kmem-cache.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/memory-management-kmem-cache.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;cpu_slab 是每个CPU本地缓存。
 &lt;ul&gt;
@@ -530,7 +962,14 @@ EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
 &lt;p&gt;上边讲完了虚拟地址空间和物理地址空间是如何管理的，还剩下最后一个问题，这俩是怎么映射的？其实虚拟地址不止可以和物理内存映射，还可以和文件等映射。物理内存只是一种特殊的情况。&lt;/p&gt;
 &lt;h2 id=&#34;用户态映射&#34;&gt;用户态映射&lt;/h2&gt;
 &lt;p&gt;首先来看一下用户态映射方式。
-&lt;img src=&#34;https://journey-c.github.io/images/memory-management-user-mode-memory-mapping.png&#34; alt=&#34;&#34;&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/memory-management-user-mode-memory-mapping.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/memory-management-user-mode-memory-mapping.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+
 前边说堆的时候，malloc函数只讲了小内存brk的方式，当申请内存较大时会使用mmap（不是系统调用那个），对于堆来说就是将虚拟地址映射到物理地址。另外如果想将文件映射到内存也可以调用&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/kernel/sys_x86_64.c#L89&#34;&gt;mmap&lt;/a&gt;。&lt;/p&gt;
 &lt;p&gt;我们先来分析一下&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/kernel/sys_x86_64.c#L89&#34;&gt;mmap&lt;/a&gt;。&lt;/p&gt;
 &lt;ol&gt;
@@ -678,7 +1117,14 @@ SYM_DATA_END(init_top_pgt)
 &lt;li&gt;顺序通讯，写入和读出的顺序一致&lt;/li&gt;
 &lt;/ol&gt;
 &lt;h1 id=&#34;2-数据部分&#34;&gt;2. 数据部分&lt;/h1&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/chan.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/chan.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/chan.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;源码位置go/src/runtime/chan.go&lt;/strong&gt;&lt;/p&gt;
 &lt;h2 id=&#34;21--hchan&#34;&gt;2.1  hchan&lt;/h2&gt;
 &lt;p&gt;channel对应的数据结构&lt;/p&gt;
@@ -1475,7 +1921,14 @@ M表示线程，P作为调度器用来帮助每个线程管理自己的goroutine
 &lt;p&gt;&lt;strong&gt;那其他线程是什么时候创建的呐?&lt;/strong&gt;
 当goroutine被唤醒时，要在M上运行(恢复goroutine的上下文)，P是帮助M管理goroutine的，恢复上下文的操作也由P来完成。如果被唤醒时发现还有空闲的P，并且没有其他M在窃取goroutine(M发现本地goroutine队列和全局goroutine队列都没有goroutine的时候，会去其他线程窃取goroutine)，说明其他M都在忙，就会创建一个M让这个空闲的P帮他来管理goroutine。
 总之一句话，开始的时候创建一个M，当发现调度不过来且还有空闲P没有工作就在创建新的，直到创建procs个M(procs通过runtime.GOMAXPROCS设置)&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/model.png&#34; alt=&#34;model&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/model.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/model.png&#34; alt=&#34;model&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h2 id=&#34;11-g&#34;&gt;1.1 G&lt;/h2&gt;
 &lt;p&gt;golang 用结构体g表示goroutine&lt;/p&gt;
 &lt;ul&gt;
@@ -1705,7 +2158,14 @@ Breakpoint &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; at 0x1049360
 &lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;	&lt;span style=&#34;color:#a6e22e&#34;&gt;MOVQ&lt;/span&gt;	&lt;span style=&#34;color:#a6e22e&#34;&gt;SP&lt;/span&gt;, (&lt;span style=&#34;color:#a6e22e&#34;&gt;g_stack&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;stack_hi&lt;/span&gt;)(&lt;span style=&#34;color:#a6e22e&#34;&gt;DI&lt;/span&gt;) &lt;span style=&#34;color:#75715e&#34;&gt;// g0.stack.hi = SP
 &lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;创建完g0的内存分布&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/stack_0.png&#34; alt=&#34;stack_0&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/stack_0.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/stack_0.png&#34; alt=&#34;stack_0&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;然后略过一段CPU型号检测和CGO初始化的代码&lt;/p&gt;
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;color:#f92672&#34;&gt;...&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
@@ -1742,7 +2202,14 @@ Breakpoint &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; at 0x1049360
 	&lt;span style=&#34;color:#a6e22e&#34;&gt;CLD&lt;/span&gt;				&lt;span style=&#34;color:#75715e&#34;&gt;// convention is D is always left cleared
 &lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;	&lt;span style=&#34;color:#a6e22e&#34;&gt;CALL&lt;/span&gt;	&lt;span style=&#34;color:#a6e22e&#34;&gt;runtime&lt;/span&gt;&lt;span style=&#34;color:#960050;background-color:#1e0010&#34;&gt;·&lt;/span&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;check&lt;/span&gt;(&lt;span style=&#34;color:#a6e22e&#34;&gt;SB&lt;/span&gt;)
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;创建完m0之后的内存分布&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/stack_1.png&#34; alt=&#34;stack_1&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/stack_1.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/stack_1.png&#34; alt=&#34;stack_1&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;m0和g0的关系&lt;/li&gt;
 &lt;/ul&gt;
@@ -2114,7 +2581,14 @@ Breakpoint &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt; at 0x1049360
 &lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;	&lt;span style=&#34;color:#a6e22e&#34;&gt;releasem&lt;/span&gt;(&lt;span style=&#34;color:#a6e22e&#34;&gt;_g_&lt;/span&gt;.&lt;span style=&#34;color:#a6e22e&#34;&gt;m&lt;/span&gt;)
 }
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;总结一下创建第一个goroutine执行runtime.main的过程(只是创建啊，整个调度这时候还是没有跑起来)
-&lt;img src=&#34;https://journey-c.github.io/images/creat_goroutine_main.png&#34; alt=&#34;create_goroutine_main&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/creat_goroutine_main.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/creat_goroutine_main.png&#34; alt=&#34;create_goroutine_main&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h2 id=&#34;24-调度循环&#34;&gt;2.4 调度循环&lt;/h2&gt;
 &lt;p&gt;我们再返回runtime·rt0_go继续看，总结一下到目前为止已经准备好的事情&lt;/p&gt;
 &lt;ol&gt;
@@ -2644,7 +3118,14 @@ go/src/runtime/proc.go, line 1146&lt;/li&gt;
 &lt;li&gt;PUT
 对象放回池子时，先判断当前P的私有空间是否为空，为空就放入，不为空就放入共享空间。&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/design.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/design.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/design.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;当GET/PUT非常频繁的时候，一般都只访问当前P的空间就可以完成操作。 GET/PUT不频繁时，即使访问到其他P的空间(有锁)，由于操作不频繁所以锁是可以接受的。&lt;/p&gt;
 &lt;h1 id=&#34;2-数据结构&#34;&gt;2. 数据结构&lt;/h1&gt;
 &lt;p&gt;&lt;a href=&#34;https://github.com/golang/go/blob/9b955d2d3fcff6a5bc8bce7bafdc4c634a28e95b/src/sync/pool.go#L44&#34;&gt;Pool&lt;/a&gt;是sync.Pool的核心数据结构。先了解一下该结构体的内部字段。&lt;/p&gt;
@@ -2675,7 +3156,14 @@ GC时回调用 &lt;a href=&#34;https://github.com/golang/go/blob/a57f07aac237d36
 &lt;li&gt;将victim指向local指向的数组，并且将local指针置空。&lt;/li&gt;
 &lt;/ol&gt;
 &lt;p&gt;所以Pool中的Object存活时间为两次GC间隔。&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/design_1.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/design_1.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/design_1.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;如上图所示，每个P都有一个&lt;a href=&#34;https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/pool.go#L65&#34;&gt;poolLocal&lt;/a&gt;用来存储对象。再来看下&lt;a href=&#34;https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/pool.go#L65&#34;&gt;poolLocal&lt;/a&gt;的内部字段。&lt;/p&gt;
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;poolLocal&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; {
 	&lt;span style=&#34;color:#a6e22e&#34;&gt;poolLocalInternal&lt;/span&gt;
@@ -2701,12 +3189,26 @@ GC时回调用 &lt;a href=&#34;https://github.com/golang/go/blob/a57f07aac237d36
 &lt;li&gt;shared是所有调度器公有的存储位置。&lt;/li&gt;
 &lt;/ol&gt;
 &lt;p&gt;&lt;a href=&#34;https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/pool.go#L62&#34;&gt;shared&lt;/a&gt;是一个双向链表实现的队列&lt;a href=&#34;https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/poolqueue.go#L194&#34;&gt;poolChain&lt;/a&gt;，而队列中每个元素&lt;a href=&#34;https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/poolqueue.go#L204&#34;&gt;poolChainElt&lt;/a&gt;，又是一个静态环形队列&lt;a href=&#34;https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/poolqueue.go#L19&#34;&gt;poolDequeue&lt;/a&gt;。环形队列的节点元素是&lt;a href=&#34;https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/poolqueue.go#L47&#34;&gt;eface&lt;/a&gt;结构如下：
-&lt;img src=&#34;https://journey-c.github.io/images/design_2.png&#34; alt=&#34;&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/design_2.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/design_2.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/pool.go#L62&#34;&gt;shared&lt;/a&gt;队列是一个生产消费模型的队列，&lt;code&gt;head&lt;/code&gt;只用于生产，&lt;code&gt;tail&lt;/code&gt;只用于消费：&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;GET操作通常是从队列&lt;code&gt;tail&lt;/code&gt;端取对象。&lt;/li&gt;
 &lt;li&gt;PUT操作通常是将对象从&lt;code&gt;head&lt;/code&gt;端放入。
-&lt;img src=&#34;https://journey-c.github.io/images/design_3.png&#34; alt=&#34;&#34;&gt;&lt;/li&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/design_3.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/design_3.png&#34; alt=&#34;&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/li&gt;
 &lt;/ol&gt;
 &lt;p&gt;其中环形队列&lt;a href=&#34;https://github.com/golang/go/blob/a57f07aac237d366630e85d080ef1ce0c34f0d09/src/sync/poolqueue.go#L19&#34;&gt;poolDequeue&lt;/a&gt;实现挺巧妙。是一个无锁、固定大小的单生产端多消费端的环形队列，单一producer可以在头部push和pop(可能和传统队列头部只能push的定义不同)，多consumer可以在尾部pop。&lt;/p&gt;
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-go&#34; data-lang=&#34;go&#34;&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;type&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;poolDequeue&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; {

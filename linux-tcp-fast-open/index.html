@@ -7,6 +7,7 @@
 <meta name="generator" content="Hugo 0.74.3" />
 
 
+
 <title>网络性能优化：TFO - Journey-C</title>
 <meta property="og:title" content="网络性能优化：TFO - Journey-C">
 
@@ -54,10 +55,17 @@ if (!doNotTrack) {
 
 
 
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+
+
 </head>
 
 <body>
     <input type="checkbox" class="hidden toggle" id="toc-control" />
+
     <main class="wrapper">
         <div>
             <header class="header">
@@ -93,15 +101,6 @@ if (!doNotTrack) {
                         width="50" height="50"
                         alt="Logo">
                 </a>
-
-                
-                <div style="float:right">
-                    <label for="toc-control">
-                        <img src="/svg/toc.svg" class="article-icon" alt="Table of Contents" />
-                    </label>
-                </div>
-                
-
                 <ul class="nav-links">
                     
                     <li><a href="/tags/"></a></li>
@@ -116,50 +115,11 @@ if (!doNotTrack) {
                     
                     <li>
                 </ul>
-
-                
-                <aside class="hidden clearfix mobile-toc">
-                    <nav id="TableOfContents">
-  <ul>
-    <li><a href="#背景">背景</a></li>
-    <li><a href="#实现">实现</a></li>
-    <li><a href="#广域网tfo可用性">广域网TFO可用性</a></li>
-    <li><a href="#附录">附录</a>
-      <ul>
-        <li><a href="#serverc">server.c</a></li>
-        <li><a href="#clientc">client.c</a></li>
-      </ul>
-    </li>
-  </ul>
-</nav>
-                </aside>
-                
             </header>
         </div>
 
 
 <div class="content">
-    
-    <aside class="article-toc" id="article-toc">
-    <div class="article-toc-content">
-        <nav id="TableOfContents">
-  <ul>
-    <li><a href="#背景">背景</a></li>
-    <li><a href="#实现">实现</a></li>
-    <li><a href="#广域网tfo可用性">广域网TFO可用性</a></li>
-    <li><a href="#附录">附录</a>
-      <ul>
-        <li><a href="#serverc">server.c</a></li>
-        <li><a href="#clientc">client.c</a></li>
-      </ul>
-    </li>
-  </ul>
-</nav>
-    </div>
-</aside>
-
-    
-
     <article class="article">
         
         <span class="article-duration">3 min read</span>
@@ -181,22 +141,86 @@ if (!doNotTrack) {
         
         
 
+        <div class="toc">
+    <details >
+        <summary>
+            <span class="details">Table Of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#%e8%83%8c%e6%99%af" aria-label="背景">背景</a></li>
+                <li>
+                    <a href="#%e5%ae%9e%e7%8e%b0" aria-label="实现">实现</a></li>
+                <li>
+                    <a href="#%e5%b9%bf%e5%9f%9f%e7%bd%91tfo%e5%8f%af%e7%94%a8%e6%80%a7" aria-label="广域网TFO可用性">广域网TFO可用性</a></li>
+                <li>
+                    <a href="#%e9%99%84%e5%bd%95" aria-label="附录">附录</a><ul>
+                        
+                <li>
+                    <a href="#serverc" aria-label="server.c">server.c</a></li>
+                <li>
+                    <a href="#clientc" aria-label="client.c">client.c</a>
+                </li>
+            </ul>
+            </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+
         <div class="article-content">
             <p>今天大多数的web服务都是基于TCP协议对外提供交互，TCP协议是诞生在网络环境普遍很差的年代。传输时延由客户端和服务端之间往返时间(RTT)以及数据传输需要的往返次数决定。过去的几十年网络带宽有大幅增长，但传输时延还是受到光速的限制，所以谷歌公司在2011年的<a href="https://conferences.sigcomm.org/co-next/2011/papers/1569470463.pdf">TCP FAST OPEN</a>论文中介绍TCP协议的扩展——TCP FAST OPEN。</p>
 <h1 id="背景">背景</h1>
 <p><a href="https://www.rfc-editor.org/pdfrfc/rfc793.txt.pdf">TCP标准</a>中只允许握手建立连接后进行数据传输，这就意味着在应用层数据交互之前有一个额外的RTT。
-<img src="/images/linux-tcp-fast-open-tcp-handshake.png" alt="TCP Handshake">
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/linux-tcp-fast-open-tcp-handshake.png">
+<img src="/images/linux-tcp-fast-open-tcp-handshake.png" alt="TCP Handshake"  />
+</a>
+</div>
+
+
 而这个额外RTT是传播时延的一部分。下图是谷歌公司统计的google.com请求中TCP握手占总请求时延的百分比。可以看到cold request(新TCP连接)的握手时延占比明显高出很多。
-<img src="/images/linux-tcp-fast-open-tcp-handshake-cast.png" alt="TCP Handshake Cast">
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/linux-tcp-fast-open-tcp-handshake-cast.png">
+<img src="/images/linux-tcp-fast-open-tcp-handshake-cast.png" alt="TCP Handshake Cast"  />
+</a>
+</div>
+
+
 这个问题的解决方案一个是应用层协议复用TCP，请求结束后连接不关闭，缓存给下次使用。但实际效果不理想，谷歌公司对一些大型CDN的研究表明，实际生产中每个TCP连接平均只有2.4个HTTP请求。</p>
 <p>而另外一种解决方式就是在握手时期就进行数据传输，直接消除了额外的RTT。TCP标准中也是在握手第三阶段将数据包放入了SYN包中，所以应用层数据放入第一、二阶段SYN包中的设计理论上也是可行的。然而，这个想法的直接实现容易受到拒绝服务 (DoS) 攻击，并且可能面临重复或陈旧 SYN 的困难。谷歌的论文中提出了一种称为 TCP 快速打开 (TFO) 的新 TCP 机制，它可以在 TCP 的初始握手期间安全地交换数据。 TFO 的核心是一个安全 cookie，服务器使用它来验证启动 TFO 连接的客户端。
-<img src="/images/linux-tcp-fast-open-tcp-fast-open.png" alt="TCP Fast Open"></p>
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/linux-tcp-fast-open-tcp-fast-open.png">
+<img src="/images/linux-tcp-fast-open-tcp-fast-open.png" alt="TCP Fast Open"  />
+</a>
+</div>
+
+</p>
 <h1 id="实现">实现</h1>
 <p><strong>(被抓包程序代码在最后)</strong></p>
 <p>新TCP连接时，客户端发送带有 Fast Open Cookie Request TCP 选项的 SYN 数据包。
-<img src="/images/linux-tcp-fast-open-tfo1.png" alt="1"></p>
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/linux-tcp-fast-open-tfo1.png">
+<img src="/images/linux-tcp-fast-open-tfo1.png" alt="1"  />
+</a>
+</div>
+
+</p>
 <p>服务器通过在密钥下加密客户端的 IP 地址来生成 cookie。服务器使用 SYN-ACK 响应客户端，该 SYN-ACK 在 TCP 选项字段中包含生成的 Fast Open Cookie。
-<img src="/images/linux-tcp-fast-open-tfo2.png" alt="2"></p>
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/linux-tcp-fast-open-tfo2.png">
+<img src="/images/linux-tcp-fast-open-tfo2.png" alt="2"  />
+</a>
+</div>
+
+</p>
 <p>客户端缓存 cookie，以便将来 TFO 连接到同一服务器。</p>
 <p>要使用从服务器接收到的TFO cookie，客户端执行以下步骤：</p>
 <ol>
@@ -211,7 +235,14 @@ if (!doNotTrack) {
 <li>客户端发送确认服务器 SYN 的 ACK。如果客户端的数据未被确认，则使用 ACK 重新传输。</li>
 <li>然后连接像正常的 TCP 连接一样进行。</li>
 </ol>
-<p><img src="/images/linux-tcp-fast-open-tfo3.png" alt="3">
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/linux-tcp-fast-open-tfo3.png">
+<img src="/images/linux-tcp-fast-open-tfo3.png" alt="3"  />
+</a>
+</div>
+
+
 可以看到第二次TCP连接的握手第一步携带了上次服务端返回的cookie，并且携带了数据的。</p>
 <p>TFO是TCP协议的experimental update，所以协议要求TCP实现默认必须禁止TFO，Linux中打开方式如下：（确保内核版本在3.17及以上）</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-bash" data-lang="bash">在/etc/sysctl.conf文件中添加
@@ -222,11 +253,25 @@ net.ipv4.tcp_fastopen<span style="color:#f92672">=</span><span style="color:#ae8
 </span><span style="color:#75715e">#define	TFO_CLIENT_NO_COOKIE	4	</span><span style="color:#75715e">/* Data in SYN w/o cookie option */</span><span style="color:#75715e">
 </span></code></pre></div><p>设置为3，则客户端服务端均开启TFO功能。</p>
 <p>最后是谷歌公司针对TFO做的对比数据，可以看到TFO机制明显缩短了传输时延，并且RTT越大的情况下越明显。
-<img src="/images/linux-tcp-fast-open-result.png" alt="result"></p>
+
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/linux-tcp-fast-open-result.png">
+<img src="/images/linux-tcp-fast-open-result.png" alt="result"  />
+</a>
+</div>
+
+</p>
 <h1 id="广域网tfo可用性">广域网TFO可用性</h1>
 <p>由于中间路由器、交换机等设备可能不支持，导致TFO在互联网环境下可能失败，从而弱化到标准的TCP握手，甚至导致更恶劣的重传，不过从Anna Maria Mandalari博士的测试数据来看，只有2.18%的SYN数据包会被直接丢弃，引起重传。
 下面是博士团队在2015年对18个国家、22个ISP环境下进行TFO的测试数据</p>
-<p><img src="/images/linux-tcp-fast-open-result-data.png" alt="result"></p>
+<p>
+<div class="post-img-view">
+<a data-fancybox="gallery" href="/images/linux-tcp-fast-open-result-data.png">
+<img src="/images/linux-tcp-fast-open-result-data.png" alt="result"  />
+</a>
+</div>
+
+</p>
 <h1 id="附录">附录</h1>
 <h2 id="serverc">server.c</h2>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;arpa/inet.h&gt;</span><span style="color:#75715e">

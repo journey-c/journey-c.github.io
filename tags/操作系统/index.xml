@@ -28,14 +28,35 @@
 &lt;li&gt;保障系统的稳定和安全，避免用户错误的使用硬件危害系统或者窃取其他进程的资源。&lt;/li&gt;
 &lt;li&gt;由于Linux进程都是运行在虚拟系统中，如果操作系统对用户访问硬件一无所知，就几乎无法实现多任务和虚拟内存。&lt;/li&gt;
 &lt;/ol&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/unix_arch.jpeg&#34; alt=&#34;unix_arch&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/unix_arch.jpeg&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/unix_arch.jpeg&#34; alt=&#34;unix_arch&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;div&gt;
 	&lt;center&gt;图片来源&lt;a href=&#34;https://www.amazon.com/Advanced-Programming-UNIX-Environment-3rd/dp/0321637739&#34;&gt;《Advanced Programming in the UNIX Environment, 3rd Edition》&lt;/a&gt;&lt;/center&gt;
 &lt;/div&gt;
 &lt;h1 id=&#34;2-三种使用系统调用方式&#34;&gt;2. 三种使用系统调用方式&lt;/h1&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/syscall_method.png&#34; alt=&#34;syscall_method&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/syscall_method.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/syscall_method.png&#34; alt=&#34;syscall_method&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h2 id=&#34;21-软件中断&#34;&gt;2.1 软件中断&lt;/h2&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/interrupt.png&#34; alt=&#34;interrupt&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/interrupt.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/interrupt.png&#34; alt=&#34;interrupt&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;没有外界打扰的情况下处理器会一直执行给定指令，中断就是打断处理器的执行并且告诉他先执行另一段指令，执行完毕再接着执行中断前的指令。从中断指令发出的对象可以分为硬件中断和软件中断。&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;硬件中断就是硬件通过传输电信号到中断控制器的输入引脚，中断控制器收到电信号之后会给处理器发送一个电信号，处理器一经检测到电信号之后就中断当前工作转而处理中断。之后会通知操作系统已经产生中断，进而操作系统可以处理这个中断了。&lt;/li&gt;
@@ -55,7 +76,14 @@
 &lt;/ul&gt;
 &lt;/li&gt;
 &lt;/ol&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/interrupt_call.png&#34; alt=&#34;interrupt_call&#34;&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/interrupt_call.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/interrupt_call.png&#34; alt=&#34;interrupt_call&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+
 下面就是一个通过软件中断调用write系统调用的例子:&lt;/p&gt;
 &lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;global _start
 
@@ -77,7 +105,14 @@ section .rodata
 ld -o sys_call sys_call.o
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;22-汇编指令&#34;&gt;2.2 汇编指令&lt;/h2&gt;
 &lt;p&gt;由于中断实现的系统调用在个别处理器上表现非常差，Linux在较新版本上使用了intel和amd上实现的快速系统调用指令syscall/sysret(64)和sysenter/sysexit(32)。这也是目前最常用的系统调用方式。
-&lt;img src=&#34;https://journey-c.github.io/images/asm.png&#34; alt=&#34;asm&#34;&gt;&lt;/p&gt;
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/asm.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/asm.png&#34; alt=&#34;asm&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;具体流程为:&lt;/p&gt;
 &lt;ol&gt;
 &lt;li&gt;cpu初始化&lt;a href=&#34;https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/arch/x86/kernel/cpu/common.c#L1869&#34;&gt;cpu_init&lt;/a&gt; 调用 &lt;a href=&#34;https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/arch/x86/kernel/cpu/common.c#L1702&#34;&gt;syscall_init&lt;/a&gt;&lt;/li&gt;
@@ -85,7 +120,14 @@ ld -o sys_call sys_call.o
 &lt;li&gt;触发系统调用后，它会在&lt;a href=&#34;https://en.wikipedia.org/wiki/Model-specific_register&#34;&gt;MSR&lt;/a&gt;中读取需要执行的函数然后执行。&lt;/li&gt;
 &lt;li&gt;剩余流程和软件中断方式差不多。&lt;/li&gt;
 &lt;/ol&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/asm_call.png&#34; alt=&#34;asm_call&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/asm_call.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/asm_call.png&#34; alt=&#34;asm_call&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;h2 id=&#34;23-vdos&#34;&gt;2.3 vDOS&lt;/h2&gt;
 &lt;p&gt;Linux平台的用户使用系统调用的方式大多是通过&lt;a href=&#34;https://www.gnu.org/software/libc/&#34;&gt;libc&lt;/a&gt;, 由于&lt;a href=&#34;https://www.gnu.org/software/libc/&#34;&gt;libc&lt;/a&gt;库要兼容BSD，SysV Windows等平台，所以每当Linux新增系统调用时，&lt;a href=&#34;https://www.gnu.org/software/libc/&#34;&gt;libc&lt;/a&gt;库都要间隔一段时间才会支持。并且有的用户升级Linux时并不会顺带升级&lt;a href=&#34;https://www.gnu.org/software/libc/&#34;&gt;libc&lt;/a&gt;，导致双方都带有沉重历史包袱。&lt;/p&gt;
 &lt;p&gt;后来Linux实现了快速系统调用vsyscall，内核提供.so通过动态链接直接map到进程空间里供用户使用，但是vsyscall有一个风险点——map 的起始地址固定（0xffffffffff600000)，有潜在的安全风险。&lt;/p&gt;
@@ -98,7 +140,14 @@ ld -o sys_call sys_call.o
 	/lib64/ld-linux-x86-64.so.2 &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;0x00007f5223aa7000&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;但是并不存在实际的.so文件，vsyscall以及vDOS将系统调用变为函数调用，并把他们映射到用户空间，明显的提高了系统调用的性能。
 Linux 2.6时，vsyscall就支持了clock_gettime, gettimeofday, time。&lt;a href=&#34;https://github.com/torvalds/linux/blob/bbf5c979011a099af5dc76498918ed7df445635b/arch/x86/entry/vdso/vdso.lds.S&#34;&gt;vdso.lds.S&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;https://journey-c.github.io/images/vdso.jpeg&#34; alt=&#34;vdso&#34;&gt;&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/vdso.jpeg&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/vdso.jpeg&#34; alt=&#34;vdso&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
 &lt;p&gt;看到这里的时候突然想到，刚参加工作的时候一位前辈和我说获取时间可以不使用系统调用，当时一脸懵逼，现在想想确实知道的太少。一些知识不是需要多高的智商才能学到，而是就摆在那，看了就不知道，不看就不知道。&lt;/p&gt;
 &lt;h1 id=&#34;3-总结&#34;&gt;3. 总结&lt;/h1&gt;
 &lt;p&gt;系统调用是用户和硬件交互的媒介&lt;/p&gt;
