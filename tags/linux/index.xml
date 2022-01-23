@@ -526,10 +526,10 @@ net.ipv4.tcp_fastopen&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;&lt
   
   <item>
     <title>Linux内存管理</title>
-    <link>https://journey-c.github.io/linux-memory-management-1/</link>
+    <link>https://journey-c.github.io/linux-memory-management/</link>
     <pubDate>Fri, 19 Feb 2021 23:25:19 +0800</pubDate>
     
-    <guid>https://journey-c.github.io/linux-memory-management-1/</guid>
+    <guid>https://journey-c.github.io/linux-memory-management/</guid>
     <description>&lt;blockquote&gt;
 &lt;p&gt;计算机的计算，一方面说的是进程、线程对于CPU的使用，另一方面是对于内存的管理。本文就是介绍Linux的内存管理。&lt;/p&gt;
 &lt;/blockquote&gt;
