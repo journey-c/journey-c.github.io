@@ -22,6 +22,40 @@
     
     <guid>https://journey-c.github.io/linux-process-management-and-scheduling-1/</guid>
     <description>&lt;p&gt;几乎所有现代操作系统都支持同时运行若干程序（至少在用户错觉是这样的）。这种错觉是由内核和处理器建立的，在很短的时间间隔内多任务不停切换。由于用户无法注意到短时间内的停滞，所以就造成了感官上的多任务并行。本文就一起来探究一下Linux是如果管理多任务的。&lt;/p&gt;
+&lt;h1 id=&#34;进程优先级&#34;&gt;进程优先级&lt;/h1&gt;
+&lt;p&gt;并非所有进程都具有同样的重要性，比如渲染屏幕的进程收到指令后要尽可能快的反馈到屏幕上，稍慢些用户就会感觉到卡顿，而用户分析计算数据的进程则不需要时刻反馈进度，只需要将结果返回即可。根据这个条件就可以粗略的将进程分为：实时进程和非实时进程。&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;硬实时进程，不能丝毫的耽误，例如火箭发射，机械控制。这些操作需要在规定时间内必须完成，否则会造成严重后果。主流Linux内核是不支持这类型进程的。&lt;/li&gt;
+&lt;li&gt;软实时进程，可以略微的耽误进度，例如写磁盘操作，需要尽快写到磁盘防止丢失，但机器负载较高时也可以暂停写入。&lt;/li&gt;
+&lt;li&gt;普通进程，不需要再明确的时间内完成的进程，这种进程就可根据优先级来分配调度。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process-priority.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process-priority.png&#34; alt=&#34;linux-process-management-and-scheduling-process-priority&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
+&lt;p&gt;调度时，unix系统中通常的做法是，将CPU时间进行分割，每个进程根据重要性分配一个时间片，然后进程依次使用CPU，时间到了就换下一个，这也就是&lt;strong&gt;抢占式多任务处理&lt;/strong&gt;。&lt;/p&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process-preemptive-multitasking-scheduling.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process-preemptive-multitasking-scheduling.png&#34; alt=&#34;linux-process-management-and-scheduling-process-preemptive-multitasking-scheduling&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
+&lt;p&gt;这种简单的模型没考虑到几个重要的问题：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;进程某些时刻就是没有事情在做，占用CPU只会浪费。&lt;/li&gt;
+&lt;li&gt;时间片力度划分很难有一个标准，单位太小则频繁切换上下文产生无关任务的消耗，单位太大则分配不均匀。&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Linux的内核开发者就此进行了非常热烈的讨论，Linux的调度算法需要满足进程分类的特点、满足不同负荷，即能在微型计算机上工作，又能在大型计算机上工作。这非常具有挑战性，Linux的调度算法至今进行过两次重大的重写：&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;2.5系列开发过程中，用所谓的O(1)调度器代替了前一个调度器，这个调度器的特点是可以在常数时间内完成调度工作，不依赖进程的数量。&lt;/li&gt;
+&lt;li&gt;2.6.23版本合并进来的&lt;strong&gt;完全公平调度器&lt;/strong&gt;，将Linux真正变成&lt;strong&gt;可用&lt;/strong&gt;的操作系统内核，该算法尽可能&lt;strong&gt;公平&lt;/strong&gt;的调度每个进程，还可以特别关注某些进程，满足Linux进程分类的特点，也是沿用至今的调度器。这也是本章要讲的核心内容。&lt;/li&gt;
+&lt;/ol&gt;
 &lt;h1 id=&#34;进程表示&#34;&gt;进程表示&lt;/h1&gt;
 &lt;p&gt;既然要管理任务，就要有一个描述任务的数据结构，操作系统一般用&lt;a href=&#34;https://en.wikipedia.org/wiki/Process_(computing)&#34;&gt;进程&lt;/a&gt;来表示任务，Linux中将进程线程抽象为&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched.h#L640&#34;&gt;struct task_struct&lt;/a&gt;，&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched.h#L640&#34;&gt;struct task_struct&lt;/a&gt;中涉及了若干个子系统，十分的复杂，我们一点点来分析。
 
@@ -262,6 +296,414 @@
 &lt;/li&gt;
 &lt;li&gt;然后根据struct pid和namespace找到对应数字类型ID，这里实际就是用namespace里的level去struct pid里取第几个struct upid，然后struct upid的成员变量nr就是所需要的数字类型id。&lt;/li&gt;
 &lt;/ol&gt;
+&lt;h2 id=&#34;信号处理&#34;&gt;信号处理&lt;/h2&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* Signal handlers: */&lt;/span&gt;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; signal_struct        &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;signal;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; sighand_struct __rcu     &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;sighand;
+sigset_t            blocked;
+sigset_t            real_blocked;
+&lt;span style=&#34;color:#75715e&#34;&gt;/* Restored if set_restore_sigmask() was used: */&lt;/span&gt;
+sigset_t            saved_sigmask;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; sigpending       pending;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;unsigned&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;long&lt;/span&gt;           sas_ss_sp;
+size_t              sas_ss_size;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;unsigned&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt;            sas_ss_flags;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;这里定义了哪些信号被阻塞暂不处理（blocked），哪些信号尚等待处理（pending），哪些信号正在通过信号处理函数进行处理（sighand）。处理的结果可以是忽略，可以是结束进程等等。&lt;/p&gt;
+&lt;p&gt;信号处理函数默认使用用户态的函数栈，当然也可以开辟新的栈专门用于信号处理，这就是 sas_ss_xxx 这三个变量的作用。&lt;/p&gt;
+&lt;h2 id=&#34;进程状态&#34;&gt;进程状态&lt;/h2&gt;
+&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process-life-cycle.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process-life-cycle.png&#34; alt=&#34;linux-process-management-and-scheduling-process-life-cycle&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
+&lt;p&gt;也就是进程的生命周期，Linux内核将上面的状态又进行了更细的划分。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* -1 unrunnable, 0 runnable, &amp;gt;0 stopped: */&lt;/span&gt;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;volatile&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;long&lt;/span&gt; state;
+
+&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; exit_state;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; exit_code;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; exit_signal;
+
+&lt;span style=&#34;color:#75715e&#34;&gt;/* Per task flags (PF_*), defined further below: */&lt;/span&gt;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;unsigned&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt;            flags;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;task_struct-&amp;gt;state表示进程的状态，取值如下：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* Used in tsk-&amp;gt;state: */&lt;/span&gt;
+&lt;span style=&#34;color:#75715e&#34;&gt;#define TASK_RUNNING            0x0000
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define TASK_INTERRUPTIBLE      0x0001
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define TASK_UNINTERRUPTIBLE        0x0002
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define __TASK_STOPPED          0x0004
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define __TASK_TRACED           0x0008
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;TASK_RUNNING 处于运行态进程（可被调度，不一定正在使用CPU）&lt;/li&gt;
+&lt;li&gt;TASK_INTERRUPTIBLE 处于睡眠中的进程，可以被唤醒。例如正在做I/O操作，但这时候来了一个信号，还是可以唤醒这个进程的&lt;/li&gt;
+&lt;li&gt;TASK_UNINTERRUPTIBLE 处于睡眠中并且不会被任何信号唤醒，只能等待操作完成，假如操作因为某些特殊原因完成不了，那么这个进程就无法被唤醒了，kill信号也无法唤醒，因为信号已经被忽略了。所以这是一个非常危险的状态，如果没有百分百的把握就不要将进程设置为这种状态。&lt;/li&gt;
+&lt;li&gt;__TASK_STOPPED 暂停状态，收到某种信号暂停运行。SIGSTOP、SIGTSTP、SIGTTIN、SIGTTOUT这些信号都能使进程陷入暂停。&lt;/li&gt;
+&lt;li&gt;__TASK_TRACED 被追踪状态，例如使用gdb调试进程时，进程就处于__TASK_TRACED态。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;使用时，state会是这几种状态中的一种，或者几种状态的组合（通过bit操作）&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* Used in tsk-&amp;gt;exit_state: */&lt;/span&gt;
+&lt;span style=&#34;color:#75715e&#34;&gt;#define EXIT_DEAD           0x0010
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define EXIT_ZOMBIE         0x0020
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;EXIT_DEAD 和 EXIT_ZOMBIE都表示进程终止，有什么区别呢？&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;EXIT_ZOMBIE 当进程结束时，最先进入EXIT_ZOMBIE态，这时只是任务执行完了，但是父进程还没执行wait()调用&lt;/li&gt;
+&lt;li&gt;EXIT_DEAD 当父进程执行wait调用后，进程进入最终态EXIT_DEAD，就可以进行清理回收工作了&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;进程调度&#34;&gt;进程调度&lt;/h2&gt;
+&lt;p&gt;以下是task_struct中调度相关的参数，这里就不细讲了，后边用到时在作说明。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 标识：当前是否在运行队列
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt;             on_rq;
+
+&lt;span style=&#34;color:#75715e&#34;&gt;// 优先级
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt;             prio;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt;             static_prio;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt;             normal_prio;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;unsigned&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt;            rt_priority;
+
+&lt;span style=&#34;color:#75715e&#34;&gt;// 调度器类
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; sched_class    &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;sched_class;
+&lt;span style=&#34;color:#75715e&#34;&gt;// 调度实体
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; sched_entity     se;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; sched_rt_entity      rt;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; sched_dl_entity      dl;
+
+&lt;span style=&#34;color:#75715e&#34;&gt;// 调度策略
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;unsigned&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt;            policy;
+
+&lt;span style=&#34;color:#75715e&#34;&gt;// CPU可使用情况
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;unsigned&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt;            policy;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt;             nr_cpus_allowed;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; cpumask_t         &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;cpus_ptr;
+cpumask_t           cpus_mask;
+
+&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; sched_info       sched_info;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;统计信息&#34;&gt;统计信息&lt;/h2&gt;
+&lt;p&gt;生产中通常都会用各种工具查看进程的状态和一些指标，而这些值task_struct也是需要维护起来的。并且调度时也需要根据这些指标来挑选运行的进程。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// 用户态消耗CPU时间
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;u64             utime;
+&lt;span style=&#34;color:#75715e&#34;&gt;// 内核态消耗CPU时间
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;u64             stime;
+&lt;span style=&#34;color:#75715e&#34;&gt;// 用户态进程组消耗CPU时间
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;u64             gtime;
+
+&lt;span style=&#34;color:#75715e&#34;&gt;// 主动上下文切换次数
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;unsigned&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;long&lt;/span&gt;           nvcsw;
+&lt;span style=&#34;color:#75715e&#34;&gt;// 被动上下文切换次数
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;unsigned&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;long&lt;/span&gt;           nivcsw;
+
+&lt;span style=&#34;color:#75715e&#34;&gt;// 进程启动时间（不包含睡眠）
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;u64             start_time;
+&lt;span style=&#34;color:#75715e&#34;&gt;// 进程启动时间（包含睡眠）
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;u64             start_boottime;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;进程关系&#34;&gt;进程关系&lt;/h2&gt;
+&lt;p&gt;这里的进程关系是指纵向的父子关系。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; task_struct __rcu    &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;real_parent;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; task_struct __rcu    &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;parent;
+
+&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; list_head        children;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; list_head        sibling;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process-process-relationship.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process-process-relationship.png&#34; alt=&#34;linux-process-management-and-scheduling-process-process-relationship&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;real_parent 真实父进程，例如使用bash启动GDB调试一个进程，则real_parent为bash&lt;/li&gt;
+&lt;li&gt;parent 父进程&lt;/li&gt;
+&lt;li&gt;children 子进程列表&lt;/li&gt;
+&lt;li&gt;sibling 兄弟进程列表&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;权限管理&#34;&gt;权限管理&lt;/h2&gt;
+&lt;p&gt;Linux作为多任务、多用户的操作系统，自然要合理的分配管理每个用户的权限。task_struct中权限相关字段如下：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* Process credentials: */&lt;/span&gt;
+
+&lt;span style=&#34;color:#75715e&#34;&gt;/* Tracer&amp;#39;s credentials at attach: */&lt;/span&gt;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; cred __rcu     &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;ptracer_cred;
+
+&lt;span style=&#34;color:#75715e&#34;&gt;/* Objective and real subjective task credentials (COW): */&lt;/span&gt;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; cred __rcu     &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;real_cred;
+
+&lt;span style=&#34;color:#75715e&#34;&gt;/* Effective (overridable) subjective task credentials (COW): */&lt;/span&gt;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;const&lt;/span&gt; &lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; cred __rcu     &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;cred;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;ptracer_cred trace进程对本进程的权限，例如GDB调试时，可以拥有哪些对被调试进程的权限。&lt;/li&gt;
+&lt;li&gt;real_cred 其他进程对本进程的权限&lt;/li&gt;
+&lt;li&gt;cred 本进程对其他进程的权限&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;接着看struct cred的定义:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; cred {
+    ...
+    kuid_t      uid;        &lt;span style=&#34;color:#75715e&#34;&gt;/* real UID of the task */&lt;/span&gt;
+    kgid_t      gid;        &lt;span style=&#34;color:#75715e&#34;&gt;/* real GID of the task */&lt;/span&gt;
+    kuid_t      suid;       &lt;span style=&#34;color:#75715e&#34;&gt;/* saved UID of the task */&lt;/span&gt;
+    kgid_t      sgid;       &lt;span style=&#34;color:#75715e&#34;&gt;/* saved GID of the task */&lt;/span&gt;
+    kuid_t      euid;       &lt;span style=&#34;color:#75715e&#34;&gt;/* effective UID of the task */&lt;/span&gt;
+    kgid_t      egid;       &lt;span style=&#34;color:#75715e&#34;&gt;/* effective GID of the task */&lt;/span&gt;
+    kuid_t      fsuid;      &lt;span style=&#34;color:#75715e&#34;&gt;/* UID for VFS ops */&lt;/span&gt;
+    kgid_t      fsgid;      &lt;span style=&#34;color:#75715e&#34;&gt;/* GID for VFS ops */&lt;/span&gt;
+    ...
+    kernel_cap_t    cap_inheritable; &lt;span style=&#34;color:#75715e&#34;&gt;/* caps our children can inherit */&lt;/span&gt;
+    kernel_cap_t    cap_permitted;  &lt;span style=&#34;color:#75715e&#34;&gt;/* caps we&amp;#39;re permitted */&lt;/span&gt;
+    kernel_cap_t    cap_effective;  &lt;span style=&#34;color:#75715e&#34;&gt;/* caps we can actually use */&lt;/span&gt;
+    kernel_cap_t    cap_bset;   &lt;span style=&#34;color:#75715e&#34;&gt;/* capability bounding set */&lt;/span&gt;
+    kernel_cap_t    cap_ambient;    &lt;span style=&#34;color:#75715e&#34;&gt;/* Ambient capability set */&lt;/span&gt;
+    ...
+} __randomize_layout;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;前几个参数控制用户和组权限&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;uid gid 启动该进程的进程的userid和groupid。实际使用时不会审核这个。&lt;/li&gt;
+&lt;li&gt;euid egid 如注释，审核时使用的userid和groupid&lt;/li&gt;
+&lt;li&gt;suid sgid 作为tmpid，当euid和egid切换时，临时保存&lt;/li&gt;
+&lt;li&gt;fsuid fsgid 审核文件权限时使用&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;除了用户和组权限的管理，还有用户等级（能力）的管理，例如root和普通用户权利就不同。平常创建进程时要么用root权限要么用普通用户权限，但Linux实际具有非常详细的&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/uapi/linux/capability.h#L106&#34;&gt;权限划分&lt;/a&gt;，叫做 capabilities机制。用位图表示是否有哪项权限。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define CAP_CHOWN            0
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define CAP_DAC_OVERRIDE     1
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define CAP_DAC_READ_SEARCH  2
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define CAP_FOWNER           3
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;...
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;当有某项权限就可以做那项事情，没有则不可以，&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/cred.h#L111&#34;&gt;struct cred&lt;/a&gt;中:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;cap_permitted 表示进程被允许的权限，和cap_effective有差异。&lt;/li&gt;
+&lt;li&gt;cap_inheritable 表示哪些权限可被继承，就是exec新进程时，哪些权限可以被加到新进程的cap_permitted中。&lt;/li&gt;
+&lt;li&gt;cap_effective 表示进程能使用哪些权限，是cap_permitted的子集。&lt;/li&gt;
+&lt;li&gt;cap_bset 使系统保留权限，如果cap_bset中没有某项权限，则所有进程都没有（包括root）。&lt;/li&gt;
+&lt;li&gt;cap_ambient 是新加入的权限，为了解决继承问题，之前继承权限只会加入到新进程cap_permitted中，而cap_ambient会被同时加入到cap_permitted和cap_effective中。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;内存管理&#34;&gt;内存管理&lt;/h2&gt;
+&lt;p&gt;进程就是若干个子系统的集合，而内存模块的变量如下，这里就不多讲了，在&lt;a href=&#34;https://journey-c.github.io/linux-memory-management/&#34;&gt;《Linux内存管理》&lt;/a&gt;中讲得很详细了。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; mm_struct        &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;mm;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; mm_struct        &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;active_mm;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h2 id=&#34;文件系统&#34;&gt;文件系统&lt;/h2&gt;
+&lt;p&gt;文件子系统相关的字段如下。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/* Filesystem information: */&lt;/span&gt;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; fs_struct        &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;fs;
+
+&lt;span style=&#34;color:#75715e&#34;&gt;/* Open file information: */&lt;/span&gt;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; files_struct     &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;files;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ul&gt;
+&lt;li&gt;fs 表示文件系统的类型&lt;/li&gt;
+&lt;li&gt;files 表示本进程已打开的文件信息&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&#34;栈空间&#34;&gt;栈空间&lt;/h2&gt;
+&lt;p&gt;进程的执行实际就是一行行代码和函数的执行，函数的执行离不开栈来保存现场以及各种参数。除了单纯的调用，进程还要处理用户态和内核态的调用关系，例如系统调用的时候，函数怎么从用户栈跳到内核栈，然后再回来。&lt;/p&gt;
+&lt;p&gt;涉及变量如下：&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;/*
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt; * For reasons of header soup (see current_thread_info()), this
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt; * must be the first element of task_struct.
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt; */&lt;/span&gt;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;struct&lt;/span&gt; thread_info      thread_info;
+&lt;span style=&#34;color:#66d9ef&#34;&gt;void&lt;/span&gt;                &lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt;stack;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;先来了解一下什么是栈？栈的本质也是一段内存，下面是进程的虚拟内存的布局。
+
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/memory-management-user-mode-memory-layout.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/memory-management-user-mode-memory-layout.png&#34; alt=&#34;memory-management-user-mode-memory-layout&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
+&lt;p&gt;最上边是内核态，再往下过了分界线一段后是用户态的栈空间。进程操作时的入栈出栈都是操作的这块空间。除了空间还有两个CPU的寄存器辅助操作：&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th&gt;名称&lt;/th&gt;
+&lt;th&gt;32位名称&lt;/th&gt;
+&lt;th&gt;64位名称&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td&gt;栈顶指针寄存器&lt;/td&gt;
+&lt;td&gt;ESP&lt;/td&gt;
+&lt;td&gt;rsp&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;栈基地址指针寄存器&lt;/td&gt;
+&lt;td&gt;EBP&lt;/td&gt;
+&lt;td&gt;rbp&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;返回值寄存器&lt;/td&gt;
+&lt;td&gt;EAX&lt;/td&gt;
+&lt;td&gt;rax&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;基地址指针寄存器存放的值表示，本次操作数据是从哪开始放的。
+栈顶指针寄存器存放的值表示，本次操作的数据放到哪了。
+本次操作结束，有数据返回时，繁缛返回寄存器。&lt;/p&gt;
+&lt;p&gt;通过 栈空间 + 栈操作寄存器 组成了进程的逻辑意义上的&lt;code&gt;栈&lt;/code&gt;。&lt;/p&gt;
+&lt;p&gt;下面通过函数调用的例子分析下栈的细节。&lt;/p&gt;
+&lt;h3 id=&#34;用户态函数栈&#34;&gt;用户态函数栈&lt;/h3&gt;
+&lt;h4 id=&#34;32位&#34;&gt;32位&lt;/h4&gt;
+&lt;p&gt;函数调用的本质实际是代码的跳转。如果只有代码的跳转则不需要涉及太多东西，但是函数调用往往涉及参数的传递，以及跳过去再怎么跳过回来的问题。&lt;/p&gt;
+&lt;p&gt;结合交叉编译的32位汇编代码分析这个例子：A 调用 B，B 返回 A。&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Linux上交叉编译32位代码&lt;/li&gt;
+&lt;/ul&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// main.c
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#include&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;&amp;lt;stdio.h&amp;gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;B&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; a, &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; b)
+{
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; a &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; b;
+}
+&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;A&lt;/span&gt;()
+{
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; a &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; b &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; c &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; a &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; b;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; B(a, b) &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; c;
+}
+&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;main&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; argc, &lt;span style=&#34;color:#66d9ef&#34;&gt;char&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt; argv[])
+{
+    printf(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;%d&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;\n&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;, A());
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;;
+}
+&lt;span style=&#34;color:#75715e&#34;&gt;/*
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt; * sudo apt-get install build-essential module-assistant
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt; * sudo apt-get install gcc-multilib g++-multilib
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt; * cc -S -m32 main.c
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt; */&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process-user-stack-1.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process-user-stack-1.png&#34; alt=&#34;linux-process-management-and-scheduling-process-user-stack-1&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
+&lt;div&gt;
+	&lt;center&gt;(上图的状态处于A调用B函数，B函数的执行中，一小格=4B)&lt;/center&gt;
+&lt;/div&gt;
+&lt;p&gt;A函数栈帧中：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;首先将main函数栈帧基地址ebp入栈
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-asm&#34; data-lang=&#34;asm&#34;&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;pushl&lt;/span&gt;   %ebp
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;然后开辟A函数的栈帧
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-asm&#34; data-lang=&#34;asm&#34;&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;movl&lt;/span&gt;    %esp, %ebp
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;然后存放A函数中局部变量
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-asm&#34; data-lang=&#34;asm&#34;&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;subl&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;$16&lt;/span&gt;, %esp
+&lt;span style=&#34;color:#a6e22e&#34;&gt;movl&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;$1&lt;/span&gt;, -&lt;span style=&#34;color:#ae81ff&#34;&gt;12&lt;/span&gt;(%ebp)
+&lt;span style=&#34;color:#a6e22e&#34;&gt;movl&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;$2&lt;/span&gt;, -&lt;span style=&#34;color:#ae81ff&#34;&gt;8&lt;/span&gt;(%ebp)
+&lt;span style=&#34;color:#a6e22e&#34;&gt;movl&lt;/span&gt;    -&lt;span style=&#34;color:#ae81ff&#34;&gt;12&lt;/span&gt;(%ebp), %edx
+&lt;span style=&#34;color:#a6e22e&#34;&gt;movl&lt;/span&gt;    -&lt;span style=&#34;color:#ae81ff&#34;&gt;8&lt;/span&gt;(%ebp), %eax
+&lt;span style=&#34;color:#a6e22e&#34;&gt;addl&lt;/span&gt;    %edx, %eax
+&lt;span style=&#34;color:#a6e22e&#34;&gt;movl&lt;/span&gt;    %eax, -&lt;span style=&#34;color:#ae81ff&#34;&gt;4&lt;/span&gt;(%ebp)
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;然后调用B函数，先是参数入栈
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-asm&#34; data-lang=&#34;asm&#34;&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;pushl&lt;/span&gt;   -&lt;span style=&#34;color:#ae81ff&#34;&gt;8&lt;/span&gt;(%ebp)
+&lt;span style=&#34;color:#a6e22e&#34;&gt;pushl&lt;/span&gt;   -&lt;span style=&#34;color:#ae81ff&#34;&gt;12&lt;/span&gt;(%ebp)
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;li&gt;调用B函数的call指令会顺便将A函数返回地址也入栈
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-asm&#34; data-lang=&#34;asm&#34;&gt;&lt;span style=&#34;color:#a6e22e&#34;&gt;call&lt;/span&gt;    &lt;span style=&#34;color:#66d9ef&#34;&gt;B&lt;/span&gt; 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;到此位置A函数的栈帧基本形成了，如上图，由栈底开始依次是上一个函数ebp，局部变量、下一个函数参数、返回地址。&lt;/p&gt;
+&lt;p&gt;&lt;code&gt;局部变量和参数之间根据栈帧的长度会有一定的填充&lt;/code&gt;，保持内存空间与16字节对齐。&lt;/p&gt;
+&lt;h4 id=&#34;64位&#34;&gt;64位&lt;/h4&gt;
+&lt;p&gt;64位和32位栈帧组成差不多，唯一的区别就是64位机器寄存器多了，函数参数前六个参数可以放在rax、rsi、rdx、rcx、r8d、r9d上。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;// main.c
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#include&lt;/span&gt; &lt;span style=&#34;color:#75715e&#34;&gt;&amp;lt;stdio.h&amp;gt;&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;B&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; a, &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; b, &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; c, &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; d, &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; e, &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; f, &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; g)
+{
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; a &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; b &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; c &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; d &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; e &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; f &lt;span style=&#34;color:#f92672&#34;&gt;+&lt;/span&gt; g;
+}
+&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;A&lt;/span&gt;()
+{
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; a &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;1&lt;/span&gt;;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; b &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;2&lt;/span&gt;;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; c &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;3&lt;/span&gt;;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; d &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;4&lt;/span&gt;;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; e &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;5&lt;/span&gt;;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; f &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;6&lt;/span&gt;;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; g &lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;7&lt;/span&gt;;
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; B(a, b, c, d, e, f, g);
+}
+&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; &lt;span style=&#34;color:#a6e22e&#34;&gt;main&lt;/span&gt;(&lt;span style=&#34;color:#66d9ef&#34;&gt;int&lt;/span&gt; argc, &lt;span style=&#34;color:#66d9ef&#34;&gt;char&lt;/span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;*&lt;/span&gt; argv[])
+{
+    printf(&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;%d&lt;/span&gt;&lt;span style=&#34;color:#ae81ff&#34;&gt;\n&lt;/span&gt;&lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;&lt;/span&gt;, A());
+    &lt;span style=&#34;color:#66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;;
+}
+&lt;span style=&#34;color:#75715e&#34;&gt;/*
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt; * cc -S main.c
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt; */&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process-user-stack-2.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process-user-stack-2.png&#34; alt=&#34;linux-process-management-and-scheduling-process-user-stack-2&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
+&lt;p&gt;64位系统中：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;保存main函数的栈基地址指针寄存器&lt;/li&gt;
+&lt;li&gt;开辟A的栈帧，并且将局部变量a～g放入栈中&lt;/li&gt;
+&lt;li&gt;前六个参数入寄存器：rax、rsi、rdx、rcx、r8d、r9d。第七个参数入栈&lt;/li&gt;
+&lt;li&gt;调用B函数，然后返回结果，最后返回main函数&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&#34;内核态函数栈&#34;&gt;内核态函数栈&lt;/h3&gt;
+&lt;p&gt;进程不光要在用户态运行，涉及系统调用以及其他情况时也要在内核态运行。在内核态运行时同样会涉及函数调用传参，这块布局不常见。&lt;/p&gt;
+&lt;p&gt;进程的&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched.h#L657&#34;&gt;stack&lt;/a&gt;变量的作用就是维护内核态的栈空间。源码中定义内核栈初始大小的变量为：&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched.h#L1726&#34;&gt;THREAD_SIZE&lt;/a&gt;，&lt;/p&gt;
+&lt;p&gt;32位机器中定义如下，PAGE_SIZE=4KB，所以内核栈初始大小位8KB&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define THREAD_SIZE_ORDER   1
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define THREAD_SIZE     (PAGE_SIZE &amp;lt;&amp;lt; THREAD_SIZE_ORDER)
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;64位机器中定义如下，内核初始大小为16KB，并且要求起始地址与16KB对齐。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#ifdef CONFIG_KASAN
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define KASAN_STACK_ORDER 1
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#else
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define KASAN_STACK_ORDER 0
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#endif
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;
+&lt;span style=&#34;color:#75715e&#34;&gt;#define THREAD_SIZE_ORDER   (2 + KASAN_STACK_ORDER)
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define THREAD_SIZE  (PAGE_SIZE &amp;lt;&amp;lt; THREAD_SIZE_ORDER)
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;
+&lt;div class=&#34;post-img-view&#34;&gt;
+&lt;a data-fancybox=&#34;gallery&#34; href=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process-user-stack-3.png&#34;&gt;
+&lt;img src=&#34;https://journey-c.github.io/images/linux-process-management-and-scheduling-process-user-stack-3.png&#34; alt=&#34;linux-process-management-and-scheduling-process-user-stack.png&#34;  /&gt;
+&lt;/a&gt;
+&lt;/div&gt;
+
+&lt;/p&gt;
+&lt;p&gt;由高地址到低地址，首先是预留8字节，接下来是&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/ptrace.h#L56&#34;&gt;pt_regs&lt;/a&gt;结构体，存放的是寄存器信息，进程处于内核态时大部分情况都是从用户态进入的，所以要保存当时寄存器里值。仔细观察寄存器的顺序就会发现，汇编代码中使用寄存器的顺序就是按照变量在结构体中的顺序来的。&lt;/p&gt;
+&lt;p&gt;最后一部分是&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/thread_info.h#L56&#34;&gt;thread_info&lt;/a&gt;结构体，里面存放的也是进程信息，task_struct中存放的是通用信息，thread_info中存放的是与体系有关的东西。&lt;/p&gt;
+&lt;p&gt;内核栈使用时和用户态&lt;/p&gt;
+&lt;h3 id=&#34;用户态task_struct查找内核栈&#34;&gt;用户态task_struct查找内核栈&lt;/h3&gt;
+&lt;p&gt;上小结就提到了task_struct-&amp;gt;stack指向了内核栈的最顶端(thread_info位置不是栈顶)，所以用户态查找内核栈时就可以通过&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/include/linux/sched/task_stack.h#L19&#34;&gt;task_stack_page&lt;/a&gt;函数取stack的值。&lt;/p&gt;
+&lt;p&gt;使用&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/processor.h#L772&#34;&gt;task_pt_regs&lt;/a&gt;调用可以获得寄存器信息。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#define task_pt_regs(task) \
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;({									\
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;	unsigned long __ptr = (unsigned long)task_stack_page(task);	\
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;	__ptr += THREAD_SIZE - TOP_OF_KERNEL_STACK_PADDING;		\
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;	((struct pt_regs *)__ptr) - 1;					\
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;})
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;分析下过程：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;首先是通过task_stack_page函数获取栈顶地址&lt;/li&gt;
+&lt;li&gt;然后向上移动了&lt;code&gt;THREAD_SIZE&lt;/code&gt;然后向下移动&lt;code&gt;TOP_OF_KERNEL_STACK_PADDING&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;code&gt;THREAD_SIZE&lt;/code&gt;之前讨论过，就是内核栈的长度，移动这个距离就是到达内核栈的最底端。&lt;code&gt;TOP_OF_KERNEL_STACK_PADDING&lt;/code&gt;主要作用权限的限制。&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4&#34;&gt;&lt;code class=&#34;language-c&#34; data-lang=&#34;c&#34;&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#ifdef CONFIG_X86_32
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# ifdef CONFIG_VM86
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#  define TOP_OF_KERNEL_STACK_PADDING 16
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# else
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#  define TOP_OF_KERNEL_STACK_PADDING 8
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# endif
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#else
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# define TOP_OF_KERNEL_STACK_PADDING 0
+&lt;/span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#endif
+&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;其中32位机器上是8，其余是0，其原因是，涉及权限变化时32位操作系统会保存堆栈信息（SS堆栈寄存器、ESP栈顶指针寄存器）。64位操作系统优化了这个问题。&lt;/p&gt;
+&lt;h3 id=&#34;内核栈查找用户态task_struct&#34;&gt;内核栈查找用户态task_struct&lt;/h3&gt;
+&lt;p&gt;直接通过&lt;a href=&#34;https://github.com/torvalds/linux/blob/2c85ebc57b3e1817b6ce1a6b703928e113a90442/arch/x86/include/asm/current.h#L13&#34;&gt;get_current()&lt;/a&gt;获取当前运行的task_struct。task_struct的值直接放在Per CPU变量里。&lt;/p&gt;
 </description>
   </item>
   
